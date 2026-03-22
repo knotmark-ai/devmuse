@@ -2,7 +2,7 @@
 
 **Date:** 2025-11-28
 **Status:** Draft
-**Source:** Two Claude instances using superpowers in real development scenarios
+**Source:** Two Claude instances using craft-claude in real development scenarios
 
 ---
 
@@ -507,7 +507,7 @@ Directly addresses the failure pattern from feedback.
 BEFORE writing any tests:
 
 1. Read testing-anti-patterns skill:
-   Use Skill tool: superpowers:testing-anti-patterns
+   Use Skill tool: craft-claude:testing-anti-patterns
 
 2. Apply gate functions from that skill when:
    - Writing mocks
@@ -567,7 +567,7 @@ Slightly more complex prompt, but faster end-to-end.
 1. **verification-before-completion: Configuration change verification**
    - Clear addition, doesn't change existing content
    - Addresses high-impact problem (false confidence in tests)
-   - File: `skills/verification-before-completion/SKILL.md`
+   - File: `skills/craft-verify/SKILL.md`
 
 2. **testing-anti-patterns: Mock-interface drift**
    - Adds new anti-pattern, doesn't modify existing
@@ -577,36 +577,36 @@ Slightly more complex prompt, but faster end-to-end.
 3. **requesting-code-review: Explicit file reading**
    - Simple addition to template
    - Fixes concrete problem (reviewers can't find files)
-   - File: `skills/requesting-code-review/SKILL.md`
+   - File: `skills/craft-review/SKILL.md`
 
 ### Phase 2: Moderate Changes (Test Carefully)
 
 4. **subagent-driven-development: Process hygiene**
    - Adds new section, doesn't change workflow
    - Addresses medium-high impact (test reliability)
-   - File: `skills/subagent-driven-development/SKILL.md`
+   - File: `skills/craft-sdd/SKILL.md`
 
 5. **subagent-driven-development: Self-reflection**
    - Changes prompt template (higher risk)
    - But documented to catch bugs
-   - File: `skills/subagent-driven-development/SKILL.md`
+   - File: `skills/craft-sdd/SKILL.md`
 
 6. **subagent-driven-development: Skills reading requirement**
    - Adds prompt overhead
    - But ensures skills are actually used
-   - File: `skills/subagent-driven-development/SKILL.md`
+   - File: `skills/craft-sdd/SKILL.md`
 
 ### Phase 3: Optimization (Validate First)
 
 7. **subagent-driven-development: Lean context option**
    - Adds complexity (two approaches)
    - Needs validation that it doesn't cause confusion
-   - File: `skills/subagent-driven-development/SKILL.md`
+   - File: `skills/craft-sdd/SKILL.md`
 
 8. **subagent-driven-development: Allow implementer to fix**
    - Changes workflow (higher risk)
    - Optimization, not bug fix
-   - File: `skills/subagent-driven-development/SKILL.md`
+   - File: `skills/craft-sdd/SKILL.md`
 
 ---
 

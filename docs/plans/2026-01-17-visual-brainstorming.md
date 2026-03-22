@@ -1,6 +1,6 @@
 # Visual Brainstorming Companion Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use craft-claude:craft-execute to implement this plan task-by-task.
 
 **Goal:** Give Claude a browser-based visual companion for brainstorming sessions - show mockups, prototypes, and interactive choices alongside terminal conversation.
 
@@ -407,12 +407,12 @@ git commit -m "test: add brainstorm server integration tests"
 ## Task 4: Add Visual Companion to Brainstorming Skill
 
 **Files:**
-- Modify: `skills/brainstorming/SKILL.md`
-- Create: `skills/brainstorming/visual-companion.md` (supporting doc)
+- Modify: `skills/craft-brainstorm/SKILL.md`
+- Create: `skills/craft-brainstorm/visual-companion.md` (supporting doc)
 
 **Step 1: Create the supporting documentation**
 
-Create `skills/brainstorming/visual-companion.md`:
+Create `skills/craft-brainstorm/visual-companion.md`:
 
 ```markdown
 # Visual Companion Reference
@@ -491,7 +491,7 @@ Event types:
 
 **Step 2: Add visual companion section to brainstorming skill**
 
-Add after "Key Principles" in `skills/brainstorming/SKILL.md`:
+Add after "Key Principles" in `skills/craft-brainstorm/SKILL.md`:
 
 ```markdown
 
@@ -518,13 +518,13 @@ The terminal remains the primary conversation interface. The browser is a visual
 
 **Step 3: Verify the edits**
 
-Run: `grep -A5 "Visual Companion" skills/brainstorming/SKILL.md`
+Run: `grep -A5 "Visual Companion" skills/craft-brainstorm/SKILL.md`
 Expected: Shows the new section
 
 **Step 4: Commit**
 
 ```bash
-git add skills/brainstorming/
+git add skills/craft-brainstorm/
 git commit -m "feat: add visual companion to brainstorming skill"
 ```
 
