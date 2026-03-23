@@ -1,10 +1,8 @@
-# Testing Craft Claude Skills / 技能测试
+# Testing Craft Claude Skills
 
 Testing skills that involve subagents, workflows, and complex interactions requires running actual Claude Code sessions in headless mode and verifying behavior through session transcripts.
 
-测试涉及子 Agent、工作流和复杂交互的技能，需要在无头模式下运行 Claude Code 会话，并通过会话日志验证行为。
-
-## Test Structure / 测试结构
+## Test Structure
 
 ```
 tests/
@@ -18,9 +16,9 @@ tests/
 └── subagent-driven-dev/                   # E2E test projects
 ```
 
-## Running Tests / 运行测试
+## Running Tests
 
-### Integration Tests / 集成测试
+### Integration Tests
 
 ```bash
 cd tests/claude-code
@@ -29,7 +27,7 @@ cd tests/claude-code
 
 **Note:** Integration tests take 10-30 minutes (real implementation with multiple subagents).
 
-### Requirements / 前提条件
+### Requirements
 
 - Run from the **craft-claude plugin directory** (not temp directories)
 - `claude` command available
@@ -37,7 +35,7 @@ cd tests/claude-code
 
 ## Integration Test: craft-code (subagent-driven mode)
 
-### What It Tests / 测试内容
+### What It Tests
 
 Verifies `craft-code` skill (subagent-driven mode) correctly:
 
@@ -48,7 +46,7 @@ Verifies `craft-code` skill (subagent-driven mode) correctly:
 5. **Review Loops** — Re-reviews when issues found
 6. **Independent Verification** — Reviewer reads code independently
 
-### How It Works / 工作方式
+### How It Works
 
 1. **Setup**: Creates temporary project with minimal implementation plan
 2. **Execution**: Runs Claude Code in headless mode with skill
@@ -61,19 +59,19 @@ Verifies `craft-code` skill (subagent-driven mode) correctly:
    - Git commits show proper workflow
 4. **Token Analysis**: Shows per-subagent token breakdown
 
-## Token Analysis Tool / Token 分析工具
+## Token Analysis Tool
 
 ```bash
 python3 tests/claude-code/analyze-token-usage.py ~/.claude/projects/<project-dir>/<session-id>.jsonl
 ```
 
-### Finding Session Files / 查找会话文件
+### Finding Session Files
 
 ```bash
 find ~/.claude/projects -name "*.jsonl" -mmin -60
 ```
 
-## Writing New Tests / 编写新测试
+## Writing New Tests
 
 ```bash
 #!/usr/bin/env bash
@@ -100,7 +98,7 @@ SESSION_FILE=$(find "$HOME/.claude/projects" -name "*.jsonl" -mmin -60 | sort -r
 grep -q '"name":"Skill".*"skill":"craft-code"' "$SESSION_FILE" && echo "[PASS]"
 ```
 
-### Best Practices / 最佳实践
+### Best Practices
 
 - Always cleanup temp directories (use `trap`)
 - Parse `.jsonl` transcripts, not user-facing output
