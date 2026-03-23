@@ -5,8 +5,8 @@
   "author": {
     "name": "Jeff"
   },
-  "homepage": "https://github.com/huiyu/craft-claude",
-  "repository": "https://github.com/huiyu/craft-claude",
+  "homepage": "https://github.com/knotmark-ai/craft-claude",
+  "repository": "https://github.com/knotmark-ai/craft-claude",
   "license": "MIT",
   "keywords": ["skills", "tdd", "debugging", "collaboration", "best-practices", "workflows"],
   "agents": [
