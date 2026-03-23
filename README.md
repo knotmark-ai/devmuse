@@ -119,7 +119,7 @@ Skills update automatically when you update the plugin:
 
 ## License
 
-MIT License - see LICENSE file for details
+MIT License - see [LICENSE](LICENSE) file for details
 
 ## Credits
 
