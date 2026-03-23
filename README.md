@@ -17,7 +17,11 @@ Next up, once you say "go", it launches a *subagent-driven development* process,
 ## Installation
 
 ```bash
-/plugin add huiyu/craft-claude
+# Register marketplace
+/plugin marketplace add huiyu/craft-claude
+
+# Install plugin
+/plugin install craft-claude@huiyu-craft-claude
 ```
 
 ### Verify Installation
