@@ -576,6 +576,16 @@ After agents return:
 3. **Run full suite** - Verify all fixes work together
 4. **Spot check** - Agents can make systematic errors
 
+## Tidy First Discipline
+
+Separate all changes into two distinct types:
+1. **STRUCTURAL** — Rearranging code without changing behavior
+2. **BEHAVIORAL** — Adding or modifying actual functionality
+
+- Never mix structural and behavioral changes in the same commit
+- Always make structural changes first when both are needed
+- Commit messages must state whether the commit is structural or behavioral
+
 ## TDD Discipline
 
 Write the test first. Watch it fail. Write minimal code to pass.
