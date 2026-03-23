@@ -22,46 +22,49 @@ Every project goes through this process. A todo list, a single-function utility,
 You MUST create a task for each of these items and complete them in order:
 
 1. **Explore project context** — check files, docs, recent commits
-2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
-3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
-4. **Propose 2-3 approaches** — with trade-offs and your recommendation
-5. **Present design** — in sections scaled to their complexity, get user approval after each section
-6. **Write design doc** — save to `docs/specs/YYYY-MM-DD-<topic>-design.md` and commit
-7. **Spec review loop** — dispatch craft-reviewer subagent (Mode A: Design Document Review) with precisely crafted review context (never your session history); fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
-8. **User reviews written spec** — ask user to review the spec file before proceeding
-9. **Transition to implementation** — invoke craft-plan skill to create implementation plan
+2. **Find architecture doc** — look for existing architecture/design docs in the project (README, docs/, ARCHITECTURE.md, DESIGN.md, or similar). If found, read it. If not found or unclear, ask the user.
+3. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
+4. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
+5. **Propose 2-3 approaches** — with trade-offs, your recommendation, and **impact on existing architecture**
+6. **Present design** — in sections scaled to their complexity, get user approval after each section
+7. **Write design doc** — save to the project's docs directory (default: `docs/specs/YYYY-MM-DD-<topic>-design.md`) and commit
+8. **Spec review loop** — dispatch craft-reviewer subagent (Mode A: Design Document Review) with precisely crafted review context (never your session history); fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
+9. **User reviews written spec** — ask user to review the spec file before proceeding
+10. **Transition to implementation** — invoke craft-plan skill to create implementation plan
 
 ## Process Flow
 
 ```dot
 digraph craft_design {
     "Explore project context" [shape=box];
+    "Find architecture doc\n(README, docs/, or ask user)" [shape=box];
     "Visual questions ahead?" [shape=diamond];
     "Offer Visual Companion\n(own message, no other content)" [shape=box];
     "Ask clarifying questions" [shape=box];
-    "Propose 2-3 approaches" [shape=box];
+    "Propose 2-3 approaches\n(assess architecture impact)" [shape=box];
     "Present design sections" [shape=box];
     "User approves design?" [shape=diamond];
-    "Write design doc" [shape=box];
+    "Write design doc\n(to target project docs/)" [shape=box];
     "Spec review loop\n(dispatch craft-reviewer Mode A)" [shape=box];
     "Spec review passed?" [shape=diamond];
     "User reviews spec?" [shape=diamond];
     "Invoke craft-plan skill" [shape=doublecircle];
 
-    "Explore project context" -> "Visual questions ahead?";
+    "Explore project context" -> "Find architecture doc\n(README, docs/, or ask user)";
+    "Find architecture doc\n(README, docs/, or ask user)" -> "Visual questions ahead?";
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
     "Visual questions ahead?" -> "Ask clarifying questions" [label="no"];
     "Offer Visual Companion\n(own message, no other content)" -> "Ask clarifying questions";
-    "Ask clarifying questions" -> "Propose 2-3 approaches";
-    "Propose 2-3 approaches" -> "Present design sections";
+    "Ask clarifying questions" -> "Propose 2-3 approaches\n(assess architecture impact)";
+    "Propose 2-3 approaches\n(assess architecture impact)" -> "Present design sections";
     "Present design sections" -> "User approves design?";
     "User approves design?" -> "Present design sections" [label="no, revise"];
-    "User approves design?" -> "Write design doc" [label="yes"];
-    "Write design doc" -> "Spec review loop\n(dispatch craft-reviewer Mode A)";
+    "User approves design?" -> "Write design doc\n(to target project docs/)" [label="yes"];
+    "Write design doc\n(to target project docs/)" -> "Spec review loop\n(dispatch craft-reviewer Mode A)";
     "Spec review loop\n(dispatch craft-reviewer Mode A)" -> "Spec review passed?";
     "Spec review passed?" -> "Spec review loop\n(dispatch craft-reviewer Mode A)" [label="issues found,\nfix and re-dispatch"];
     "Spec review passed?" -> "User reviews spec?" [label="approved"];
-    "User reviews spec?" -> "Write design doc" [label="changes requested"];
+    "User reviews spec?" -> "Write design doc\n(to target project docs/)" [label="changes requested"];
     "User reviews spec?" -> "Invoke craft-plan skill" [label="approved"];
 }
 ```
@@ -70,9 +73,14 @@ digraph craft_design {
 
 ## The Process
 
-**Understanding the idea:**
+**Understanding the project architecture:**
 
 - Check out the current project state first (files, docs, recent commits)
+- Look for existing architecture/design documentation: README, ARCHITECTURE.md, DESIGN.md, `docs/` directory, or any file the user points you to. If found, read it to understand the system's structure, core decisions, and constraints. If not found, ask the user if there's a document you should reference.
+- When proposing changes, assess impact on the existing architecture. Call out which components, interfaces, or data flows are affected. If the change requires updating the architecture doc, note that.
+
+**Understanding the idea:**
+
 - Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
 - If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then design the first sub-project through the normal flow. Each sub-project gets its own spec → plan → implementation cycle.
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
@@ -111,8 +119,10 @@ digraph craft_design {
 
 **Documentation:**
 
-- Write the validated design (spec) to `docs/specs/YYYY-MM-DD-<topic>-design.md`
-  - (User preferences for spec location override this default)
+- Write the design doc to the **target project's** docs directory, not the plugin's
+  - Default: `docs/specs/YYYY-MM-DD-<topic>-design.md` in the current working project
+  - User preferences or CLAUDE.md for spec location override this default
+- If the change impacts the project's architecture doc, note what needs updating (but don't update it now — that happens after implementation is verified)
 - Commit the design document to git
 
 **Spec Review Loop:**
