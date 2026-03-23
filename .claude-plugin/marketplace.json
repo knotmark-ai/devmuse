@@ -1,6 +1,6 @@
 {
-  "name": "craft-claude-dev",
-  "description": "Development marketplace for craft-claude skills library",
+  "name": "craft-claude",
+  "description": "Marketplace for craft-claude plugin",
   "owner": {
     "name": "Jeff"
   },
