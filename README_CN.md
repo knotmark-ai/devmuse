@@ -21,7 +21,7 @@ Craft Claude 是一套专为 Claude Code 设计的完整软件开发工作流，
 /plugin marketplace add huiyu/craft-claude
 
 # 安装插件
-/plugin install craft-claude@craft-claude
+/plugin install craft-claude@huiyu
 ```
 
 ### 验证安装

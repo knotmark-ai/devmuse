@@ -21,7 +21,7 @@ Next up, once you say "go", it launches a *subagent-driven development* process,
 /plugin marketplace add huiyu/craft-claude
 
 # Install plugin
-/plugin install craft-claude@craft-claude
+/plugin install craft-claude@huiyu
 ```
 
 ### Verify Installation
