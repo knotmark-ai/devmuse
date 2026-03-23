@@ -18,10 +18,10 @@ Craft Claude 是一套专为 Claude Code 设计的完整软件开发工作流，
 
 ```bash
 # 注册市场
-/plugin marketplace add knotmark-ai/craft-claude-marketplace
+/plugin marketplace add knotmark-ai/craft-claude
 
 # 安装插件
-/plugin install craft-claude@knotmark-ai
+/plugin install craft-claude@craft-claude
 ```
 
 ### 验证安装
