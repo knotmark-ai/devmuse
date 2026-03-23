@@ -18,7 +18,7 @@ Next up, once you say "go", it launches a *subagent-driven development* process,
 
 ```bash
 # Register marketplace
-/plugin marketplace add knotmark-ai/craft-claude
+/plugin marketplace add knotmark-ai/craft-claude-marketplace
 
 # Install plugin
 /plugin install craft-claude@knotmark-ai
