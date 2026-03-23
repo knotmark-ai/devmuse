@@ -1,6 +1,6 @@
 # Craft Claude
 
-Craft Claude is a complete software development workflow for Claude Code, built on top of a set of composable "skills" and a bootstrap that makes sure your agent uses them.
+Craft Claude is a complete software development workflow for Claude Code, built on a four-layer architecture of rules, skills, agents, and knowledge.
 
 Based on [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent.
 
@@ -12,7 +12,7 @@ Once it's teased a spec out of the conversation, it shows it to you in chunks sh
 
 After you've signed off on the design, your agent puts together an implementation plan that's clear enough for an enthusiastic junior engineer with poor taste, no judgement, no project context, and an aversion to testing to follow. It emphasizes true red/green TDD, YAGNI (You Aren't Gonna Need It), and DRY.
 
-Next up, once you say "go", it launches a *subagent-driven-development* process, having agents work through each engineering task, inspecting and reviewing their work, and continuing forward. It's not uncommon for Claude to be able to work autonomously for a couple hours at a time without deviating from the plan you put together.
+Next up, once you say "go", it launches a *subagent-driven development* process, having agents work through each engineering task, inspecting and reviewing their work, and continuing forward. It's not uncommon for Claude to be able to work autonomously for a couple hours at a time without deviating from the plan you put together.
 
 ## Installation
 
@@ -34,55 +34,66 @@ Then install the plugin:
 
 Start a new session and ask for something that should trigger a skill (for example, "help me plan this feature" or "let's debug this issue"). The agent should automatically invoke the relevant skill.
 
-## The Basic Workflow
+## The Core Pipeline
 
-1. **craft-brainstorm** - Activates before writing code. Refines rough ideas through questions, explores alternatives, presents design in sections for validation.
+```
+design → plan → code → review
+```
 
-2. **craft-worktree** - Activates after design approval. Creates isolated workspace on new branch, runs project setup, verifies clean test baseline.
+1. **craft-design** — Activates before writing code. Refines rough ideas through questions, explores alternatives, presents design in sections for validation. Dispatches craft-reviewer (Mode A) for spec review.
 
-3. **craft-plan** - Activates with approved design. Breaks work into bite-sized tasks (2-5 minutes each). Every task has exact file paths, complete code, verification steps.
+2. **craft-plan** — Activates with approved design. Breaks work into bite-sized tasks (2-5 minutes each). Every task has exact file paths, complete code, verification steps.
 
-4. **craft-sdd** or **craft-execute** - Activates with plan. Dispatches fresh subagent per task with two-stage review (spec compliance, then code quality), or executes in batches with human checkpoints.
+3. **craft-code** — Activates with plan. Sets up isolated worktree, then executes tasks via subagent-driven development (recommended) or inline mode. Enforces TDD discipline (RED-GREEN-REFACTOR). Dispatches craft-coder for implementation and craft-reviewer for two-stage review (spec compliance, then code quality).
 
-5. **craft-tdd** - Activates during implementation. Enforces RED-GREEN-REFACTOR: write failing test, watch it fail, write minimal code, watch it pass, commit.
-
-6. **craft-review** - Activates between tasks. Reviews against plan, reports issues by severity. Critical issues block progress.
-
-7. **craft-finish** - Activates when tasks complete. Verifies tests, presents options (merge/PR/keep/discard), cleans up worktree.
+4. **craft-review** — Activates when implementation completes. Dispatches craft-reviewer for final review, handles feedback with technical rigor, verifies with fresh evidence, then finishes (merge/PR/keep/discard).
 
 **The agent checks for relevant skills before any task.** Mandatory workflows, not suggestions.
 
-## What's Inside
+## Architecture
 
-### Skills Library
+```
+craft-claude/
+├── rules/        Always-on principles (loaded via SessionStart hook)
+├── skills/       User-triggered workflows (/craft-xxx)
+├── agents/       Independent roles (dispatched by skills)
+└── knowledge/    Domain knowledge (injected on demand)
+```
 
-**Testing**
-- **craft-tdd** - RED-GREEN-REFACTOR cycle (includes testing anti-patterns reference)
+### Skills (6)
 
-**Debugging**
-- **craft-debug** - 4-phase root cause process (includes root-cause-tracing, defense-in-depth, condition-based-waiting techniques)
-- **craft-verify** - Ensure it's actually fixed
+| Skill | Role |
+|-------|------|
+| **craft-design** | Ideas → design spec through collaborative dialogue |
+| **craft-plan** | Design → detailed implementation plan |
+| **craft-code** | Plan → implementation (subagent or inline, with TDD and worktree) |
+| **craft-review** | Review + verify + integrate (feedback handling, verification gates, merge/PR) |
+| **craft-debug** | Systematic root cause analysis (independent of pipeline) |
+| **craft-write-skill** | Create/edit skills using TDD methodology |
 
-**Collaboration**
-- **craft-brainstorm** - Socratic design refinement
-- **craft-plan** - Detailed implementation plans
-- **craft-execute** - Batch execution with checkpoints
-- **craft-parallel** - Concurrent subagent workflows
-- **craft-review** - Pre-review checklist
-- **craft-review-response** - Responding to feedback
-- **craft-worktree** - Parallel development branches
-- **craft-finish** - Merge/PR decision workflow
-- **craft-sdd** - Fast iteration with two-stage review (spec compliance, then code quality)
+### Agents (2)
 
-**Meta**
-- **craft-write-skill** - Create new skills following best practices (includes testing methodology)
+| Agent | Role |
+|-------|------|
+| **craft-reviewer** | Three-mode reviewer: design doc (A), code quality (B), spec compliance (C) |
+| **craft-coder** | Implementation specialist: builds features from task specs |
+
+### Rules (1)
+
+| Rule | Role |
+|------|------|
+| **bootstrap** | Skill discovery and invocation rules, priority ordering, decision flow |
+
+### Knowledge
+
+Reserved for language/framework-specific patterns (Java, Go, Python, TypeScript, React, Flutter, etc.). Created on demand when craft-reviewer needs domain-specific review criteria.
 
 ## Philosophy
 
-- **Test-Driven Development** - Write tests first, always
-- **Systematic over ad-hoc** - Process over guessing
-- **Complexity reduction** - Simplicity as primary goal
-- **Evidence over claims** - Verify before declaring success
+- **Test-Driven Development** — Write tests first, always
+- **Systematic over ad-hoc** — Process over guessing
+- **Complexity reduction** — Simplicity as primary goal
+- **Evidence over claims** — Verify before declaring success
 
 ## Local Development
 
