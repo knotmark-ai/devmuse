@@ -92,6 +92,15 @@ digraph code_review {
 - Implementation matches spec
 - No scope creep
 
+**Architecture (MEDIUM):**
+- Sound design decisions, scalability considerations
+- Performance implications
+
+**Production Readiness (MEDIUM):**
+- Migration strategy (if schema changes)
+- Backward compatibility considered
+- Breaking changes documented
+
 **Output:**
 
 ```

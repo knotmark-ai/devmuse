@@ -1,6 +1,6 @@
 # Go Fractals CLI - Implementation Plan
 
-Execute this plan using the `craft-claude:craft-sdd` skill.
+Execute this plan using the `craft-claude:craft-code` skill.
 
 ## Context
 
