@@ -1,6 +1,6 @@
 # Visual Companion Guide
 
-Browser-based visual craft-brainstorm companion for showing mockups, diagrams, and options.
+Browser-based visual craft-design companion for showing mockups, diagrams, and options.
 
 ## When to Use
 

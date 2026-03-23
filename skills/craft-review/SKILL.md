@@ -641,4 +641,4 @@ git worktree remove <worktree-path>
 - Called by **craft-code** after implementation completes
 - Also independently triggerable for ad-hoc review
 - Agent reference: @../../agents/craft-reviewer.md
-- Pairs with **craft-worktree** for worktree cleanup
+- Worktree cleanup handled in Step 4: Finish
