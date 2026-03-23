@@ -16,18 +16,8 @@ Next up, once you say "go", it launches a *subagent-driven development* process,
 
 ## Installation
 
-### Claude Code (via Plugin Marketplace)
-
-Register the marketplace first:
-
 ```bash
-/plugin marketplace add huiyu/craft-claude-marketplace
-```
-
-Then install the plugin:
-
-```bash
-/plugin install craft-claude@craft-claude-marketplace
+/plugin add huiyu/craft-claude
 ```
 
 ### Verify Installation

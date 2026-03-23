@@ -16,18 +16,8 @@ Craft Claude 是一套专为 Claude Code 设计的完整软件开发工作流，
 
 ## 安装
 
-### Claude Code（通过插件市场）
-
-先注册市场：
-
 ```bash
-/plugin marketplace add huiyu/craft-claude-marketplace
-```
-
-然后安装插件：
-
-```bash
-/plugin install craft-claude@craft-claude-marketplace
+/plugin add huiyu/craft-claude
 ```
 
 ### 验证安装
