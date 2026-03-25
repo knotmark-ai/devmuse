@@ -179,9 +179,11 @@ Terminal state: invoke craft-design (pass scope file path)
 
 **Process:**
 1. Read Use Case Set, extract all UC-IDs
-2. Scan test files for UC-ID references
-3. Scan production code for corresponding implementations
+2. Scan test files for UC-ID references (`// Covers: UC-xxx` comments)
+3. For each test with a UC-ID, identify the production code it exercises (follow imports, function calls from test to source)
 4. Cross-reference, generate coverage matrix
+
+**Production code mapping heuristic:** Production code does not carry UC-ID annotations. Instead, trace from test → the functions/classes the test calls → mark those source locations as the "Code" column. If a UC-ID has a test but the test only exercises mocks (no real production code path), flag as `⚠️ Test only`.
 
 **Output:**
 ```markdown
@@ -344,8 +346,9 @@ After:
 
 **Step 3: Dispatch review-coverage**
 1. Read Design Spec → find Requirements Reference → get scope file path
-2. Dispatch craft-reviewer review-coverage mode
-3. Receive Coverage Report
+2. If no Requirements Reference found (legacy design spec without scope): skip review-coverage, log warning, continue to Verification
+3. Dispatch craft-reviewer review-coverage mode
+4. Receive Coverage Report
 
 **Step 4: Handle coverage gaps**
 ```
