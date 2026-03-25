@@ -45,6 +45,14 @@ Review whether a design document is complete, consistent, and ready for implemen
 
 Review code changes for production readiness.
 
+**Language-specific criteria:** If the codebase uses a language with a knowledge file, load it for additional review criteria:
+- TypeScript/JavaScript: @../knowledge/languages/typescript.md
+- Python: @../knowledge/languages/python.md
+- Go: @../knowledge/languages/go.md
+- Java: @../knowledge/languages/java.md
+
+Detect the primary language from the diff and apply the relevant criteria alongside the universal checklist below.
+
 **Inputs:**
 - `{WHAT_WAS_IMPLEMENTED}` - What was built
 - `{PLAN_OR_REQUIREMENTS}` - What it should do

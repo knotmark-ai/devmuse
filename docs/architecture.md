@@ -106,14 +106,18 @@ Meta:
 
 **Design decision:** 2 generic agents + knowledge injection, not N language-specific agents. Review logic is 80% universal; change once, effective globally. Adding a new language only requires a knowledge file.
 
-### knowledge/ (empty, reserved)
+### knowledge/ (4 language files)
 
-Created on demand when craft-reviewer needs language/framework-specific review criteria.
+Language-specific review criteria, referenced by craft-reviewer via `@` paths in Mode B (Code Review).
 
 ```
 knowledge/
-├── languages/        # java.md, go.md, python.md, typescript.md
-└── frameworks/       # spring-boot.md, react.md, flutter.md
+├── languages/
+│   ├── typescript.md   # Type safety, async patterns, common pitfalls
+│   ├── python.md       # Type hints, pythonic patterns, security
+│   ├── go.md           # Error handling, concurrency, interface design
+│   └── java.md         # Null handling, concurrency, resource management
+└── frameworks/         # (reserved) spring-boot.md, react.md, flutter.md
 ```
 
 ---
