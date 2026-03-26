@@ -65,6 +65,8 @@ This structure informs the task decomposition. Each task should produce self-con
 ````markdown
 ### Task N: [Component Name]
 
+**Covers:** UC-1, UC-3
+
 **Files:**
 - Create: `exact/path/to/file.py`
 - Modify: `exact/path/to/existing.py:123-145`
@@ -109,6 +111,7 @@ git commit -m "feat: add specific feature"
 - Exact commands with expected output
 - Reference relevant skills with @ syntax
 - DRY, YAGNI, TDD, frequent commits
+- Include `Covers: UC-xxx` per task when a scope artifact exists — this tells the coder which use cases to trace in tests
 
 ## Plan Review Loop
 
