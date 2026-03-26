@@ -74,16 +74,17 @@ Skills and agents reference knowledge via `@` relative paths within the plugin:
 
 **Principle:** Rules consume tokens via hook injection. Only put content that must be unconditionally always-on. Anything loadable on-demand via skills should stay in skills.
 
-### skills/ (6)
+### skills/ (7)
 
-Core pipeline: `design → plan → code → review`
+Core pipeline: `scope → design → plan → code → review`
 
 | Name | Role | Dispatches Agent |
 |------|------|------|
-| craft-design | Ideas → design spec via collaborative dialogue | craft-reviewer (Mode A) |
+| craft-scope | Use cases + conflict detection + impact analysis | craft-reviewer (review-coverage) |
+| craft-design | Ideas → design spec via collaborative dialogue | craft-reviewer (review-design) |
 | craft-plan | Design → implementation plan | — |
-| craft-code | Plan → implementation (subagent or inline, TDD, worktree) | craft-coder, craft-reviewer (Mode B+C) |
-| craft-review | Review + verify + integrate | craft-reviewer (Mode B) |
+| craft-code | Plan → implementation (subagent or inline, TDD, worktree) | craft-coder, craft-reviewer (review-code + review-compliance) |
+| craft-review | Review + verify + integrate | craft-reviewer (review-code + review-coverage) |
 
 Independent:
 
@@ -101,17 +102,19 @@ Meta:
 
 | Name | Role | Dispatched by |
 |------|------|---------|
-| craft-reviewer | Three-mode reviewer: design doc (A), code quality (B), spec compliance (C) | craft-design, craft-code, craft-review |
+| craft-reviewer | Four-mode reviewer: design doc (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage) | craft-scope, craft-design, craft-code, craft-review |
 | craft-coder | Implementation specialist | craft-code |
 
 **Design decision:** 2 generic agents + knowledge injection, not N language-specific agents. Review logic is 80% universal; change once, effective globally. Adding a new language only requires a knowledge file.
 
 ### knowledge/ (4 language files)
 
-Language-specific review criteria, referenced by craft-reviewer via `@` paths in Mode B (Code Review).
+Language-specific review criteria, referenced by craft-reviewer via `@` paths in review-code mode.
 
 ```
 knowledge/
+├── templates/
+│   └── scope.md          # Use Case Set template for craft-scope
 ├── languages/
 │   ├── typescript.md   # Type safety, async patterns, common pitfalls
 │   ├── python.md       # Type hints, pythonic patterns, security
@@ -137,7 +140,7 @@ knowledge/
 
 - **skills → agents: one-way dispatch.** Skills orchestrate, agents execute.
 - **agents → skills: forbidden.** Agents don't trigger user-level workflows.
-- **skills → skills: chain calls allowed.** e.g. craft-design → craft-plan → craft-code → craft-review.
+- **skills → skills: chain calls allowed.** e.g. craft-scope → craft-design → craft-plan → craft-code → craft-review.
 - **rules guide but don't call.** bootstrap.md tells Claude when to invoke which skill.
 - **knowledge is passive.** Only referenced, never calls anything.
 

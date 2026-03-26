@@ -74,16 +74,17 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 
 **原则：** rules 通过 hook 注入消耗 token。只放无条件始终生效的内容，能通过 skill 按需加载的留在 skill 中。
 
-### skills/（6 个）
+### skills/（7 个）
 
-核心管线：`design → plan → code → review`
+核心管线：`scope → design → plan → code → review`
 
 | 名称 | 角色 | 派遣 Agent |
 |------|------|------|
-| craft-design | 通过协作对话将想法转化为设计方案 | craft-reviewer（模式 A） |
+| craft-scope | 用例枚举 + 冲突检测 + 影响分析 | craft-reviewer（review-coverage） |
+| craft-design | 通过协作对话将想法转化为设计方案 | craft-reviewer（review-design） |
 | craft-plan | 将设计转化为详细实施计划 | — |
-| craft-code | 按计划实现（子 Agent 或内联模式，含 TDD 和工作区隔离） | craft-coder, craft-reviewer（模式 B+C） |
-| craft-review | 审查 + 验证 + 集成 | craft-reviewer（模式 B） |
+| craft-code | 按计划实现（子 Agent 或内联模式，含 TDD 和工作区隔离） | craft-coder, craft-reviewer（review-code + review-compliance） |
+| craft-review | 审查 + 验证 + 集成 | craft-reviewer（review-code + review-coverage） |
 
 独立流程：
 
@@ -101,7 +102,7 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 
 | 名称 | 角色 | 被谁派遣 |
 |------|------|---------|
-| craft-reviewer | 三模式审查者：设计文档（A）、代码质量（B）、规格符合性（C） | craft-design, craft-code, craft-review |
+| craft-reviewer | 四模式审查者：设计文档（review-design）、代码质量（review-code）、规格符合性（review-compliance）、需求覆盖（review-coverage） | craft-scope, craft-design, craft-code, craft-review |
 | craft-coder | 实现者 | craft-code |
 
 **设计决策：** 2 个通用 agent + knowledge 注入，而非 N 个语言专用 agent。审查逻辑 80% 通用，改一处全局生效。扩展新语言只需加 knowledge 文件。
@@ -112,6 +113,8 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 
 ```
 knowledge/
+├── templates/
+│   └── scope.md          # craft-scope 使用的用例集模板
 ├── languages/        # java.md, go.md, python.md, typescript.md
 └── frameworks/       # spring-boot.md, react.md, flutter.md
 ```
@@ -133,7 +136,7 @@ knowledge/
 
 - **skills → agents：单向派遣。** skill 是编排者，agent 是执行者。
 - **agents → skills：禁止。** agent 不反向触发用户级工作流。
-- **skills → skills：允许链式调用。** 如 craft-design → craft-plan → craft-code → craft-review。
+- **skills → skills：允许链式调用。** 如 craft-scope → craft-design → craft-plan → craft-code → craft-review。
 - **rules 引导但不调用。** bootstrap.md 告诉 Claude 遇到什么情况触发哪个 skill。
 - **knowledge 纯被动。** 只被引用，不调用任何层。
 
