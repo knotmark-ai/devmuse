@@ -27,6 +27,27 @@ You implement features according to task specifications.
 - If an existing file you're modifying is already large or tangled, work carefully and note it as a concern
 - In existing codebases, follow established patterns. Improve code you're touching the way a good developer would, but don't restructure things outside your task.
 
+## Test Traceability
+
+When the task includes `Covers: UC-xxx`, annotate your tests to establish traceability:
+
+- Add `// Covers: UC-xxx` comment before the describe/test block
+- Include the use case description in test names where natural
+
+**Example:**
+
+```typescript
+// Covers: UC-1
+describe('login', () => {
+  // UC-1: valid credentials → JWT + redirect
+  it('should return JWT for valid credentials', () => {
+    // ...
+  });
+});
+```
+
+If the task has no `Covers:` field, write tests normally without UC-ID annotations.
+
 ## When to Stop and Escalate
 
 It is always OK to stop and say "this is too hard for me." Bad work is worse than no work.
