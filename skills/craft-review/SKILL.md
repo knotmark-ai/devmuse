@@ -18,11 +18,16 @@ digraph review_process {
 
     dispatch [label="Step 1:\nDispatch Review"];
     feedback [label="Step 2:\nHandle Feedback"];
-    verify [label="Step 3:\nVerification"];
-    finish [label="Step 4:\nFinish/Integrate"];
+    coverage [label="Step 3:\nRequirements Coverage Check"];
+    gaps [label="Step 4:\nHandle Gaps"];
+    verify [label="Step 5:\nVerification"];
+    finish [label="Step 6:\nFinish/Integrate"];
 
     dispatch -> feedback;
-    feedback -> verify;
+    feedback -> coverage;
+    coverage -> gaps [label="gaps found", style=dashed];
+    coverage -> verify;
+    gaps -> verify;
     verify -> finish;
     verify -> feedback [label="issues found", style=dashed];
 }
@@ -56,7 +61,7 @@ HEAD_SHA=$(git rev-parse HEAD)
 
 **2. Dispatch craft-reviewer subagent:**
 
-Use Task tool with craft-claude:craft-reviewer type, fill template at @../../agents/craft-reviewer.md Mode B
+Use Task tool with craft-claude:craft-reviewer type, fill template at @../../agents/craft-reviewer.md review-code
 
 **Placeholders:**
 - `{WHAT_WAS_IMPLEMENTED}` - What you just built
@@ -315,7 +320,31 @@ You understand 1,2,3,6. Unclear on 4,5.
 
 **The Bottom Line:** External feedback = suggestions to evaluate, not orders to follow. Verify. Question. Then implement. No performative agreement. Technical rigor always.
 
-## Step 3: Verification
+## Step 3: Requirements Coverage Check
+
+After code quality review passes, verify all use cases from scope are covered.
+
+**Dispatch review-coverage:**
+1. Read the Design Spec for this feature
+2. Find the `Requirements Reference` section → extract scope file path
+3. If no Requirements Reference found (legacy spec without scope): skip this step, log warning, continue to Verification
+4. Dispatch craft-reviewer subagent with review-coverage mode:
+   - `{SCOPE_FILE_PATH}`: the scope file path from Requirements Reference
+   - `{BASE_SHA}` / `{HEAD_SHA}`: git range for this feature
+
+**Handle coverage gaps:**
+
+```
+All Covered → continue to Verification
+Gaps Found →
+  ├─ Missing implementation (❌) → send back to craft-code to implement
+  ├─ Missing test (⚠️) → add test for the uncovered use case
+  └─ Missing in scope itself → inform user (not a code problem, scope was incomplete)
+```
+
+This step is always executed when a scope artifact exists. It is never skipped — the coverage report may be small (2 rows) or large (20 rows), but it always runs.
+
+## Step 4: Verification
 
 Claiming work is complete without verification is dishonesty, not efficiency.
 
@@ -442,7 +471,7 @@ From 24 failure memories:
 
 **The Bottom Line:** No shortcuts for verification. Run the command. Read the output. THEN claim the result. This is non-negotiable.
 
-## Step 4: Finish
+## Step 5: Finish
 
 Guide completion of development work by presenting clear options and handling chosen workflow.
 
@@ -641,4 +670,4 @@ git worktree remove <worktree-path>
 - Called by **craft-code** after implementation completes
 - Also independently triggerable for ad-hoc review
 - Agent reference: @../../agents/craft-reviewer.md
-- Worktree cleanup handled in Step 4: Finish
+- Worktree cleanup handled in Step 5: Finish
