@@ -420,6 +420,29 @@ Each artifact forward-references the previous one. The reviewer traces the chain
 
 ---
 
+## Knowledge Migration Matrix
+
+Refactoring craft-design must not lose knowledge. Every piece of methodology currently in craft-design is either **migrated** to craft-scope or **retained** in craft-design.
+
+| Knowledge in current craft-design | Destination | Action |
+|-----------------------------------|-------------|--------|
+| One question at a time, multiple choice preferred | craft-scope | **Migrate** — same methodology applies to use case elicitation |
+| Scope assessment (multi-subsystem → decompose into sub-projects) | craft-scope | **Migrate** — scope decides if decomposition is needed, before design |
+| Focus on purpose, constraints, success criteria | craft-scope | **Migrate** — this is requirements elicitation, not design |
+| 2-3 approaches with trade-offs | craft-design | **Retain** — this is technical design methodology |
+| Incremental validation (present sections, get approval) | Both | **Retain in design, replicate in scope** — scope also presents use cases incrementally |
+| Visual Companion | craft-design | **Retain** — visual questions are about design (layouts, architecture diagrams), not requirements |
+| Design for isolation and clarity | craft-design | **Retain** — architecture principle |
+| Working in existing codebases (follow existing patterns) | Both | **Retain in design, reference in scope** — scope's Quick Probe explores existing code; design follows existing patterns |
+| YAGNI ruthlessly | Both | **Retain in both** — scope: don't add unnecessary use cases; design: don't over-engineer |
+| Spec review loop (dispatch reviewer, max 3 iterations) | Both | **Retain in design, replicate in scope** — scope can optionally review use case quality |
+| Write design doc + commit | craft-design | **Retain** |
+| Anti-pattern: "too simple to need a design" | craft-scope | **Migrate** — becomes "too simple to need scoping" |
+
+**Implementation constraint:** When modifying craft-design, the implementer must verify every section of the current SKILL.md is accounted for — either retained, migrated to craft-scope, or explicitly marked as removed with justification. No silent deletions.
+
+---
+
 ## Architecture Impact
 
 ### Files to create
