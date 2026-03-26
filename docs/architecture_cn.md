@@ -80,7 +80,7 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 
 | 名称 | 角色 | 派遣 Agent |
 |------|------|------|
-| craft-scope | 用例枚举 + 冲突检测 + 影响分析 | craft-reviewer（review-coverage） |
+| craft-scope | 用例枚举 + 冲突检测 + 影响分析 | — |
 | craft-design | 通过协作对话将想法转化为设计方案 | craft-reviewer（review-design） |
 | craft-plan | 将设计转化为详细实施计划 | — |
 | craft-code | 按计划实现（子 Agent 或内联模式，含 TDD 和工作区隔离） | craft-coder, craft-reviewer（review-code + review-compliance） |
@@ -107,7 +107,7 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 
 **设计决策：** 2 个通用 agent + knowledge 注入，而非 N 个语言专用 agent。审查逻辑 80% 通用，改一处全局生效。扩展新语言只需加 knowledge 文件。
 
-### knowledge/（暂空，预留）
+### knowledge/（4 个语言文件 + 模板）
 
 当 craft-reviewer 需要语言/框架特定审查标准时按需创建。
 

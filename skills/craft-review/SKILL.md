@@ -18,16 +18,13 @@ digraph review_process {
 
     dispatch [label="Step 1:\nDispatch Review"];
     feedback [label="Step 2:\nHandle Feedback"];
-    coverage [label="Step 3:\nRequirements Coverage Check"];
-    gaps [label="Step 4:\nHandle Gaps"];
-    verify [label="Step 5:\nVerification"];
-    finish [label="Step 6:\nFinish/Integrate"];
+    coverage [label="Step 3:\nCoverage Check\n+ Handle Gaps"];
+    verify [label="Step 4:\nVerification"];
+    finish [label="Step 5:\nFinish/Integrate"];
 
     dispatch -> feedback;
     feedback -> coverage;
-    coverage -> gaps [label="gaps found", style=dashed];
     coverage -> verify;
-    gaps -> verify;
     verify -> finish;
     verify -> feedback [label="issues found", style=dashed];
 }

@@ -98,7 +98,7 @@ digraph craft_design {
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
 - Prefer multiple choice questions when possible, but open-ended is fine too
 - Only one question per message - if a topic needs more exploration, break it into multiple questions
-- Focus on understanding: purpose, constraints, success criteria
+- Focus on understanding: technical approach, integration constraints, compatibility requirements
 
 **Exploring approaches:**
 

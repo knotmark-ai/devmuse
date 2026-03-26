@@ -80,7 +80,7 @@ Core pipeline: `scope → design → plan → code → review`
 
 | Name | Role | Dispatches Agent |
 |------|------|------|
-| craft-scope | Use cases + conflict detection + impact analysis | craft-reviewer (review-coverage) |
+| craft-scope | Use cases + conflict detection + impact analysis | — |
 | craft-design | Ideas → design spec via collaborative dialogue | craft-reviewer (review-design) |
 | craft-plan | Design → implementation plan | — |
 | craft-code | Plan → implementation (subagent or inline, TDD, worktree) | craft-coder, craft-reviewer (review-code + review-compliance) |
