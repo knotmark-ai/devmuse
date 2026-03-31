@@ -1,5 +1,7 @@
 # DevMuse
 
+[English](README.md)
+
 DevMuse 是一套专为 Claude Code 设计的完整软件开发工作流，基于规则（rules）、技能（skills）、代理（agents）、知识（knowledge）四层架构构建。
 
 基于 [Superpowers](https://github.com/obra/superpowers)（Jesse Vincent）。
