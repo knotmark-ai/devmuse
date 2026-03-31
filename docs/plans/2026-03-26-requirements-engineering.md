@@ -196,7 +196,7 @@ You MUST create a task for each of these items and complete them in order:
 ## Process Flow
 
 ```dot
-digraph craft_scope {
+digraph mu_scope {
     "Quick Probe\n(inline, automatic)" [shape=box];
     "New/empty project?" [shape=diamond];
     "Skip probe" [shape=box];

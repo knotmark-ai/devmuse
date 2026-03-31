@@ -40,7 +40,7 @@ You MUST create a task for each of these items and complete them in order:
 ## Process Flow
 
 ```dot
-digraph craft_design {
+digraph mu_design {
     "Read scope artifact\n(docs/scope/*.md)" [shape=box];
     "Explore project context" [shape=box];
     "Find architecture doc\n(README, docs/, or ask user)" [shape=box];
