@@ -6,7 +6,7 @@ Craft Claude 是一套专为 Claude Code 设计的完整软件开发工作流，
 
 ## 工作原理
 
-从你启动 Claude Code 的那一刻起就开始了。当它发现你正在构建某个东西时，它**不会**直接跳进去写代码，而是退一步问你真正想做什么。
+从你启动 Claude Code 的那一刻起就开始了。当它发现你正在构建某个东西时，它**不会**直接跳进去写代码，而是先*界定范围*——枚举用例、检测冲突、评估对现有代码的影响。只有在这之后，才进入设计阶段。
 
 在通过对话梳理出需求规格后，它会将内容分成足够短的片段展示给你，便于你实际阅读和消化。
 
@@ -31,16 +31,18 @@ Craft Claude 是一套专为 Claude Code 设计的完整软件开发工作流，
 ## 核心管线
 
 ```
-design → plan → code → review
+scope → design → plan → code → review
 ```
 
-1. **craft-design** — 在写代码之前激活。通过提问细化粗略想法，探索替代方案，分段展示设计供验证。派遣 craft-reviewer（模式 A）审查设计文档。
+1. **craft-scope** — 在设计之前激活。扫描代码库评估影响（Quick Probe），枚举用例（正常路径、边界情况、错误情况），检测用例之间的冲突，产出用例集。深度根据复杂度自适应——修 bug 只需 1 个用例，新功能需要完整枚举。
 
-2. **craft-plan** — 在设计获批后激活。将工作拆分为小型任务（每个 2-5 分钟）。每个任务都有精确的文件路径、完整的代码和验证步骤。
+2. **craft-design** — 在范围确认后激活。专注于技术设计（不再问"做什么"——那在范围里）。提出 2-3 种方案，分段展示设计供验证。派遣 craft-reviewer（review-design）审查设计文档。
 
-3. **craft-code** — 有计划后激活。创建隔离工作区，然后通过子 Agent 驱动开发（推荐）或内联模式执行任务。强制 TDD 纪律（RED-GREEN-REFACTOR）。派遣 craft-coder 实现、craft-reviewer 进行两阶段审查（先规格符合性，再代码质量）。
+3. **craft-plan** — 在设计获批后激活。将工作拆分为小型任务（每个 2-5 分钟）。每个任务都有精确的文件路径、完整的代码、验证步骤和 UC-ID 追溯。
 
-4. **craft-review** — 实现完成后激活。派遣 craft-reviewer 进行最终审查，以技术严谨性处理反馈，用新鲜证据验证，然后完成集成（合并/PR/保留/丢弃）。
+4. **craft-code** — 有计划后激活。创建隔离工作区，然后通过子 Agent 驱动开发（推荐）或内联模式执行任务。强制 TDD 纪律（RED-GREEN-REFACTOR）。测试标注 UC-ID 实现追溯。派遣 craft-coder 实现、craft-reviewer 进行两阶段审查（review-compliance 规格符合性，再 review-code 代码质量）。
+
+5. **craft-review** — 实现完成后激活。派遣 craft-reviewer 进行代码质量审查和需求覆盖度检查（review-coverage），以技术严谨性处理反馈，用新鲜证据验证，然后完成集成（合并/PR/保留/丢弃）。
 
 **Agent 在执行任何任务前都会检查相关技能。** 这是强制工作流，不是建议。
 
@@ -54,14 +56,15 @@ craft-claude/
 └── knowledge/    领域知识（按需注入）
 ```
 
-### 技能（6 个）
+### 技能（7 个）
 
 | 技能 | 角色 |
 |------|------|
-| **craft-design** | 通过协作对话将想法转化为设计方案 |
-| **craft-plan** | 将设计转化为详细实施计划 |
+| **craft-scope** | 用例枚举、冲突检测、代码库影响分析 |
+| **craft-design** | 确认范围 → 通过协作对话进行技术设计 |
+| **craft-plan** | 将设计转化为带 UC-ID 追溯的详细实施计划 |
 | **craft-code** | 按计划实现（子 Agent 或内联模式，含 TDD 和工作区隔离） |
-| **craft-review** | 审查 + 验证 + 集成（反馈处理、验证门禁、合并/PR） |
+| **craft-review** | 审查 + 验证 + 集成（反馈处理、验证门禁、覆盖度检查、合并/PR） |
 | **craft-debug** | 系统化根因分析（独立于管线） |
 | **craft-write-skill** | 使用 TDD 方法论创建/编辑技能 |
 
@@ -69,7 +72,7 @@ craft-claude/
 
 | 代理 | 角色 |
 |------|------|
-| **craft-reviewer** | 三模式审查者：设计文档（A）、代码质量（B）、规格符合性（C） |
+| **craft-reviewer** | 四模式审查者：设计文档（review-design）、代码质量（review-code）、规格符合性（review-compliance）、需求覆盖（review-coverage） |
 | **craft-coder** | 实现专家：根据任务规格构建功能 |
 
 ### 规则（1 个）
@@ -80,7 +83,7 @@ craft-claude/
 
 ### 知识
 
-预留给语言/框架特定的模式（Java、Go、Python、TypeScript、React、Flutter 等）。当 craft-reviewer 需要语言特定的审查标准时按需创建。
+语言/框架特定的审查标准（Java、Go、Python、TypeScript）和模板（scope 用例集模板）。按需创建。
 
 ## 理念
 

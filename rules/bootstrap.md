@@ -42,6 +42,11 @@ digraph skill_flow {
     "Already designed?" [shape=diamond];
     "Invoke design skill" [shape=box];
     "Might any skill apply?" [shape=diamond];
+    "Creative work?" [shape=diamond];
+    "Scope exists?" [shape=diamond];
+    "Bug or failure?" [shape=diamond];
+    "Invoke craft-scope (1 use case: repro steps)" [shape=box];
+    "Invoke craft-scope" [shape=box];
     "Invoke Skill tool" [shape=box];
     "Announce: 'Using [skill] to [purpose]'" [shape=box];
     "Has checklist?" [shape=diamond];
@@ -55,8 +60,16 @@ digraph skill_flow {
     "Invoke design skill" -> "Might any skill apply?";
 
     "User message received" -> "Might any skill apply?";
-    "Might any skill apply?" -> "Invoke Skill tool" [label="yes, even 1%"];
+    "Might any skill apply?" -> "Creative work?" [label="yes, even 1%"];
     "Might any skill apply?" -> "Respond (including clarifications)" [label="definitely not"];
+    "Creative work?" -> "Scope exists?" [label="yes"];
+    "Creative work?" -> "Bug or failure?" [label="no"];
+    "Scope exists?" -> "Invoke craft-scope" [label="no"];
+    "Scope exists?" -> "Invoke Skill tool" [label="yes"];
+    "Bug or failure?" -> "Invoke craft-scope (1 use case: repro steps)" [label="yes"];
+    "Bug or failure?" -> "Invoke Skill tool" [label="no"];
+    "Invoke craft-scope" -> "Invoke Skill tool";
+    "Invoke craft-scope (1 use case: repro steps)" -> "Invoke Skill tool";
     "Invoke Skill tool" -> "Announce: 'Using [skill] to [purpose]'";
     "Announce: 'Using [skill] to [purpose]'" -> "Has checklist?";
     "Has checklist?" -> "Create TodoWrite todo per item" [label="yes"];
@@ -83,16 +96,21 @@ These thoughts mean STOP—you're rationalizing:
 | "I'll just do this one thing first" | Check BEFORE doing anything. |
 | "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
 | "I know what that means" | Knowing the concept ≠ using the skill. Invoke it. |
+| "This is too simple to need scoping" | Simple tasks are where omissions hurt most. Scope can be 1 use case. |
+| "I already know what to build" | You know what YOU want. Scope finds what you missed. |
+| "Just a quick fix" | Quick Probe takes 30 seconds. Just do it. |
 
 ## Skill Priority
 
 When multiple skills could apply, use this order:
 
-1. **Process skills first** (design, debugging) - these determine HOW to approach the task
-2. **Implementation skills second** (code, review) - these guide execution
+1. **Scoping skill first** (scope) - determines WHAT to build
+2. **Process skills second** (design, debugging) - determines HOW to approach the task
+3. **Implementation skills third** (plan, code, review) - these guide execution
 
-"Let's build X" → design first, then plan, then code.
-"Fix this bug" → debug first, then code.
+"Let's build X" → scope first, then design, then plan, then code.
+"Fix this bug" → scope first (1 use case: repro steps), then debug, then code.
+"Add a button" → scope first (quick), then design, then plan, then code.
 
 ## Skill Types
 

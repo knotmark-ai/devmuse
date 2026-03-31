@@ -13,6 +13,10 @@ Start by understanding the current project context, then ask questions one at a 
 Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
 </HARD-GATE>
 
+<HARD-GATE>
+craft-design requires a scope artifact (docs/scope/*.md) as input. If no scope artifact exists, invoke craft-scope first. Do NOT proceed with design without a scope artifact.
+</HARD-GATE>
+
 ## Anti-Pattern: "This Is Too Simple To Need A Design"
 
 Every project goes through this process. A todo list, a single-function utility, a config change — all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but you MUST present it and get approval.
@@ -21,21 +25,23 @@ Every project goes through this process. A todo list, a single-function utility,
 
 You MUST create a task for each of these items and complete them in order:
 
-1. **Explore project context** — check files, docs, recent commits
-2. **Find architecture doc** — look for existing architecture/design docs in the project (README, docs/, ARCHITECTURE.md, DESIGN.md, or similar). If found, read it. If not found or unclear, ask the user.
-3. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
-4. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
-5. **Propose 2-3 approaches** — with trade-offs, your recommendation, and **impact on existing architecture**
-6. **Present design** — in sections scaled to their complexity, get user approval after each section
-7. **Write design doc** — save to the project's docs directory (default: `docs/specs/YYYY-MM-DD-<topic>-design.md`) and commit
-8. **Spec review loop** — dispatch craft-reviewer subagent (Mode A: Design Document Review) with precisely crafted review context (never your session history); fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
-9. **User reviews written spec** — ask user to review the spec file before proceeding
-10. **Transition to implementation** — invoke craft-plan skill to create implementation plan
+1. **Read scope artifact** — read the Use Case Set, understand all use cases, conflicts, and constraints
+2. **Explore project context** — check files, docs, recent commits
+3. **Find architecture doc** — look for existing architecture/design docs in the project (README, docs/, ARCHITECTURE.md, DESIGN.md, or similar). If found, read it. If not found or unclear, ask the user.
+4. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
+5. **Ask clarifying questions** — one at a time, **technical direction only** (not "what to build" — that's in the scope)
+6. **Propose 2-3 approaches** — with trade-offs, your recommendation, impact on existing architecture, and **UC coverage per approach**
+7. **Present design** — in sections scaled to their complexity, get user approval after each section
+8. **Write design doc** — save to the project's docs directory (default: `docs/specs/YYYY-MM-DD-<topic>-design.md`), **include Requirements Reference field**, and commit
+9. **Spec review loop** — dispatch craft-reviewer subagent (review-design mode) with precisely crafted review context; fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
+10. **User reviews written spec** — ask user to review the spec file before proceeding
+11. **Transition to implementation** — invoke craft-plan skill to create implementation plan
 
 ## Process Flow
 
 ```dot
 digraph craft_design {
+    "Read scope artifact\n(docs/scope/*.md)" [shape=box];
     "Explore project context" [shape=box];
     "Find architecture doc\n(README, docs/, or ask user)" [shape=box];
     "Visual questions ahead?" [shape=diamond];
@@ -45,11 +51,12 @@ digraph craft_design {
     "Present design sections" [shape=box];
     "User approves design?" [shape=diamond];
     "Write design doc\n(to target project docs/)" [shape=box];
-    "Spec review loop\n(dispatch craft-reviewer Mode A)" [shape=box];
+    "Spec review loop\n(dispatch craft-reviewer review-design)" [shape=box];
     "Spec review passed?" [shape=diamond];
     "User reviews spec?" [shape=diamond];
     "Invoke craft-plan skill" [shape=doublecircle];
 
+    "Read scope artifact\n(docs/scope/*.md)" -> "Explore project context";
     "Explore project context" -> "Find architecture doc\n(README, docs/, or ask user)";
     "Find architecture doc\n(README, docs/, or ask user)" -> "Visual questions ahead?";
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
@@ -60,9 +67,9 @@ digraph craft_design {
     "Present design sections" -> "User approves design?";
     "User approves design?" -> "Present design sections" [label="no, revise"];
     "User approves design?" -> "Write design doc\n(to target project docs/)" [label="yes"];
-    "Write design doc\n(to target project docs/)" -> "Spec review loop\n(dispatch craft-reviewer Mode A)";
-    "Spec review loop\n(dispatch craft-reviewer Mode A)" -> "Spec review passed?";
-    "Spec review passed?" -> "Spec review loop\n(dispatch craft-reviewer Mode A)" [label="issues found,\nfix and re-dispatch"];
+    "Write design doc\n(to target project docs/)" -> "Spec review loop\n(dispatch craft-reviewer review-design)";
+    "Spec review loop\n(dispatch craft-reviewer review-design)" -> "Spec review passed?";
+    "Spec review passed?" -> "Spec review loop\n(dispatch craft-reviewer review-design)" [label="issues found,\nfix and re-dispatch"];
     "Spec review passed?" -> "User reviews spec?" [label="approved"];
     "User reviews spec?" -> "Write design doc\n(to target project docs/)" [label="changes requested"];
     "User reviews spec?" -> "Invoke craft-plan skill" [label="approved"];
@@ -81,12 +88,17 @@ digraph craft_design {
 
 **Understanding the idea:**
 
+**When a scope artifact exists (normal case):**
+- The scope answers "what to build" — DO NOT re-ask purpose, user scenarios, or success criteria
+- Focus clarifying questions on TECHNICAL DIRECTION: approach preferences, performance constraints, compatibility requirements, integration points
+- The use cases from scope are your design constraints — your design must cover all of them
+
 - Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
-- If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then design the first sub-project through the normal flow. Each sub-project gets its own spec → plan → implementation cycle.
+- If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then design the first sub-project through the normal flow. Each sub-project gets its own spec → plan → implementation cycle. Scope decomposition is handled by craft-scope. If the scope covers multiple subsystems, craft-scope should have decomposed it before reaching craft-design.
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
 - Prefer multiple choice questions when possible, but open-ended is fine too
 - Only one question per message - if a topic needs more exploration, break it into multiple questions
-- Focus on understanding: purpose, constraints, success criteria
+- Focus on understanding: technical approach, integration constraints, compatibility requirements
 
 **Exploring approaches:**
 
@@ -125,10 +137,21 @@ digraph craft_design {
 - If the change impacts the project's architecture doc, note what needs updating (but don't update it now — that happens after implementation is verified)
 - Commit the design document to git
 
+**Required field in every design doc:**
+
+```markdown
+## Requirements Reference
+- Scope: docs/scope/YYYY-MM-DD-<name>.md
+- Covers: UC-1, UC-2, UC-3, ...
+- NFRs: NFR-1, NFR-2, ...
+```
+
+This field establishes the traceability link from design back to scope.
+
 **Spec Review Loop:**
 After writing the spec document:
 
-1. Dispatch craft-reviewer subagent with Mode A (Design Document Review) — see @../../agents/craft-reviewer.md
+1. Dispatch craft-reviewer subagent with review-design mode — see @../../agents/craft-reviewer.md
 2. If Issues Found: fix, re-dispatch, repeat until Approved
 3. If loop exceeds 3 iterations, surface to human for guidance
 

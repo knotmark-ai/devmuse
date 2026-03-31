@@ -6,7 +6,7 @@ Based on [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent.
 
 ## How it works
 
-It starts from the moment you fire up Claude Code. As soon as it sees that you're building something, it *doesn't* just jump into trying to write code. Instead, it steps back and asks you what you're really trying to do.
+It starts from the moment you fire up Claude Code. As soon as it sees that you're building something, it *doesn't* just jump into trying to write code. Instead, it steps back and *scopes* the work first — enumerating use cases, detecting conflicts, and assessing impact on existing code. Only then does it move to design.
 
 Once it's teased a spec out of the conversation, it shows it to you in chunks short enough to actually read and digest.
 
@@ -31,16 +31,18 @@ Start a new session and ask for something that should trigger a skill (for examp
 ## The Core Pipeline
 
 ```
-design → plan → code → review
+scope → design → plan → code → review
 ```
 
-1. **craft-design** — Activates before writing code. Refines rough ideas through questions, explores alternatives, presents design in sections for validation. Dispatches craft-reviewer (Mode A) for spec review.
+1. **craft-scope** — Activates before design. Scans the codebase for impact (Quick Probe), enumerates use cases (happy paths, edge cases, error cases), detects conflicts between use cases, and produces a Use Case Set. Depth adapts to complexity — a bug fix gets 1 use case, a new feature gets full enumeration.
 
-2. **craft-plan** — Activates with approved design. Breaks work into bite-sized tasks (2-5 minutes each). Every task has exact file paths, complete code, verification steps.
+2. **craft-design** — Activates with approved scope. Focuses on technical design only (not "what to build" — that's in the scope). Proposes 2-3 approaches, presents design in sections for validation. Dispatches craft-reviewer (review-design) for spec review.
 
-3. **craft-code** — Activates with plan. Sets up isolated worktree, then executes tasks via subagent-driven development (recommended) or inline mode. Enforces TDD discipline (RED-GREEN-REFACTOR). Dispatches craft-coder for implementation and craft-reviewer for two-stage review (spec compliance, then code quality).
+3. **craft-plan** — Activates with approved design. Breaks work into bite-sized tasks (2-5 minutes each). Every task has exact file paths, complete code, verification steps, and UC-ID traceability.
 
-4. **craft-review** — Activates when implementation completes. Dispatches craft-reviewer for final review, handles feedback with technical rigor, verifies with fresh evidence, then finishes (merge/PR/keep/discard).
+4. **craft-code** — Activates with plan. Sets up isolated worktree, then executes tasks via subagent-driven development (recommended) or inline mode. Enforces TDD discipline (RED-GREEN-REFACTOR). Tests carry UC-ID annotations for traceability. Dispatches craft-coder for implementation and craft-reviewer for two-stage review (review-compliance, then review-code).
+
+5. **craft-review** — Activates when implementation completes. Dispatches craft-reviewer for code quality review and requirements coverage check (review-coverage), handles feedback with technical rigor, verifies with fresh evidence, then finishes (merge/PR/keep/discard).
 
 **The agent checks for relevant skills before any task.** Mandatory workflows, not suggestions.
 
@@ -54,14 +56,15 @@ craft-claude/
 └── knowledge/    Domain knowledge (injected on demand)
 ```
 
-### Skills (6)
+### Skills (7)
 
 | Skill | Role |
 |-------|------|
-| **craft-design** | Ideas → design spec through collaborative dialogue |
-| **craft-plan** | Design → detailed implementation plan |
+| **craft-scope** | Use case elicitation, conflict detection, codebase impact analysis |
+| **craft-design** | Approved scope → technical design spec through collaborative dialogue |
+| **craft-plan** | Design → detailed implementation plan with UC-ID traceability |
 | **craft-code** | Plan → implementation (subagent or inline, with TDD and worktree) |
-| **craft-review** | Review + verify + integrate (feedback handling, verification gates, merge/PR) |
+| **craft-review** | Review + verify + integrate (feedback handling, verification gates, coverage check, merge/PR) |
 | **craft-debug** | Systematic root cause analysis (independent of pipeline) |
 | **craft-write-skill** | Create/edit skills using TDD methodology |
 
@@ -69,7 +72,7 @@ craft-claude/
 
 | Agent | Role |
 |-------|------|
-| **craft-reviewer** | Three-mode reviewer: design doc (A), code quality (B), spec compliance (C) |
+| **craft-reviewer** | Four-mode reviewer: design doc (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage) |
 | **craft-coder** | Implementation specialist: builds features from task specs |
 
 ### Rules (1)
@@ -80,7 +83,7 @@ craft-claude/
 
 ### Knowledge
 
-Reserved for language/framework-specific patterns (Java, Go, Python, TypeScript, React, Flutter, etc.). Created on demand when craft-reviewer needs domain-specific review criteria.
+Language/framework-specific review criteria (Java, Go, Python, TypeScript) and templates (scope Use Case Set). Created on demand when needed.
 
 ## Philosophy
 

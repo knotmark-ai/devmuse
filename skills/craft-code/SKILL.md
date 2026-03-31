@@ -249,10 +249,10 @@ digraph process {
         "Implementer subagent asks questions?" [shape=diamond];
         "Answer questions, provide context" [shape=box];
         "Implementer subagent implements, tests, commits, self-reviews" [shape=box];
-        "Dispatch spec reviewer subagent (@../../agents/craft-reviewer.md Mode C)" [shape=box];
+        "Dispatch spec reviewer subagent (@../../agents/craft-reviewer.md review-compliance)" [shape=box];
         "Spec reviewer subagent confirms code matches spec?" [shape=diamond];
         "Implementer subagent fixes spec gaps" [shape=box];
-        "Dispatch code quality reviewer subagent (@../../agents/craft-reviewer.md Mode B)" [shape=box];
+        "Dispatch code quality reviewer subagent (@../../agents/craft-reviewer.md review-code)" [shape=box];
         "Code quality reviewer subagent approves?" [shape=diamond];
         "Implementer subagent fixes quality issues" [shape=box];
         "Mark task complete in TodoWrite" [shape=box];
@@ -267,14 +267,14 @@ digraph process {
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
     "Answer questions, provide context" -> "Dispatch implementer subagent (@../../agents/craft-coder.md)";
     "Implementer subagent asks questions?" -> "Implementer subagent implements, tests, commits, self-reviews" [label="no"];
-    "Implementer subagent implements, tests, commits, self-reviews" -> "Dispatch spec reviewer subagent (@../../agents/craft-reviewer.md Mode C)";
-    "Dispatch spec reviewer subagent (@../../agents/craft-reviewer.md Mode C)" -> "Spec reviewer subagent confirms code matches spec?";
+    "Implementer subagent implements, tests, commits, self-reviews" -> "Dispatch spec reviewer subagent (@../../agents/craft-reviewer.md review-compliance)";
+    "Dispatch spec reviewer subagent (@../../agents/craft-reviewer.md review-compliance)" -> "Spec reviewer subagent confirms code matches spec?";
     "Spec reviewer subagent confirms code matches spec?" -> "Implementer subagent fixes spec gaps" [label="no"];
-    "Implementer subagent fixes spec gaps" -> "Dispatch spec reviewer subagent (@../../agents/craft-reviewer.md Mode C)" [label="re-review"];
-    "Spec reviewer subagent confirms code matches spec?" -> "Dispatch code quality reviewer subagent (@../../agents/craft-reviewer.md Mode B)" [label="yes"];
-    "Dispatch code quality reviewer subagent (@../../agents/craft-reviewer.md Mode B)" -> "Code quality reviewer subagent approves?";
+    "Implementer subagent fixes spec gaps" -> "Dispatch spec reviewer subagent (@../../agents/craft-reviewer.md review-compliance)" [label="re-review"];
+    "Spec reviewer subagent confirms code matches spec?" -> "Dispatch code quality reviewer subagent (@../../agents/craft-reviewer.md review-code)" [label="yes"];
+    "Dispatch code quality reviewer subagent (@../../agents/craft-reviewer.md review-code)" -> "Code quality reviewer subagent approves?";
     "Code quality reviewer subagent approves?" -> "Implementer subagent fixes quality issues" [label="no"];
-    "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (@../../agents/craft-reviewer.md Mode B)" [label="re-review"];
+    "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (@../../agents/craft-reviewer.md review-code)" [label="re-review"];
     "Code quality reviewer subagent approves?" -> "Mark task complete in TodoWrite" [label="yes"];
     "Mark task complete in TodoWrite" -> "More tasks remain?";
     "More tasks remain?" -> "Dispatch implementer subagent (@../../agents/craft-coder.md)" [label="yes"];
@@ -784,6 +784,12 @@ Next failing test for next feature.
 | **Clear** | Name describes behavior | `test('test1')` |
 | **Shows intent** | Demonstrates desired API | Obscures what code should do |
 
+### UC-ID Traceability
+
+When the plan includes `Covers: UC-xxx` per task, ensure the coder annotates tests with UC-ID comments. This enables the review-coverage mode to verify all use cases are implemented.
+
+The coder agent handles this automatically when given the `Covers:` field — see @../../agents/craft-coder.md Test Traceability section.
+
 ### Why Order Matters
 
 **"I'll write tests after to verify it works"**
@@ -957,7 +963,7 @@ Two-stage review after each task ensures both correctness and quality.
 
 ### Stage 1: Spec Compliance Review
 
-Dispatch reviewer using @../../agents/craft-reviewer.md Mode C (spec compliance):
+Dispatch reviewer using @../../agents/craft-reviewer.md review-compliance:
 - Does the implementation match the task specification?
 - Missing requirements?
 - Extra features not requested?
@@ -968,7 +974,7 @@ Dispatch reviewer using @../../agents/craft-reviewer.md Mode C (spec compliance)
 
 ### Stage 2: Code Quality Review
 
-Dispatch reviewer using @../../agents/craft-reviewer.md Mode B (code quality):
+Dispatch reviewer using @../../agents/craft-reviewer.md review-code:
 - Code quality, readability, maintainability
 - Test quality and coverage
 - Error handling, edge cases
