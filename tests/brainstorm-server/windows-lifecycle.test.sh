@@ -7,7 +7,7 @@
 #
 # Requirements:
 #   - Node.js in PATH
-#   - Run from the repository root, or set CRAFT_CLAUDE_ROOT
+#   - Run from the repository root, or set DEVMUSE_ROOT
 #   - On Windows: Git Bash (OSTYPE=msys*)
 #
 # Usage:
@@ -17,7 +17,7 @@ set -uo pipefail
 # ========== Configuration ==========
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-REPO_ROOT="${CRAFT_CLAUDE_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
+REPO_ROOT="${DEVMUSE_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 START_SCRIPT="$REPO_ROOT/skills/mu-design/scripts/start-server.sh"
 STOP_SCRIPT="$REPO_ROOT/skills/mu-design/scripts/stop-server.sh"
 SERVER_JS="$REPO_ROOT/skills/mu-design/scripts/server.js"

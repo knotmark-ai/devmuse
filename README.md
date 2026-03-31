@@ -1,6 +1,6 @@
-# Craft Claude
+# DevMuse
 
-Craft Claude is a complete software development workflow for Claude Code, built on a four-layer architecture of rules, skills, agents, and knowledge.
+DevMuse is a complete software development workflow for Claude Code, built on a four-layer architecture of rules, skills, agents, and knowledge.
 
 Based on [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent.
 

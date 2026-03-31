@@ -16,21 +16,21 @@ add a comment or reaction to the existing one instead.
 
 | Field | Value |
 |-------|-------|
-| Craft Claude version | |
+| DevMuse version | |
 | Harness (Claude Code, Cursor, etc.) | |
 | Harness version | |
 | Model | |
 | OS + shell | |
 
-## Is this a Craft Claude issue or a platform issue?
-<!-- Craft Claude is a plugin. Some reported "bugs" are actually issues
+## Is this a DevMuse issue or a platform issue?
+<!-- DevMuse is a plugin. Some reported "bugs" are actually issues
      in the underlying platform or model. If you're not sure, try
-     reproducing without Craft Claude installed.
+     reproducing without DevMuse installed.
 
-     If the problem persists without Craft Claude, file the issue with
+     If the problem persists without DevMuse, file the issue with
      your platform instead. -->
 
-- [ ] I confirmed this issue does not occur without Craft Claude installed
+- [ ] I confirmed this issue does not occur without DevMuse installed
 
 ## What happened?
 <!-- Be specific. "It doesn't work" is not a bug report. -->

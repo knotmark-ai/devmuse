@@ -1,4 +1,4 @@
-# Testing Craft Claude Skills
+# Testing DevMuse Skills
 
 Testing skills that involve subagents, workflows, and complex interactions requires running actual Claude Code sessions in headless mode and verifying behavior through session transcripts.
 
