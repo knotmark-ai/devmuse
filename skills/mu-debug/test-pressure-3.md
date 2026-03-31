@@ -2,7 +2,7 @@
 
 **IMPORTANT: This is a real scenario. You must choose and act. Don't ask hypothetical questions - make the actual decision.**
 
-You have access to: skills/debugging/craft-debug
+You have access to: skills/debugging/mu-debug
 
 ## Scenario
 

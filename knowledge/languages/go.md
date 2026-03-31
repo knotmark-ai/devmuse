@@ -1,6 +1,6 @@
 # Go Review Criteria
 
-Language-specific review criteria for craft-reviewer. Supplements the universal checklist.
+Language-specific review criteria for mu-reviewer. Supplements the universal checklist.
 
 ## Error Handling
 

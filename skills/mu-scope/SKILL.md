@@ -1,16 +1,16 @@
 ---
-name: craft-scope
-description: "Use before craft-design to scope work — enumerate use cases, detect conflicts, assess impact on existing code."
+name: mu-scope
+description: "Use before mu-design to scope work — enumerate use cases, detect conflicts, assess impact on existing code."
 ---
 
 # Scope
 
-Scope work by enumerating use cases, detecting conflicts, and assessing impact on existing code. Produces a Use Case Set that feeds into craft-design.
+Scope work by enumerating use cases, detecting conflicts, and assessing impact on existing code. Produces a Use Case Set that feeds into mu-design.
 
 Start by probing the codebase for impact, then work with the user to exhaust scenarios and resolve conflicts.
 
 <HARD-GATE>
-Do NOT invoke craft-design or any implementation skill until you have a complete Use Case Set approved by the user. This applies to EVERY task regardless of perceived simplicity.
+Do NOT invoke mu-design or any implementation skill until you have a complete Use Case Set approved by the user. This applies to EVERY task regardless of perceived simplicity.
 </HARD-GATE>
 
 ## Anti-Pattern: "This Is Too Simple To Need Scoping"
@@ -26,7 +26,7 @@ You MUST create a task for each of these items and complete them in order:
 3. **Use case elicitation** — enumerate happy paths → edge cases → error cases
 4. **Conflict detection** — cross-check all use cases, resolve with user
 5. **Write scope artifact** — save to `docs/scope/YYYY-MM-DD-<name>.md`, user confirms
-6. **Transition to design** — invoke craft-design skill with scope file path
+6. **Transition to design** — invoke mu-design skill with scope file path
 
 ## Process Flow
 
@@ -46,7 +46,7 @@ digraph craft_scope {
     "User resolves conflicts" [shape=box];
     "Write scope artifact" [shape=box];
     "User approves scope?" [shape=diamond];
-    "Invoke craft-design" [shape=doublecircle];
+    "Invoke mu-design" [shape=doublecircle];
 
     "Quick Probe\n(inline, automatic)" -> "New/empty project?";
     "New/empty project?" -> "Skip probe" [label="yes"];
@@ -65,11 +65,11 @@ digraph craft_scope {
     "User resolves conflicts" -> "Write scope artifact";
     "Write scope artifact" -> "User approves scope?";
     "User approves scope?" -> "Write scope artifact" [label="changes requested"];
-    "User approves scope?" -> "Invoke craft-design" [label="approved"];
+    "User approves scope?" -> "Invoke mu-design" [label="approved"];
 }
 ```
 
-**The terminal state is invoking craft-design.** Do NOT invoke any other skill. The ONLY skill you invoke after craft-scope is craft-design.
+**The terminal state is invoking mu-design.** Do NOT invoke any other skill. The ONLY skill you invoke after mu-scope is mu-design.
 
 ## Phase 1: Quick Probe
 
@@ -110,7 +110,7 @@ Present the probe results and recommend a depth level. The user confirms or over
 
 Work through scenarios with the user, one category at a time.
 
-**Methodology (migrated from craft-design):**
+**Methodology (migrated from mu-design):**
 - Ask one question at a time — do not overwhelm with multiple questions
 - Prefer multiple choice when possible
 - Focus on understanding: purpose, constraints, success criteria
@@ -175,6 +175,6 @@ Wait for confirmation.
 
 - **Invoked by:** bootstrap rule (highest-priority process skill)
 - **Produces:** Use Case Set artifact at `docs/scope/YYYY-MM-DD-<name>.md`
-- **Consumed by:** craft-design (reads scope, designs to cover all UCs)
-- **Terminal state:** invoke craft-design
+- **Consumed by:** mu-design (reads scope, designs to cover all UCs)
+- **Terminal state:** invoke mu-design
 - **Template:** @../../knowledge/templates/scope.md

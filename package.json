@@ -1,5 +1,5 @@
 {
-  "name": "craft-claude",
+  "name": "devmuse",
   "version": "0.2.0",
   "type": "module",
   "main": "hooks/session-start"

@@ -1,5 +1,5 @@
 ---
-name: craft-review
+name: mu-review
 description: Use when code changes need review, verification, and integration - covers review dispatch, feedback handling, verification gates, and merge/PR workflow
 ---
 
@@ -32,7 +32,7 @@ digraph review_process {
 
 ## Step 1: Dispatch Review
 
-Dispatch craft-reviewer subagent to catch issues before they cascade. The reviewer gets precisely crafted context for evaluation — never your session's history. This keeps the reviewer focused on the work product, not your thought process, and preserves your own context for continued work.
+Dispatch mu-reviewer subagent to catch issues before they cascade. The reviewer gets precisely crafted context for evaluation — never your session's history. This keeps the reviewer focused on the work product, not your thought process, and preserves your own context for continued work.
 
 **Core principle:** Review early, review often.
 
@@ -56,9 +56,9 @@ BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-**2. Dispatch craft-reviewer subagent:**
+**2. Dispatch mu-reviewer subagent:**
 
-Use Task tool with craft-claude:craft-reviewer type, fill template at @../../agents/craft-reviewer.md review-code
+Use Task tool with devmuse:mu-reviewer type, fill template at @../../agents/mu-reviewer.md review-code
 
 **Placeholders:**
 - `{WHAT_WAS_IMPLEMENTED}` - What you just built
@@ -83,7 +83,7 @@ You: Let me request code review before proceeding.
 BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
 HEAD_SHA=$(git rev-parse HEAD)
 
-[Dispatch craft-reviewer subagent]
+[Dispatch mu-reviewer subagent]
   WHAT_WAS_IMPLEMENTED: Verification and repair functions for conversation index
   PLAN_OR_REQUIREMENTS: Task 2 from docs/plans/deployment-plan.md
   BASE_SHA: a7981ec
@@ -325,7 +325,7 @@ After code quality review passes, verify all use cases from scope are covered.
 1. Read the Design Spec for this feature
 2. Find the `Requirements Reference` section → extract scope file path
 3. If no Requirements Reference found (legacy spec without scope): skip this step, log warning, continue to Verification
-4. Dispatch craft-reviewer subagent with review-coverage mode:
+4. Dispatch mu-reviewer subagent with review-coverage mode:
    - `{SCOPE_FILE_PATH}`: the scope file path from Requirements Reference
    - `{BASE_SHA}` / `{HEAD_SHA}`: git range for this feature
 
@@ -334,7 +334,7 @@ After code quality review passes, verify all use cases from scope are covered.
 ```
 All Covered → continue to Verification
 Gaps Found →
-  ├─ Missing implementation (❌) → send back to craft-code to implement
+  ├─ Missing implementation (❌) → send back to mu-code to implement
   ├─ Missing test (⚠️) → add test for the uncovered use case
   └─ Missing in scope itself → inform user (not a code problem, scope was incomplete)
 ```
@@ -664,7 +664,7 @@ git worktree remove <worktree-path>
 
 ## Integration
 
-- Called by **craft-code** after implementation completes
+- Called by **mu-code** after implementation completes
 - Also independently triggerable for ad-hoc review
-- Agent reference: @../../agents/craft-reviewer.md
+- Agent reference: @../../agents/mu-reviewer.md
 - Worktree cleanup handled in Step 5: Finish

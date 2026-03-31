@@ -18,10 +18,10 @@ Next up, once you say "go", it launches a *subagent-driven development* process,
 
 ```bash
 # Register marketplace
-/plugin marketplace add knotmark-ai/craft-claude
+/plugin marketplace add knotmark-ai/devmuse
 
 # Install plugin
-/plugin install craft-claude@craft-claude
+/plugin install devmuse@devmuse
 ```
 
 ### Verify Installation
@@ -34,24 +34,24 @@ Start a new session and ask for something that should trigger a skill (for examp
 scope → design → plan → code → review
 ```
 
-1. **craft-scope** — Activates before design. Scans the codebase for impact (Quick Probe), enumerates use cases (happy paths, edge cases, error cases), detects conflicts between use cases, and produces a Use Case Set. Depth adapts to complexity — a bug fix gets 1 use case, a new feature gets full enumeration.
+1. **mu-scope** — Activates before design. Scans the codebase for impact (Quick Probe), enumerates use cases (happy paths, edge cases, error cases), detects conflicts between use cases, and produces a Use Case Set. Depth adapts to complexity — a bug fix gets 1 use case, a new feature gets full enumeration.
 
-2. **craft-design** — Activates with approved scope. Focuses on technical design only (not "what to build" — that's in the scope). Proposes 2-3 approaches, presents design in sections for validation. Dispatches craft-reviewer (review-design) for spec review.
+2. **mu-design** — Activates with approved scope. Focuses on technical design only (not "what to build" — that's in the scope). Proposes 2-3 approaches, presents design in sections for validation. Dispatches mu-reviewer (review-design) for spec review.
 
-3. **craft-plan** — Activates with approved design. Breaks work into bite-sized tasks (2-5 minutes each). Every task has exact file paths, complete code, verification steps, and UC-ID traceability.
+3. **mu-plan** — Activates with approved design. Breaks work into bite-sized tasks (2-5 minutes each). Every task has exact file paths, complete code, verification steps, and UC-ID traceability.
 
-4. **craft-code** — Activates with plan. Sets up isolated worktree, then executes tasks via subagent-driven development (recommended) or inline mode. Enforces TDD discipline (RED-GREEN-REFACTOR). Tests carry UC-ID annotations for traceability. Dispatches craft-coder for implementation and craft-reviewer for two-stage review (review-compliance, then review-code).
+4. **mu-code** — Activates with plan. Sets up isolated worktree, then executes tasks via subagent-driven development (recommended) or inline mode. Enforces TDD discipline (RED-GREEN-REFACTOR). Tests carry UC-ID annotations for traceability. Dispatches mu-coder for implementation and mu-reviewer for two-stage review (review-compliance, then review-code).
 
-5. **craft-review** — Activates when implementation completes. Dispatches craft-reviewer for code quality review and requirements coverage check (review-coverage), handles feedback with technical rigor, verifies with fresh evidence, then finishes (merge/PR/keep/discard).
+5. **mu-review** — Activates when implementation completes. Dispatches mu-reviewer for code quality review and requirements coverage check (review-coverage), handles feedback with technical rigor, verifies with fresh evidence, then finishes (merge/PR/keep/discard).
 
 **The agent checks for relevant skills before any task.** Mandatory workflows, not suggestions.
 
 ## Architecture
 
 ```
-craft-claude/
+devmuse/
 ├── rules/        Always-on principles (loaded via SessionStart hook)
-├── skills/       User-triggered workflows (/craft-xxx)
+├── skills/       User-triggered workflows (/mu-xxx)
 ├── agents/       Independent roles (dispatched by skills)
 └── knowledge/    Domain knowledge (injected on demand)
 ```
@@ -60,20 +60,20 @@ craft-claude/
 
 | Skill | Role |
 |-------|------|
-| **craft-scope** | Use case elicitation, conflict detection, codebase impact analysis |
-| **craft-design** | Approved scope → technical design spec through collaborative dialogue |
-| **craft-plan** | Design → detailed implementation plan with UC-ID traceability |
-| **craft-code** | Plan → implementation (subagent or inline, with TDD and worktree) |
-| **craft-review** | Review + verify + integrate (feedback handling, verification gates, coverage check, merge/PR) |
-| **craft-debug** | Systematic root cause analysis (independent of pipeline) |
-| **craft-write-skill** | Create/edit skills using TDD methodology |
+| **mu-scope** | Use case elicitation, conflict detection, codebase impact analysis |
+| **mu-design** | Approved scope → technical design spec through collaborative dialogue |
+| **mu-plan** | Design → detailed implementation plan with UC-ID traceability |
+| **mu-code** | Plan → implementation (subagent or inline, with TDD and worktree) |
+| **mu-review** | Review + verify + integrate (feedback handling, verification gates, coverage check, merge/PR) |
+| **mu-debug** | Systematic root cause analysis (independent of pipeline) |
+| **mu-write-skill** | Create/edit skills using TDD methodology |
 
 ### Agents (2)
 
 | Agent | Role |
 |-------|------|
-| **craft-reviewer** | Four-mode reviewer: design doc (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage) |
-| **craft-coder** | Implementation specialist: builds features from task specs |
+| **mu-reviewer** | Four-mode reviewer: design doc (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage) |
+| **mu-coder** | Implementation specialist: builds features from task specs |
 
 ### Rules (1)
 
@@ -97,7 +97,7 @@ Language/framework-specific review criteria (Java, Go, Python, TypeScript) and t
 Load the plugin directly from a local directory without installation:
 
 ```bash
-claude --plugin-dir /path/to/craft-claude
+claude --plugin-dir /path/to/devmuse
 ```
 
 After making changes, reload without restarting:
@@ -109,7 +109,7 @@ After making changes, reload without restarting:
 Optionally add a shell alias for convenience:
 
 ```bash
-alias claude-dev='claude --plugin-dir /path/to/craft-claude'
+alias claude-dev='claude --plugin-dir /path/to/devmuse'
 ```
 
 ## Updating
@@ -117,7 +117,7 @@ alias claude-dev='claude --plugin-dir /path/to/craft-claude'
 Skills update automatically when you update the plugin:
 
 ```bash
-/plugin update craft-claude
+/plugin update devmuse
 ```
 
 ## License

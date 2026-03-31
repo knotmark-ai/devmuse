@@ -1,20 +1,20 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "craft-claude",
+  "name": "devmuse",
   "description": "Core workflow plugin for Claude Code: scope, design, plan, code, review, debug",
   "owner": {
     "name": "KnotMark AI"
   },
   "plugins": [
     {
-      "name": "craft-claude",
+      "name": "devmuse",
       "description": "Core workflow plugin for Claude Code: scope, design, plan, code, review, debug",
       "version": "0.2.0",
       "source": "./",
       "author": {
         "name": "KnotMark AI"
       },
-      "homepage": "https://github.com/knotmark-ai/craft-claude",
+      "homepage": "https://github.com/knotmark-ai/devmuse",
       "category": "workflow"
     }
   ]

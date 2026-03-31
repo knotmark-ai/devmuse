@@ -1,17 +1,17 @@
 {
-  "name": "craft-claude",
+  "name": "devmuse",
   "description": "Core workflow plugin for Claude Code: scope, design, plan, code, review, debug",
   "version": "0.2.0",
   "author": {
     "name": "KnotMark AI"
   },
-  "homepage": "https://github.com/knotmark-ai/craft-claude",
-  "repository": "https://github.com/knotmark-ai/craft-claude",
+  "homepage": "https://github.com/knotmark-ai/devmuse",
+  "repository": "https://github.com/knotmark-ai/devmuse",
   "license": "MIT",
   "keywords": ["skills", "tdd", "debugging", "collaboration", "best-practices", "workflows"],
   "agents": [
-    "./agents/craft-reviewer.md",
-    "./agents/craft-coder.md"
+    "./agents/mu-reviewer.md",
+    "./agents/mu-coder.md"
   ],
   "skills": ["./skills/"]
 }

@@ -1,48 +1,48 @@
 # Requirements Engineering Integration — Design Spec
 
 > **Date:** 2026-03-25
-> **Issue:** [#2 feat: integrate requirements engineering into craft-claude workflow](https://github.com/knotmark-ai/craft-claude/issues/2)
+> **Issue:** [#2 feat: integrate requirements engineering into devmuse workflow](https://github.com/knotmark-ai/devmuse/issues/2)
 > **Branch:** feature/requirements-engineering
 
 ## Motivation
 
 Two concrete pain points in the current pipeline:
 
-1. **Use case omissions on existing codebases** — `craft-design` explores user intent conversationally but does not scan the codebase to discover downstream dependencies and edge cases. Result: omissions discovered only during review or after merge.
+1. **Use case omissions on existing codebases** — `mu-design` explores user intent conversationally but does not scan the codebase to discover downstream dependencies and edge cases. Result: omissions discovered only during review or after merge.
 
-2. **Tests verify code behavior, not requirements** — TDD in `craft-code` writes tests based on code structure, not use cases. Tests answer "does this function work?" rather than "does this feature satisfy the requirement?"
+2. **Tests verify code behavior, not requirements** — TDD in `mu-code` writes tests based on code structure, not use cases. Tests answer "does this function work?" rather than "does this feature satisfy the requirement?"
 
 Root cause: **no dedicated requirements phase that produces use cases as a first-class artifact, traceable through design → code → tests → review.**
 
 ## Pipeline Change
 
 ```
-Current:   idea → craft-design → craft-plan → craft-code → craft-review
-Proposed:  idea → craft-scope → craft-design → craft-plan → craft-code → craft-review
+Current:   idea → mu-design → mu-plan → mu-code → mu-review
+Proposed:  idea → mu-scope → mu-design → mu-plan → mu-code → mu-review
 ```
 
-**craft-scope is mandatory.** It is never skipped — simple tasks get a lightweight scope (1-2 use cases, < 1 min), complex tasks get full enumeration with conflict detection. Depth is probed, not preset.
+**mu-scope is mandatory.** It is never skipped — simple tasks get a lightweight scope (1-2 use cases, < 1 min), complex tasks get full enumeration with conflict detection. Depth is probed, not preset.
 
 ## Design Decisions
 
-### 1. craft-design is not renamed
+### 1. mu-design is not renamed
 
 "Design" is retained — its responsibility narrows from "what + how" to purely "how" (technical design). Zero migration cost.
 
 ### 2. No new agents
 
-Agent count stays at 2 (craft-reviewer + craft-coder). Impact analysis (Quick Probe) is executed inline by `craft-scope`. Requirements coverage is a new mode on craft-reviewer.
+Agent count stays at 2 (mu-reviewer + mu-coder). Impact analysis (Quick Probe) is executed inline by `mu-scope`. Requirements coverage is a new mode on mu-reviewer.
 
-### 3. craft-reviewer uses descriptive mode names
+### 3. mu-reviewer uses descriptive mode names
 
 Modes renamed from letters to descriptive names for clarity:
 
 | Old | New | Dispatched by |
 |-----|-----|---------------|
-| Mode A | review-design | craft-design |
-| Mode B | review-code | craft-code |
-| Mode C | review-compliance | craft-code |
-| — | review-coverage (NEW) | craft-review |
+| Mode A | review-design | mu-design |
+| Mode B | review-code | mu-code |
+| Mode C | review-compliance | mu-code |
+| — | review-coverage (NEW) | mu-review |
 
 ### 4. Scope is always mandatory
 
@@ -52,14 +52,14 @@ Even bug fixes go through scope — the reproduction steps are the use case. Dep
 
 ## Component Design
 
-### Component 1: `craft-scope` skill (NEW)
+### Component 1: `mu-scope` skill (NEW)
 
 **Goal:** Exhaust use cases, detect conflicts, assess impact on existing code.
 
 **Frontmatter:**
 ```yaml
-name: craft-scope
-description: "Use before craft-design to scope work — enumerate use cases, detect conflicts, assess impact on existing code."
+name: mu-scope
+description: "Use before mu-design to scope work — enumerate use cases, detect conflicts, assess impact on existing code."
 ```
 
 **Process:**
@@ -89,7 +89,7 @@ Phase 5: Output Use Case Set
   ├─ Write to docs/scope/YYYY-MM-DD-<name>.md
   └─ User confirms
 
-Terminal state: invoke craft-design (pass scope file path)
+Terminal state: invoke mu-design (pass scope file path)
 ```
 
 **Quick Probe checks (inline, Phase 1):**
@@ -165,11 +165,11 @@ Terminal state: invoke craft-design (pass scope file path)
 
 ---
 
-### Component 2: craft-reviewer `review-coverage` mode (NEW)
+### Component 2: mu-reviewer `review-coverage` mode (NEW)
 
 **Goal:** Verify every use case has corresponding implementation and tests. Produces the coverage report that closes the traceability loop.
 
-**Dispatched by:** craft-review (after review-code)
+**Dispatched by:** mu-review (after review-code)
 
 **Input:**
 ```
@@ -208,14 +208,14 @@ Terminal state: invoke craft-design (pass scope file path)
 
 ---
 
-### Component 3: `craft-design` modifications
+### Component 3: `mu-design` modifications
 
-**Goal:** Narrow craft-design to purely technical design. It always receives a scope artifact as input.
+**Goal:** Narrow mu-design to purely technical design. It always receives a scope artifact as input.
 
 **Hard gate:**
 ```
-craft-design requires a scope artifact (docs/scope/*.md) as input.
-If no scope artifact exists, invoke craft-scope first.
+mu-design requires a scope artifact (docs/scope/*.md) as input.
+If no scope artifact exists, invoke mu-scope first.
 Do NOT proceed with design without a scope artifact.
 ```
 
@@ -232,8 +232,8 @@ Do NOT proceed with design without a scope artifact.
 | 7 | Write design doc | Present design |
 | 8 | Spec review loop | Write design doc (**with Requirements Reference field**) |
 | 9 | User reviews | Spec review loop (**review-design checks UC coverage**) |
-| 10 | Invoke craft-plan | User reviews |
-| 11 | — | Invoke craft-plan |
+| 10 | Invoke mu-plan | User reviews |
+| 11 | — | Invoke mu-plan |
 
 **Design Spec artifact — new required field:**
 
@@ -257,7 +257,7 @@ Do NOT proceed with design without a scope artifact.
 
 ---
 
-### Component 4: `craft-plan` modifications
+### Component 4: `mu-plan` modifications
 
 **Goal:** Each task in the plan must reference the use cases it covers.
 
@@ -276,15 +276,15 @@ Do NOT proceed with design without a scope artifact.
 ...
 ````
 
-This enables craft-coder to annotate tests with UC-IDs.
+This enables mu-coder to annotate tests with UC-IDs.
 
 ---
 
-### Component 5: `craft-code` modifications
+### Component 5: `mu-code` modifications
 
 **Goal:** Tests must carry UC-ID traceability.
 
-**craft-coder agent — new guideline:**
+**mu-coder agent — new guideline:**
 
 ```markdown
 ## Test Traceability
@@ -318,11 +318,11 @@ describe('account lockout', () => {
 });
 ```
 
-No other changes to craft-code (TDD, worktrees, review gates all unchanged).
+No other changes to mu-code (TDD, worktrees, review gates all unchanged).
 
 ---
 
-### Component 6: `craft-review` modifications
+### Component 6: `mu-review` modifications
 
 **Goal:** Add requirements coverage check after code quality review.
 
@@ -347,14 +347,14 @@ After:
 **Step 3: Dispatch review-coverage**
 1. Read Design Spec → find Requirements Reference → get scope file path
 2. If no Requirements Reference found (legacy design spec without scope): skip review-coverage, log warning, continue to Verification
-3. Dispatch craft-reviewer review-coverage mode
+3. Dispatch mu-reviewer review-coverage mode
 4. Receive Coverage Report
 
 **Step 4: Handle coverage gaps**
 ```
 All Covered → continue to Verification
 Gaps Found →
-  ├─ Missing implementation (❌) → send back to craft-code
+  ├─ Missing implementation (❌) → send back to mu-code
   ├─ Missing test (⚠️) → add test
   └─ Missing in scope itself → inform user (not a code problem)
 ```
@@ -365,7 +365,7 @@ review-coverage is always executed (same principle as scope — never skipped, d
 
 ### Component 7: `bootstrap.md` modifications
 
-**Goal:** Make craft-scope the highest-priority process skill.
+**Goal:** Make mu-scope the highest-priority process skill.
 
 **Skill priority change:**
 
@@ -422,47 +422,47 @@ Each artifact forward-references the previous one. The reviewer traces the chain
 
 ## Knowledge Migration Matrix
 
-Refactoring craft-design must not lose knowledge. Every piece of methodology currently in craft-design is either **migrated** to craft-scope or **retained** in craft-design.
+Refactoring mu-design must not lose knowledge. Every piece of methodology currently in mu-design is either **migrated** to mu-scope or **retained** in mu-design.
 
-| Knowledge in current craft-design | Destination | Action |
+| Knowledge in current mu-design | Destination | Action |
 |-----------------------------------|-------------|--------|
-| One question at a time, multiple choice preferred | craft-scope | **Migrate** — same methodology applies to use case elicitation |
-| Scope assessment (multi-subsystem → decompose into sub-projects) | craft-scope | **Migrate** — scope decides if decomposition is needed, before design |
-| Focus on purpose, constraints, success criteria | craft-scope | **Migrate** — this is requirements elicitation, not design |
-| 2-3 approaches with trade-offs | craft-design | **Retain** — this is technical design methodology |
+| One question at a time, multiple choice preferred | mu-scope | **Migrate** — same methodology applies to use case elicitation |
+| Scope assessment (multi-subsystem → decompose into sub-projects) | mu-scope | **Migrate** — scope decides if decomposition is needed, before design |
+| Focus on purpose, constraints, success criteria | mu-scope | **Migrate** — this is requirements elicitation, not design |
+| 2-3 approaches with trade-offs | mu-design | **Retain** — this is technical design methodology |
 | Incremental validation (present sections, get approval) | Both | **Retain in design, replicate in scope** — scope also presents use cases incrementally |
-| Visual Companion | craft-design | **Retain** — visual questions are about design (layouts, architecture diagrams), not requirements |
-| Design for isolation and clarity | craft-design | **Retain** — architecture principle |
+| Visual Companion | mu-design | **Retain** — visual questions are about design (layouts, architecture diagrams), not requirements |
+| Design for isolation and clarity | mu-design | **Retain** — architecture principle |
 | Working in existing codebases (follow existing patterns) | Both | **Retain in design, reference in scope** — scope's Quick Probe explores existing code; design follows existing patterns |
 | YAGNI ruthlessly | Both | **Retain in both** — scope: don't add unnecessary use cases; design: don't over-engineer |
 | Spec review loop (dispatch reviewer, max 3 iterations) | Both | **Retain in design, replicate in scope** — scope can optionally review use case quality |
-| Write design doc + commit | craft-design | **Retain** |
-| Anti-pattern: "too simple to need a design" | craft-scope | **Migrate** — becomes "too simple to need scoping" |
+| Write design doc + commit | mu-design | **Retain** |
+| Anti-pattern: "too simple to need a design" | mu-scope | **Migrate** — becomes "too simple to need scoping" |
 
-**Implementation constraint:** When modifying craft-design, the implementer must verify every section of the current SKILL.md is accounted for — either retained, migrated to craft-scope, or explicitly marked as removed with justification. No silent deletions.
+**Implementation constraint:** When modifying mu-design, the implementer must verify every section of the current SKILL.md is accounted for — either retained, migrated to mu-scope, or explicitly marked as removed with justification. No silent deletions.
 
 ---
 
 ## Architecture Impact
 
 ### Files to create
-- `skills/craft-scope/SKILL.md`
+- `skills/mu-scope/SKILL.md`
 - `knowledge/templates/scope.md` (Use Case Set template)
 
 ### Files to modify
-- `agents/craft-reviewer.md` — add review-coverage mode, rename modes A/B/C to descriptive names
-- `skills/craft-design/SKILL.md` — add scope artifact gate, remove exploratory elicitation, add Requirements Reference
-- `skills/craft-plan/SKILL.md` — add `Covers: UC-xxx` to task structure
-- `skills/craft-code/SKILL.md` — add test traceability guideline
-- `agents/craft-coder.md` — add test traceability section
-- `skills/craft-review/SKILL.md` — add review-coverage dispatch step
+- `agents/mu-reviewer.md` — add review-coverage mode, rename modes A/B/C to descriptive names
+- `skills/mu-design/SKILL.md` — add scope artifact gate, remove exploratory elicitation, add Requirements Reference
+- `skills/mu-plan/SKILL.md` — add `Covers: UC-xxx` to task structure
+- `skills/mu-code/SKILL.md` — add test traceability guideline
+- `agents/mu-coder.md` — add test traceability section
+- `skills/mu-review/SKILL.md` — add review-coverage dispatch step
 - `rules/bootstrap.md` — update skill priority, add scope to decision flow
-- `docs/architecture.md` — update pipeline description, add craft-scope to skill table
-- `.claude-plugin/plugin.json` — add craft-scope skill path
+- `docs/architecture.md` — update pipeline description, add mu-scope to skill table
+- `.claude-plugin/plugin.json` — add mu-scope skill path
 
 ### Files unchanged
-- `skills/craft-debug/SKILL.md`
-- `skills/craft-write-skill/SKILL.md`
+- `skills/mu-debug/SKILL.md`
+- `skills/mu-write-skill/SKILL.md`
 - `knowledge/languages/*`
 
 ---
@@ -471,15 +471,15 @@ Refactoring craft-design must not lose knowledge. Every piece of methodology cur
 
 | Component | Change Type | Effort |
 |-----------|------------|--------|
-| craft-scope | NEW skill | High |
+| mu-scope | NEW skill | High |
 | review-coverage | NEW reviewer mode | Medium |
 | scope template | NEW knowledge file | Low |
-| craft-design | Modify (add gate, narrow questions) | Medium |
-| craft-plan | Modify (add UC-ID per task) | Low |
-| craft-code | Modify (add traceability guideline) | Low |
-| craft-coder | Modify (add traceability section) | Low |
-| craft-review | Modify (add coverage step) | Medium |
-| craft-reviewer | Modify (add mode, rename modes) | Medium |
+| mu-design | Modify (add gate, narrow questions) | Medium |
+| mu-plan | Modify (add UC-ID per task) | Low |
+| mu-code | Modify (add traceability guideline) | Low |
+| mu-coder | Modify (add traceability section) | Low |
+| mu-review | Modify (add coverage step) | Medium |
+| mu-reviewer | Modify (add mode, rename modes) | Medium |
 | bootstrap | Modify (update priority) | Low |
 | architecture.md | Modify (update docs) | Low |
 | plugin.json | Modify (add skill path) | Low |

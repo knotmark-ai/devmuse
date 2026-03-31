@@ -1,5 +1,5 @@
 ---
-name: craft-code
+name: mu-code
 description: Use when you have an implementation plan ready to execute - supports subagent-driven and inline execution modes with TDD, worktree isolation, and review gates
 ---
 
@@ -11,7 +11,7 @@ Execute implementation plan task by task. Two modes: subagent-driven (recommende
 
 **Core principle:** Fresh subagent per task + two-stage review (spec then quality) = high quality, fast iteration
 
-**Announce at start:** "I'm using the craft-code skill to implement this plan."
+**Announce at start:** "I'm using the mu-code skill to implement this plan."
 
 ## Process
 
@@ -27,7 +27,7 @@ digraph process_overview {
     "Parallel Dispatch" [shape=box];
     "Per-task loop: implement → review → next" [shape=box];
     "All tasks complete" [shape=diamond];
-    "Chain to craft-review" [shape=box style=filled fillcolor=lightgreen];
+    "Chain to mu-review" [shape=box style=filled fillcolor=lightgreen];
 
     "Read plan, extract tasks" -> "Step 1: Worktree Setup";
     "Step 1: Worktree Setup" -> "Step 2: Select Execution Mode";
@@ -38,7 +38,7 @@ digraph process_overview {
     "Inline Mode" -> "Per-task loop: implement → review → next";
     "Parallel Dispatch" -> "Per-task loop: implement → review → next";
     "Per-task loop: implement → review → next" -> "All tasks complete";
-    "All tasks complete" -> "Chain to craft-review" [label="yes"];
+    "All tasks complete" -> "Chain to mu-review" [label="yes"];
     "All tasks complete" -> "Per-task loop: implement → review → next" [label="no - next task"];
 }
 ```
@@ -79,7 +79,7 @@ If no directory exists and no CLAUDE.md preference:
 No worktree directory found. Where should I create worktrees?
 
 1. .worktrees/ (project-local, hidden)
-2. ~/.config/craft-claude/worktrees/<project-name>/ (global location)
+2. ~/.config/devmuse/worktrees/<project-name>/ (global location)
 
 Which would you prefer?
 ```
@@ -104,7 +104,7 @@ Per Jesse's rule "Fix broken things immediately":
 
 **Why critical:** Prevents accidentally committing worktree contents to repository.
 
-#### For Global Directory (~/.config/craft-claude/worktrees)
+#### For Global Directory (~/.config/devmuse/worktrees)
 
 No .gitignore verification needed - outside project entirely.
 
@@ -124,8 +124,8 @@ case $LOCATION in
   .worktrees|worktrees)
     path="$LOCATION/$BRANCH_NAME"
     ;;
-  ~/.config/craft-claude/worktrees/*)
-    path="~/.config/craft-claude/worktrees/$project/$BRANCH_NAME"
+  ~/.config/devmuse/worktrees/*)
+    path="~/.config/devmuse/worktrees/$project/$BRANCH_NAME"
     ;;
 esac
 
@@ -245,14 +245,14 @@ digraph process {
 
     subgraph cluster_per_task {
         label="Per Task";
-        "Dispatch implementer subagent (@../../agents/craft-coder.md)" [shape=box];
+        "Dispatch implementer subagent (@../../agents/mu-coder.md)" [shape=box];
         "Implementer subagent asks questions?" [shape=diamond];
         "Answer questions, provide context" [shape=box];
         "Implementer subagent implements, tests, commits, self-reviews" [shape=box];
-        "Dispatch spec reviewer subagent (@../../agents/craft-reviewer.md review-compliance)" [shape=box];
+        "Dispatch spec reviewer subagent (@../../agents/mu-reviewer.md review-compliance)" [shape=box];
         "Spec reviewer subagent confirms code matches spec?" [shape=diamond];
         "Implementer subagent fixes spec gaps" [shape=box];
-        "Dispatch code quality reviewer subagent (@../../agents/craft-reviewer.md review-code)" [shape=box];
+        "Dispatch code quality reviewer subagent (@../../agents/mu-reviewer.md review-code)" [shape=box];
         "Code quality reviewer subagent approves?" [shape=diamond];
         "Implementer subagent fixes quality issues" [shape=box];
         "Mark task complete in TodoWrite" [shape=box];
@@ -260,25 +260,25 @@ digraph process {
 
     "Read plan, extract all tasks with full text, note context, create TodoWrite" [shape=box];
     "More tasks remain?" [shape=diamond];
-    "Chain to craft-review for final review" [shape=box style=filled fillcolor=lightgreen];
+    "Chain to mu-review for final review" [shape=box style=filled fillcolor=lightgreen];
 
-    "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (@../../agents/craft-coder.md)";
-    "Dispatch implementer subagent (@../../agents/craft-coder.md)" -> "Implementer subagent asks questions?";
+    "Read plan, extract all tasks with full text, note context, create TodoWrite" -> "Dispatch implementer subagent (@../../agents/mu-coder.md)";
+    "Dispatch implementer subagent (@../../agents/mu-coder.md)" -> "Implementer subagent asks questions?";
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
-    "Answer questions, provide context" -> "Dispatch implementer subagent (@../../agents/craft-coder.md)";
+    "Answer questions, provide context" -> "Dispatch implementer subagent (@../../agents/mu-coder.md)";
     "Implementer subagent asks questions?" -> "Implementer subagent implements, tests, commits, self-reviews" [label="no"];
-    "Implementer subagent implements, tests, commits, self-reviews" -> "Dispatch spec reviewer subagent (@../../agents/craft-reviewer.md review-compliance)";
-    "Dispatch spec reviewer subagent (@../../agents/craft-reviewer.md review-compliance)" -> "Spec reviewer subagent confirms code matches spec?";
+    "Implementer subagent implements, tests, commits, self-reviews" -> "Dispatch spec reviewer subagent (@../../agents/mu-reviewer.md review-compliance)";
+    "Dispatch spec reviewer subagent (@../../agents/mu-reviewer.md review-compliance)" -> "Spec reviewer subagent confirms code matches spec?";
     "Spec reviewer subagent confirms code matches spec?" -> "Implementer subagent fixes spec gaps" [label="no"];
-    "Implementer subagent fixes spec gaps" -> "Dispatch spec reviewer subagent (@../../agents/craft-reviewer.md review-compliance)" [label="re-review"];
-    "Spec reviewer subagent confirms code matches spec?" -> "Dispatch code quality reviewer subagent (@../../agents/craft-reviewer.md review-code)" [label="yes"];
-    "Dispatch code quality reviewer subagent (@../../agents/craft-reviewer.md review-code)" -> "Code quality reviewer subagent approves?";
+    "Implementer subagent fixes spec gaps" -> "Dispatch spec reviewer subagent (@../../agents/mu-reviewer.md review-compliance)" [label="re-review"];
+    "Spec reviewer subagent confirms code matches spec?" -> "Dispatch code quality reviewer subagent (@../../agents/mu-reviewer.md review-code)" [label="yes"];
+    "Dispatch code quality reviewer subagent (@../../agents/mu-reviewer.md review-code)" -> "Code quality reviewer subagent approves?";
     "Code quality reviewer subagent approves?" -> "Implementer subagent fixes quality issues" [label="no"];
-    "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (@../../agents/craft-reviewer.md review-code)" [label="re-review"];
+    "Implementer subagent fixes quality issues" -> "Dispatch code quality reviewer subagent (@../../agents/mu-reviewer.md review-code)" [label="re-review"];
     "Code quality reviewer subagent approves?" -> "Mark task complete in TodoWrite" [label="yes"];
     "Mark task complete in TodoWrite" -> "More tasks remain?";
-    "More tasks remain?" -> "Dispatch implementer subagent (@../../agents/craft-coder.md)" [label="yes"];
-    "More tasks remain?" -> "Chain to craft-review for final review" [label="no"];
+    "More tasks remain?" -> "Dispatch implementer subagent (@../../agents/mu-coder.md)" [label="yes"];
+    "More tasks remain?" -> "Chain to mu-review for final review" [label="no"];
 }
 ```
 
@@ -318,7 +318,7 @@ Implementer subagents report one of four statuses. Handle each appropriately:
 #### Subagent-Driven Example Workflow
 
 ```
-You: I'm using the craft-code skill to implement this plan.
+You: I'm using the mu-code skill to implement this plan.
 
 [Read plan file once: docs/plans/feature-plan.md]
 [Extract all 5 tasks with full text and context]
@@ -331,7 +331,7 @@ Task 1: Hook installation script
 
 Implementer: "Before I begin - should the hook be installed at user or system level?"
 
-You: "User level (~/.config/craft-claude/hooks/)"
+You: "User level (~/.config/devmuse/hooks/)"
 
 Implementer: "Got it. Implementing now..."
 [Later] Implementer:
@@ -385,7 +385,7 @@ Code reviewer: ✅ Approved
 ...
 
 [After all tasks]
-[Chain to craft-review for final review]
+[Chain to mu-review for final review]
 Final reviewer: All requirements met, ready to merge
 
 Done!
@@ -414,7 +414,7 @@ For each task:
 #### Step 3: Complete Development
 
 After all tasks complete and verified:
-- Chain to craft-review for final review
+- Chain to mu-review for final review
 - Follow that skill to verify tests, present options, execute choice
 
 #### When to Stop and Ask for Help
@@ -788,7 +788,7 @@ Next failing test for next feature.
 
 When the plan includes `Covers: UC-xxx` per task, ensure the coder annotates tests with UC-ID comments. This enables the review-coverage mode to verify all use cases are implemented.
 
-The coder agent handles this automatically when given the `Covers:` field — see @../../agents/craft-coder.md Test Traceability section.
+The coder agent handles this automatically when given the `Covers:` field — see @../../agents/mu-coder.md Test Traceability section.
 
 ### Why Order Matters
 
@@ -963,7 +963,7 @@ Two-stage review after each task ensures both correctness and quality.
 
 ### Stage 1: Spec Compliance Review
 
-Dispatch reviewer using @../../agents/craft-reviewer.md review-compliance:
+Dispatch reviewer using @../../agents/mu-reviewer.md review-compliance:
 - Does the implementation match the task specification?
 - Missing requirements?
 - Extra features not requested?
@@ -974,7 +974,7 @@ Dispatch reviewer using @../../agents/craft-reviewer.md review-compliance:
 
 ### Stage 2: Code Quality Review
 
-Dispatch reviewer using @../../agents/craft-reviewer.md review-code:
+Dispatch reviewer using @../../agents/mu-reviewer.md review-code:
 - Code quality, readability, maintainability
 - Test quality and coverage
 - Error handling, edge cases
@@ -983,7 +983,7 @@ Dispatch reviewer using @../../agents/craft-reviewer.md review-code:
 
 ### Final Review
 
-After all tasks complete, chain to craft-review for comprehensive review of entire implementation.
+After all tasks complete, chain to mu-review for comprehensive review of entire implementation.
 
 ## Red Flags
 
@@ -1029,7 +1029,7 @@ After all tasks complete, chain to craft-review for comprehensive review of enti
 
 ## Integration
 
-- **craft-plan** creates the plan this skill executes
-- Chain to **craft-review** after all tasks complete
-- Agent references: @../../agents/craft-coder.md, @../../agents/craft-reviewer.md
+- **mu-plan** creates the plan this skill executes
+- Chain to **mu-review** after all tasks complete
+- Agent references: @../../agents/mu-coder.md, @../../agents/mu-reviewer.md
 - Testing anti-patterns: @testing-anti-patterns.md

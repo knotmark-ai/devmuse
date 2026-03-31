@@ -3,9 +3,9 @@
 ## 四层架构
 
 ```
-craft-claude/
+devmuse/
 ├── rules/        "必须遵守什么" — 始终生效的原则
-├── skills/       "做什么" — 用户触发的工作流（/craft-xxx）
+├── skills/       "做什么" — 用户触发的工作流（/mu-xxx）
 ├── agents/       "谁来做" — 独立角色，被 skill 派遣
 └── knowledge/    "怎么做/参考什么" — 按需注入的领域知识
 ```
@@ -80,41 +80,41 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 
 | 名称 | 角色 | 派遣 Agent |
 |------|------|------|
-| craft-scope | 用例枚举 + 冲突检测 + 影响分析 | — |
-| craft-design | 通过协作对话将想法转化为设计方案 | craft-reviewer（review-design） |
-| craft-plan | 将设计转化为详细实施计划 | — |
-| craft-code | 按计划实现（子 Agent 或内联模式，含 TDD 和工作区隔离） | craft-coder, craft-reviewer（review-code + review-compliance） |
-| craft-review | 审查 + 验证 + 集成 | craft-reviewer（review-code + review-coverage） |
+| mu-scope | 用例枚举 + 冲突检测 + 影响分析 | — |
+| mu-design | 通过协作对话将想法转化为设计方案 | mu-reviewer（review-design） |
+| mu-plan | 将设计转化为详细实施计划 | — |
+| mu-code | 按计划实现（子 Agent 或内联模式，含 TDD 和工作区隔离） | mu-coder, mu-reviewer（review-code + review-compliance） |
+| mu-review | 审查 + 验证 + 集成 | mu-reviewer（review-code + review-coverage） |
 
 独立流程：
 
 | 名称 | 角色 | 派遣 Agent |
 |------|------|------|
-| craft-debug | 系统化根因分析 | — |
+| mu-debug | 系统化根因分析 | — |
 
 元技能：
 
 | 名称 | 角色 | 派遣 Agent |
 |------|------|------|
-| craft-write-skill | 使用 TDD 方法论创建/编辑技能 | — |
+| mu-write-skill | 使用 TDD 方法论创建/编辑技能 | — |
 
 ### agents/（2 个）
 
 | 名称 | 角色 | 被谁派遣 |
 |------|------|---------|
-| craft-reviewer | 四模式审查者：设计文档（review-design）、代码质量（review-code）、规格符合性（review-compliance）、需求覆盖（review-coverage） | craft-scope, craft-design, craft-code, craft-review |
-| craft-coder | 实现者 | craft-code |
+| mu-reviewer | 四模式审查者：设计文档（review-design）、代码质量（review-code）、规格符合性（review-compliance）、需求覆盖（review-coverage） | mu-scope, mu-design, mu-code, mu-review |
+| mu-coder | 实现者 | mu-code |
 
 **设计决策：** 2 个通用 agent + knowledge 注入，而非 N 个语言专用 agent。审查逻辑 80% 通用，改一处全局生效。扩展新语言只需加 knowledge 文件。
 
 ### knowledge/（4 个语言文件 + 模板）
 
-当 craft-reviewer 需要语言/框架特定审查标准时按需创建。
+当 mu-reviewer 需要语言/框架特定审查标准时按需创建。
 
 ```
 knowledge/
 ├── templates/
-│   └── scope.md          # craft-scope 使用的用例集模板
+│   └── scope.md          # mu-scope 使用的用例集模板
 ├── languages/        # java.md, go.md, python.md, typescript.md
 └── frameworks/       # spring-boot.md, react.md, flutter.md
 ```
@@ -136,7 +136,7 @@ knowledge/
 
 - **skills → agents：单向派遣。** skill 是编排者，agent 是执行者。
 - **agents → skills：禁止。** agent 不反向触发用户级工作流。
-- **skills → skills：允许链式调用。** 如 craft-scope → craft-design → craft-plan → craft-code → craft-review。
+- **skills → skills：允许链式调用。** 如 mu-scope → mu-design → mu-plan → mu-code → mu-review。
 - **rules 引导但不调用。** bootstrap.md 告诉 Claude 遇到什么情况触发哪个 skill。
 - **knowledge 纯被动。** 只被引用，不调用任何层。
 
@@ -161,8 +161,8 @@ rules ──约束──→ 所有层
 {
   "version": "0.2.0",
   "agents": [
-    "./agents/craft-reviewer.md",
-    "./agents/craft-coder.md"
+    "./agents/mu-reviewer.md",
+    "./agents/mu-coder.md"
   ],
   "skills": ["./skills/"]
 }

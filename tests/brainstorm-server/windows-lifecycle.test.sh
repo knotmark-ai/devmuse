@@ -18,9 +18,9 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="${CRAFT_CLAUDE_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
-START_SCRIPT="$REPO_ROOT/skills/craft-brainstorm/scripts/start-server.sh"
-STOP_SCRIPT="$REPO_ROOT/skills/craft-brainstorm/scripts/stop-server.sh"
-SERVER_JS="$REPO_ROOT/skills/craft-brainstorm/scripts/server.js"
+START_SCRIPT="$REPO_ROOT/skills/mu-design/scripts/start-server.sh"
+STOP_SCRIPT="$REPO_ROOT/skills/mu-design/scripts/stop-server.sh"
+SERVER_JS="$REPO_ROOT/skills/mu-design/scripts/server.js"
 
 TEST_DIR="${TMPDIR:-/tmp}/brainstorm-win-test-$$"
 

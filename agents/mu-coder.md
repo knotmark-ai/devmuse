@@ -1,6 +1,6 @@
 ---
-name: craft-coder
-description: Implementation specialist that builds features from task specifications. Dispatched by craft-code skill.
+name: mu-coder
+description: Implementation specialist that builds features from task specifications. Dispatched by mu-code skill.
 tools: ["Read", "Edit", "Write", "Bash", "Grep", "Glob"]
 model: sonnet
 ---

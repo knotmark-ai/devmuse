@@ -1,5 +1,5 @@
 ---
-name: craft-plan
+name: mu-plan
 description: Use when you have a spec or requirements for a multi-step task, before touching code
 ---
 
@@ -11,16 +11,16 @@ Write comprehensive implementation plans assuming the engineer has zero context 
 
 Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.
 
-**Announce at start:** "I'm using the craft-plan skill to create the implementation plan."
+**Announce at start:** "I'm using the mu-plan skill to create the implementation plan."
 
-**Context:** This should be run in a dedicated worktree (created by craft-design skill).
+**Context:** This should be run in a dedicated worktree (created by mu-design skill).
 
 **Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
 - (User preferences for plan location override this default)
 
 ## Scope Check
 
-If the spec covers multiple independent subsystems, it should have been broken into sub-project specs during craft-design. If it wasn't, suggest breaking this into separate plans — one per subsystem. Each plan should produce working, testable software on its own.
+If the spec covers multiple independent subsystems, it should have been broken into sub-project specs during mu-design. If it wasn't, suggest breaking this into separate plans — one per subsystem. Each plan should produce working, testable software on its own.
 
 ## File Structure
 
@@ -49,7 +49,7 @@ This structure informs the task decomposition. Each task should produce self-con
 ```markdown
 # [Feature Name] Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use craft-claude:craft-code (recommended) or craft-claude:craft-code to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use devmuse:mu-code (recommended) or devmuse:mu-code to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** [One sentence describing what this builds]
 
@@ -139,4 +139,4 @@ After saving the plan, offer execution choice:
 
 **Which approach?"**
 
-**Invoke craft-claude:craft-code** to execute the plan. craft-code supports both modes.
+**Invoke devmuse:mu-code** to execute the plan. mu-code supports both modes.

@@ -1,10 +1,10 @@
 # Requirements Engineering Integration — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use craft-claude:craft-code (recommended) to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use devmuse:mu-code (recommended) to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a mandatory `craft-scope` skill before `craft-design`, with UC-ID traceability through all pipeline stages and a `review-coverage` mode for verification.
+**Goal:** Add a mandatory `mu-scope` skill before `mu-design`, with UC-ID traceability through all pipeline stages and a `review-coverage` mode for verification.
 
-**Architecture:** New `craft-scope` skill produces a Use Case Set artifact consumed by all downstream stages. craft-reviewer gains a `review-coverage` mode. Existing skills get minimal modifications to carry UC-IDs. Mode names change from letters to descriptive names.
+**Architecture:** New `mu-scope` skill produces a Use Case Set artifact consumed by all downstream stages. mu-reviewer gains a `review-coverage` mode. Existing skills get minimal modifications to carry UC-IDs. Mode names change from letters to descriptive names.
 
 **Tech Stack:** Markdown (skill/agent definitions), JSON (plugin config)
 
@@ -18,19 +18,19 @@
 
 | File | Responsibility |
 |------|---------------|
-| `skills/craft-scope/SKILL.md` | New skill: use case elicitation, conflict detection, Quick Probe |
-| `knowledge/templates/scope.md` | Use Case Set template (referenced by craft-scope via `@`) |
+| `skills/mu-scope/SKILL.md` | New skill: use case elicitation, conflict detection, Quick Probe |
+| `knowledge/templates/scope.md` | Use Case Set template (referenced by mu-scope via `@`) |
 
 ### Files to modify
 
 | File | Change |
 |------|--------|
-| `agents/craft-reviewer.md` | Add review-coverage mode, rename Mode A/B/C to descriptive names |
-| `skills/craft-design/SKILL.md` | Add scope artifact gate, narrow clarifying questions, add Requirements Reference |
-| `skills/craft-plan/SKILL.md` | Add `Covers: UC-xxx` to task structure |
-| `agents/craft-coder.md` | Add Test Traceability section |
-| `skills/craft-code/SKILL.md` | Add traceability guideline to TDD section |
-| `skills/craft-review/SKILL.md` | Add review-coverage dispatch step |
+| `agents/mu-reviewer.md` | Add review-coverage mode, rename Mode A/B/C to descriptive names |
+| `skills/mu-design/SKILL.md` | Add scope artifact gate, narrow clarifying questions, add Requirements Reference |
+| `skills/mu-plan/SKILL.md` | Add `Covers: UC-xxx` to task structure |
+| `agents/mu-coder.md` | Add Test Traceability section |
+| `skills/mu-code/SKILL.md` | Add traceability guideline to TDD section |
+| `skills/mu-review/SKILL.md` | Add review-coverage dispatch step |
 | `rules/bootstrap.md` | Update skill priority, add scope to decision flow |
 | `docs/architecture.md` | Update pipeline, skill table, agent descriptions |
 | `docs/architecture_cn.md` | Same updates in Chinese |
@@ -39,8 +39,8 @@
 
 ### Files unchanged
 
-- `skills/craft-debug/SKILL.md`
-- `skills/craft-write-skill/SKILL.md`
+- `skills/mu-debug/SKILL.md`
+- `skills/mu-write-skill/SKILL.md`
 - `knowledge/languages/*`
 
 ---
@@ -118,39 +118,39 @@ Expected: Shows `# Scope: <feature-name>` header
 
 ```bash
 git add knowledge/templates/scope.md
-git commit -m "feat: add Use Case Set template for craft-scope"
+git commit -m "feat: add Use Case Set template for mu-scope"
 ```
 
 ---
 
-### Task 2: Create craft-scope skill
+### Task 2: Create mu-scope skill
 
 **Covers:** Component 1 from design spec — the core new skill
 
 **Files:**
-- Create: `skills/craft-scope/SKILL.md`
+- Create: `skills/mu-scope/SKILL.md`
 
-**Reference:** Read current `skills/craft-design/SKILL.md` for style/structure patterns. Read design spec Component 1 and Knowledge Migration Matrix.
+**Reference:** Read current `skills/mu-design/SKILL.md` for style/structure patterns. Read design spec Component 1 and Knowledge Migration Matrix.
 
 - [ ] **Step 1: Create skill directory**
 
 ```bash
-mkdir -p skills/craft-scope
+mkdir -p skills/mu-scope
 ```
 
-- [ ] **Step 2: Write craft-scope SKILL.md**
+- [ ] **Step 2: Write mu-scope SKILL.md**
 
 The skill must include:
 1. YAML frontmatter (name, description)
-2. Hard gate: terminal state is invoke craft-design
-3. Anti-pattern section (migrated from craft-design: "too simple to need scoping")
+2. Hard gate: terminal state is invoke mu-design
+3. Anti-pattern section (migrated from mu-design: "too simple to need scoping")
 4. Checklist with all 5 phases
 5. Phase 1: Quick Probe (inline, checks table, skip for new projects)
 6. Phase 2: Depth Decision (confirm with user)
 7. Phase 3: Use Case Elicitation (happy → edge → error, one category at a time)
 8. Phase 4: Conflict Detection (cross-check, mark, resolve)
 9. Phase 5: Output (write to docs/scope/, user confirms)
-10. Methodology migrated from craft-design:
+10. Methodology migrated from mu-design:
     - One question at a time, multiple choice preferred
     - Scope assessment (multi-subsystem → decompose into sub-projects)
     - Focus on purpose, constraints, success criteria
@@ -160,22 +160,22 @@ The skill must include:
 12. Conflict format: `⚠️ CONFLICT: UC-X vs UC-Y`
 13. Template reference: `@../../knowledge/templates/scope.md`
 14. Key principles section
-15. Process flow diagram (dot format, matching craft-design style)
+15. Process flow diagram (dot format, matching mu-design style)
 
 ```markdown
 ---
-name: craft-scope
-description: "Use before craft-design to scope work — enumerate use cases, detect conflicts, assess impact on existing code."
+name: mu-scope
+description: "Use before mu-design to scope work — enumerate use cases, detect conflicts, assess impact on existing code."
 ---
 
 # Scope
 
-Scope work by enumerating use cases, detecting conflicts, and assessing impact on existing code. Produces a Use Case Set that feeds into craft-design.
+Scope work by enumerating use cases, detecting conflicts, and assessing impact on existing code. Produces a Use Case Set that feeds into mu-design.
 
 Start by probing the codebase for impact, then work with the user to exhaust scenarios and resolve conflicts.
 
 <HARD-GATE>
-Do NOT invoke craft-design or any implementation skill until you have a complete Use Case Set approved by the user. This applies to EVERY task regardless of perceived simplicity.
+Do NOT invoke mu-design or any implementation skill until you have a complete Use Case Set approved by the user. This applies to EVERY task regardless of perceived simplicity.
 </HARD-GATE>
 
 ## Anti-Pattern: "This Is Too Simple To Need Scoping"
@@ -191,7 +191,7 @@ You MUST create a task for each of these items and complete them in order:
 3. **Use case elicitation** — enumerate happy paths → edge cases → error cases
 4. **Conflict detection** — cross-check all use cases, resolve with user
 5. **Write scope artifact** — save to `docs/scope/YYYY-MM-DD-<name>.md`, user confirms
-6. **Transition to design** — invoke craft-design skill with scope file path
+6. **Transition to design** — invoke mu-design skill with scope file path
 
 ## Process Flow
 
@@ -211,7 +211,7 @@ digraph craft_scope {
     "User resolves conflicts" [shape=box];
     "Write scope artifact" [shape=box];
     "User approves scope?" [shape=diamond];
-    "Invoke craft-design" [shape=doublecircle];
+    "Invoke mu-design" [shape=doublecircle];
 
     "Quick Probe\n(inline, automatic)" -> "New/empty project?";
     "New/empty project?" -> "Skip probe" [label="yes"];
@@ -230,11 +230,11 @@ digraph craft_scope {
     "User resolves conflicts" -> "Write scope artifact";
     "Write scope artifact" -> "User approves scope?";
     "User approves scope?" -> "Write scope artifact" [label="changes requested"];
-    "User approves scope?" -> "Invoke craft-design" [label="approved"];
+    "User approves scope?" -> "Invoke mu-design" [label="approved"];
 }
 ```
 
-**The terminal state is invoking craft-design.** Do NOT invoke any other skill. The ONLY skill you invoke after craft-scope is craft-design.
+**The terminal state is invoking mu-design.** Do NOT invoke any other skill. The ONLY skill you invoke after mu-scope is mu-design.
 
 ## Phase 1: Quick Probe
 
@@ -275,7 +275,7 @@ Present the probe results and recommend a depth level. The user confirms or over
 
 Work through scenarios with the user, one category at a time.
 
-**Methodology (migrated from craft-design):**
+**Methodology (migrated from mu-design):**
 - Ask one question at a time — do not overwhelm with multiple questions
 - Prefer multiple choice when possible
 - Focus on understanding: purpose, constraints, success criteria
@@ -340,61 +340,61 @@ Wait for confirmation.
 
 - **Invoked by:** bootstrap rule (highest-priority process skill)
 - **Produces:** Use Case Set artifact at `docs/scope/YYYY-MM-DD-<name>.md`
-- **Consumed by:** craft-design (reads scope, designs to cover all UCs)
-- **Terminal state:** invoke craft-design
+- **Consumed by:** mu-design (reads scope, designs to cover all UCs)
+- **Terminal state:** invoke mu-design
 - **Template:** @../../knowledge/templates/scope.md
 ```
 
 - [ ] **Step 3: Verify the skill file**
 
-Run: `head -5 skills/craft-scope/SKILL.md`
-Expected: Shows YAML frontmatter with `name: craft-scope`
+Run: `head -5 skills/mu-scope/SKILL.md`
+Expected: Shows YAML frontmatter with `name: mu-scope`
 
-Run: `grep -c "HARD-GATE" skills/craft-scope/SKILL.md`
+Run: `grep -c "HARD-GATE" skills/mu-scope/SKILL.md`
 Expected: 2 (opening and closing tags)
 
-Run: `grep "craft-design" skills/craft-scope/SKILL.md | head -3`
-Expected: References to invoking craft-design as terminal state
+Run: `grep "mu-design" skills/mu-scope/SKILL.md | head -3`
+Expected: References to invoking mu-design as terminal state
 
 - [ ] **Step 4: Verify knowledge migration**
 
 Check that each migrated item from the Knowledge Migration Matrix is present:
 
-Run: `grep -i "one question at a time" skills/craft-scope/SKILL.md`
-Expected: Found (migrated from craft-design)
+Run: `grep -i "one question at a time" skills/mu-scope/SKILL.md`
+Expected: Found (migrated from mu-design)
 
-Run: `grep -i "multiple choice" skills/craft-scope/SKILL.md`
-Expected: Found (migrated from craft-design)
+Run: `grep -i "multiple choice" skills/mu-scope/SKILL.md`
+Expected: Found (migrated from mu-design)
 
-Run: `grep -i "sub-project\|subsystem\|decompose" skills/craft-scope/SKILL.md`
-Expected: Found (scope assessment migrated from craft-design)
+Run: `grep -i "sub-project\|subsystem\|decompose" skills/mu-scope/SKILL.md`
+Expected: Found (scope assessment migrated from mu-design)
 
-Run: `grep -i "purpose.*constraint\|constraints.*success" skills/craft-scope/SKILL.md`
+Run: `grep -i "purpose.*constraint\|constraints.*success" skills/mu-scope/SKILL.md`
 Expected: Found (focus on purpose/constraints/success criteria)
 
-Run: `grep -i "YAGNI" skills/craft-scope/SKILL.md`
+Run: `grep -i "YAGNI" skills/mu-scope/SKILL.md`
 Expected: Found
 
-Run: `grep -i "too simple" skills/craft-scope/SKILL.md`
-Expected: Found (anti-pattern migrated from craft-design)
+Run: `grep -i "too simple" skills/mu-scope/SKILL.md`
+Expected: Found (anti-pattern migrated from mu-design)
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add skills/craft-scope/SKILL.md
-git commit -m "feat: add craft-scope skill for use case elicitation and conflict detection"
+git add skills/mu-scope/SKILL.md
+git commit -m "feat: add mu-scope skill for use case elicitation and conflict detection"
 ```
 
 ---
 
-### Task 3: Modify craft-reviewer — add review-coverage mode and rename modes
+### Task 3: Modify mu-reviewer — add review-coverage mode and rename modes
 
 **Covers:** Component 2 from design spec + Design Decision 3
 
 **Files:**
-- Modify: `agents/craft-reviewer.md`
+- Modify: `agents/mu-reviewer.md`
 
-**Reference:** Read current `agents/craft-reviewer.md` for structure. Read design spec Component 2.
+**Reference:** Read current `agents/mu-reviewer.md` for structure. Read design spec Component 2.
 
 - [ ] **Step 1: Rename existing modes from letters to descriptive names**
 
@@ -464,34 +464,34 @@ In the `review-design` section, add to the checklist table:
 
 - [ ] **Step 4: Verify changes**
 
-Run: `grep "review-design\|review-code\|review-compliance\|review-coverage" agents/craft-reviewer.md`
+Run: `grep "review-design\|review-code\|review-compliance\|review-coverage" agents/mu-reviewer.md`
 Expected: All four mode names present, no "Mode A/B/C" remaining
 
-Run: `grep -c "Mode [ABC]" agents/craft-reviewer.md`
+Run: `grep -c "Mode [ABC]" agents/mu-reviewer.md`
 Expected: 0 (all letter modes replaced)
 
-Run: `grep "Four-mode" agents/craft-reviewer.md`
+Run: `grep "Four-mode" agents/mu-reviewer.md`
 Expected: Found in description
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add agents/craft-reviewer.md
+git add agents/mu-reviewer.md
 git commit -m "feat: add review-coverage mode, rename reviewer modes to descriptive names"
 ```
 
 ---
 
-### Task 4: Modify craft-design — add scope gate and narrow responsibilities
+### Task 4: Modify mu-design — add scope gate and narrow responsibilities
 
 **Covers:** Component 3 from design spec + Knowledge Migration Matrix
 
 **Files:**
-- Modify: `skills/craft-design/SKILL.md`
+- Modify: `skills/mu-design/SKILL.md`
 
 **Reference:** Read design spec Component 3 and Knowledge Migration Matrix carefully. Every section of the current SKILL.md must be accounted for.
 
-**CRITICAL:** Before making changes, read the entire current `skills/craft-design/SKILL.md` and verify against the Knowledge Migration Matrix that every piece of content is either retained, migrated (already in craft-scope), or explicitly removed with justification.
+**CRITICAL:** Before making changes, read the entire current `skills/mu-design/SKILL.md` and verify against the Knowledge Migration Matrix that every piece of content is either retained, migrated (already in mu-scope), or explicitly removed with justification.
 
 - [ ] **Step 1: Add scope artifact hard gate**
 
@@ -499,7 +499,7 @@ The current file has a `<HARD-GATE>...</HARD-GATE>` block about not implementing
 
 ```markdown
 <HARD-GATE>
-craft-design requires a scope artifact (docs/scope/*.md) as input. If no scope artifact exists, invoke craft-scope first. Do NOT proceed with design without a scope artifact.
+mu-design requires a scope artifact (docs/scope/*.md) as input. If no scope artifact exists, invoke mu-scope first. Do NOT proceed with design without a scope artifact.
 </HARD-GATE>
 ```
 
@@ -516,9 +516,9 @@ Replace the current checklist with:
 6. **Propose 2-3 approaches** — with trade-offs, your recommendation, impact on existing architecture, and **UC coverage per approach**
 7. **Present design** — in sections, get user approval after each section
 8. **Write design doc** — save to project's docs directory, **include Requirements Reference field**, commit
-9. **Spec review loop** — dispatch craft-reviewer review-design mode (max 3 iterations)
+9. **Spec review loop** — dispatch mu-reviewer review-design mode (max 3 iterations)
 10. **User reviews written spec**
-11. **Transition to implementation** — invoke craft-plan skill
+11. **Transition to implementation** — invoke mu-plan skill
 ```
 
 - [ ] **Step 3: Add Requirements Reference to design doc format**
@@ -549,18 +549,18 @@ In "The Process" → "Understanding the idea" section, add:
 - The use cases from scope are your design constraints — your design must cover all of them
 ```
 
-- [ ] **Step 5: Remove content migrated to craft-scope**
+- [ ] **Step 5: Remove content migrated to mu-scope**
 
-Remove or update these sections that are now craft-scope's responsibility:
-- The "assess scope" paragraph about multi-subsystem decomposition — add a note: "Scope decomposition is handled by craft-scope. If the scope covers multiple subsystems, craft-scope should have decomposed it before reaching craft-design."
+Remove or update these sections that are now mu-scope's responsibility:
+- The "assess scope" paragraph about multi-subsystem decomposition — add a note: "Scope decomposition is handled by mu-scope. If the scope covers multiple subsystems, mu-scope should have decomposed it before reaching mu-design."
 - The paragraph about "Focus on understanding: purpose, constraints, success criteria" — narrow to: "Focus on understanding: technical approach, integration constraints, compatibility requirements"
 
-**DO NOT delete content silently.** For each removal, verify the equivalent exists in `skills/craft-scope/SKILL.md`.
+**DO NOT delete content silently.** For each removal, verify the equivalent exists in `skills/mu-scope/SKILL.md`.
 
 - [ ] **Step 6: Update spec review dispatch**
 
-Change: `dispatch craft-reviewer subagent (Mode A: Design Document Review)`
-To: `dispatch craft-reviewer subagent (review-design mode)`
+Change: `dispatch mu-reviewer subagent (Mode A: Design Document Review)`
+To: `dispatch mu-reviewer subagent (review-design mode)`
 
 - [ ] **Step 7: Update process flow diagram**
 
@@ -568,33 +568,33 @@ Update the dot diagram to start with "Read scope artifact" instead of "Explore p
 
 - [ ] **Step 8: Verify changes**
 
-Run: `grep "scope artifact\|scope.*gate\|Requirements Reference" skills/craft-design/SKILL.md`
+Run: `grep "scope artifact\|scope.*gate\|Requirements Reference" skills/mu-design/SKILL.md`
 Expected: Multiple hits — gate, checklist step 1, documentation section
 
-Run: `grep "review-design" skills/craft-design/SKILL.md`
+Run: `grep "review-design" skills/mu-design/SKILL.md`
 Expected: Found (replaces "Mode A")
 
-Run: `grep -c "Mode A" skills/craft-design/SKILL.md`
+Run: `grep -c "Mode A" skills/mu-design/SKILL.md`
 Expected: 0
 
-Run: `grep "purpose.*constraints.*success criteria" skills/craft-design/SKILL.md`
+Run: `grep "purpose.*constraints.*success criteria" skills/mu-design/SKILL.md`
 Expected: Should reference technical context, not requirements elicitation
 
 - [ ] **Step 9: Commit**
 
 ```bash
-git add skills/craft-design/SKILL.md
-git commit -m "feat: add scope artifact gate to craft-design, narrow to technical design only"
+git add skills/mu-design/SKILL.md
+git commit -m "feat: add scope artifact gate to mu-design, narrow to technical design only"
 ```
 
 ---
 
-### Task 5: Modify craft-plan — add UC-ID per task
+### Task 5: Modify mu-plan — add UC-ID per task
 
 **Covers:** Component 4 from design spec
 
 **Files:**
-- Modify: `skills/craft-plan/SKILL.md`
+- Modify: `skills/mu-plan/SKILL.md`
 
 - [ ] **Step 1: Add Covers field to task structure**
 
@@ -619,24 +619,24 @@ In the "Remember" section, add:
 
 - [ ] **Step 3: Verify changes**
 
-Run: `grep "Covers.*UC" skills/craft-plan/SKILL.md`
+Run: `grep "Covers.*UC" skills/mu-plan/SKILL.md`
 Expected: Found in task structure and remember section
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add skills/craft-plan/SKILL.md
+git add skills/mu-plan/SKILL.md
 git commit -m "feat: add UC-ID traceability to plan task structure"
 ```
 
 ---
 
-### Task 6: Modify craft-coder — add test traceability section
+### Task 6: Modify mu-coder — add test traceability section
 
 **Covers:** Component 5 from design spec (agent side)
 
 **Files:**
-- Modify: `agents/craft-coder.md`
+- Modify: `agents/mu-coder.md`
 
 - [ ] **Step 1: Add Test Traceability section**
 
@@ -667,24 +667,24 @@ If the task has no `Covers:` field, write tests normally without UC-ID annotatio
 
 - [ ] **Step 2: Verify changes**
 
-Run: `grep "Test Traceability\|Covers.*UC" agents/craft-coder.md`
+Run: `grep "Test Traceability\|Covers.*UC" agents/mu-coder.md`
 Expected: Section header and UC-ID references found
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add agents/craft-coder.md
-git commit -m "feat: add test traceability guideline to craft-coder agent"
+git add agents/mu-coder.md
+git commit -m "feat: add test traceability guideline to mu-coder agent"
 ```
 
 ---
 
-### Task 7: Modify craft-code — add traceability guideline
+### Task 7: Modify mu-code — add traceability guideline
 
 **Covers:** Component 5 from design spec (skill side)
 
 **Files:**
-- Modify: `skills/craft-code/SKILL.md`
+- Modify: `skills/mu-code/SKILL.md`
 
 - [ ] **Step 1: Add traceability note to TDD section**
 
@@ -695,7 +695,7 @@ In the TDD section, after "Good Tests" table, add:
 
 When the plan includes `Covers: UC-xxx` per task, ensure the coder annotates tests with UC-ID comments. This enables the review-coverage mode to verify all use cases are implemented.
 
-The coder agent handles this automatically when given the `Covers:` field — see @../../agents/craft-coder.md Test Traceability section.
+The coder agent handles this automatically when given the `Covers:` field — see @../../agents/mu-coder.md Test Traceability section.
 ```
 
 - [ ] **Step 2: Update review-compliance references**
@@ -704,27 +704,27 @@ Replace any remaining `Mode C` references with `review-compliance` and `Mode B` 
 
 - [ ] **Step 3: Verify changes**
 
-Run: `grep "UC-ID Traceability\|review-compliance\|review-code" skills/craft-code/SKILL.md`
+Run: `grep "UC-ID Traceability\|review-compliance\|review-code" skills/mu-code/SKILL.md`
 Expected: Found
 
-Run: `grep -c "Mode [BC]" skills/craft-code/SKILL.md`
+Run: `grep -c "Mode [BC]" skills/mu-code/SKILL.md`
 Expected: 0
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add skills/craft-code/SKILL.md
-git commit -m "feat: add UC-ID traceability to craft-code, rename reviewer mode references"
+git add skills/mu-code/SKILL.md
+git commit -m "feat: add UC-ID traceability to mu-code, rename reviewer mode references"
 ```
 
 ---
 
-### Task 8: Modify craft-review — add review-coverage step
+### Task 8: Modify mu-review — add review-coverage step
 
 **Covers:** Component 6 from design spec
 
 **Files:**
-- Modify: `skills/craft-review/SKILL.md`
+- Modify: `skills/mu-review/SKILL.md`
 
 - [ ] **Step 1: Update process diagram**
 
@@ -747,7 +747,7 @@ After code quality review passes, verify all use cases from scope are covered.
 1. Read the Design Spec for this feature
 2. Find the `Requirements Reference` section → extract scope file path
 3. If no Requirements Reference found (legacy spec without scope): skip this step, log warning, continue to Verification
-4. Dispatch craft-reviewer subagent with review-coverage mode:
+4. Dispatch mu-reviewer subagent with review-coverage mode:
    - `{SCOPE_FILE_PATH}`: the scope file path from Requirements Reference
    - `{BASE_SHA}` / `{HEAD_SHA}`: git range for this feature
 
@@ -756,7 +756,7 @@ After code quality review passes, verify all use cases from scope are covered.
 ```
 All Covered → continue to Verification
 Gaps Found →
-  ├─ Missing implementation (❌) → send back to craft-code to implement
+  ├─ Missing implementation (❌) → send back to mu-code to implement
   ├─ Missing test (⚠️) → add test for the uncovered use case
   └─ Missing in scope itself → inform user (not a code problem, scope was incomplete)
 ```
@@ -780,17 +780,17 @@ Replace `Mode B` with `review-code` throughout the file.
 
 - [ ] **Step 5: Verify changes**
 
-Run: `grep "review-coverage\|Requirements Coverage\|SCOPE_FILE_PATH" skills/craft-review/SKILL.md`
+Run: `grep "review-coverage\|Requirements Coverage\|SCOPE_FILE_PATH" skills/mu-review/SKILL.md`
 Expected: All present
 
-Run: `grep -c "Mode [AB]" skills/craft-review/SKILL.md`
+Run: `grep -c "Mode [AB]" skills/mu-review/SKILL.md`
 Expected: 0
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add skills/craft-review/SKILL.md
-git commit -m "feat: add review-coverage step to craft-review pipeline"
+git add skills/mu-review/SKILL.md
+git commit -m "feat: add review-coverage step to mu-review pipeline"
 ```
 
 ---
@@ -832,7 +832,7 @@ Add to the existing red flags table:
 
 - [ ] **Step 3: Update the decision flow diagram**
 
-Update the dot diagram to include craft-scope as the first decision point for creative work.
+Update the dot diagram to include mu-scope as the first decision point for creative work.
 
 - [ ] **Step 4: Verify changes**
 
@@ -846,7 +846,7 @@ Expected: Found in red flags table
 
 ```bash
 git add rules/bootstrap.md
-git commit -m "feat: add craft-scope as highest-priority process skill in bootstrap"
+git commit -m "feat: add mu-scope as highest-priority process skill in bootstrap"
 ```
 
 ---
@@ -864,27 +864,27 @@ git commit -m "feat: add craft-scope as highest-priority process skill in bootst
 
 Changes needed:
 1. Pipeline description: `design → plan → code → review` → `scope → design → plan → code → review`
-2. Skills table: add craft-scope row, update count from 6 to 7
+2. Skills table: add mu-scope row, update count from 6 to 7
 3. Skills table: update dispatch columns to use descriptive mode names (review-design, review-code, etc.)
 4. Agents table: update from "Three-mode reviewer" to "Four-mode reviewer", update mode names
 5. Knowledge section: add `templates/scope.md` entry
-6. Chain call example: update to include `craft-scope → craft-design → craft-plan → ...`
+6. Chain call example: update to include `mu-scope → mu-design → mu-plan → ...`
 
 - [ ] **Step 2: Update architecture_cn.md**
 
 Apply the same changes in Chinese:
 1. 核心管线: `scope → design → plan → code → review`
-2. Skills 表: add craft-scope row (需求分析/用例枚举/冲突检测)
+2. Skills 表: add mu-scope row (需求分析/用例枚举/冲突检测)
 3. Agent 描述: 三模式 → 四模式, 模式名改为描述性名称
 4. Knowledge: add templates/scope.md
-5. Chain call: add craft-scope
+5. Chain call: add mu-scope
 
 - [ ] **Step 3: Verify changes**
 
-Run: `grep "craft-scope" docs/architecture.md`
+Run: `grep "mu-scope" docs/architecture.md`
 Expected: Found in pipeline, skills table, chain call example
 
-Run: `grep "craft-scope" docs/architecture_cn.md`
+Run: `grep "mu-scope" docs/architecture_cn.md`
 Expected: Found
 
 Run: `grep "Four-mode\|review-design\|review-coverage" docs/architecture.md`
@@ -932,26 +932,26 @@ git commit -m "docs: update architecture docs and plugin metadata for requiremen
 Check that each stage references the correct upstream artifact:
 
 ```bash
-# craft-scope references template
-grep "@../../knowledge/templates/scope.md" skills/craft-scope/SKILL.md
+# mu-scope references template
+grep "@../../knowledge/templates/scope.md" skills/mu-scope/SKILL.md
 
-# craft-design references scope artifact
-grep "docs/scope/" skills/craft-design/SKILL.md
+# mu-design references scope artifact
+grep "docs/scope/" skills/mu-design/SKILL.md
 
-# craft-plan references UC-IDs
-grep "Covers.*UC" skills/craft-plan/SKILL.md
+# mu-plan references UC-IDs
+grep "Covers.*UC" skills/mu-plan/SKILL.md
 
-# craft-coder references UC-IDs
-grep "Covers.*UC" agents/craft-coder.md
+# mu-coder references UC-IDs
+grep "Covers.*UC" agents/mu-coder.md
 
-# craft-review references review-coverage
-grep "review-coverage" skills/craft-review/SKILL.md
+# mu-review references review-coverage
+grep "review-coverage" skills/mu-review/SKILL.md
 
-# craft-reviewer has review-coverage mode
-grep "review-coverage" agents/craft-reviewer.md
+# mu-reviewer has review-coverage mode
+grep "review-coverage" agents/mu-reviewer.md
 
-# bootstrap references craft-scope
-grep "craft-scope\|scope" rules/bootstrap.md
+# bootstrap references mu-scope
+grep "mu-scope\|scope" rules/bootstrap.md
 ```
 
 Expected: All commands return matches.
@@ -967,15 +967,15 @@ Expected: No matches (all replaced with descriptive names).
 
 - [ ] **Step 3: Verify knowledge migration completeness**
 
-Read `skills/craft-scope/SKILL.md` and verify each item from the Knowledge Migration Matrix in the design spec is present.
+Read `skills/mu-scope/SKILL.md` and verify each item from the Knowledge Migration Matrix in the design spec is present.
 
 - [ ] **Step 4: Verify plugin auto-discovery**
 
 ```bash
-ls skills/craft-scope/SKILL.md
+ls skills/mu-scope/SKILL.md
 ```
 
-Expected: File exists. Since plugin.json uses `"skills": ["./skills/"]`, craft-scope will be auto-discovered.
+Expected: File exists. Since plugin.json uses `"skills": ["./skills/"]`, mu-scope will be auto-discovered.
 
 - [ ] **Step 5: Commit verification results (if any fixes needed)**
 

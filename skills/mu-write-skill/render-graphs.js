@@ -93,8 +93,8 @@ function main() {
     console.error('  --combine    Combine all diagrams into one SVG');
     console.error('');
     console.error('Example:');
-    console.error('  ./render-graphs.js ../craft-sdd');
-    console.error('  ./render-graphs.js ../craft-sdd --combine');
+    console.error('  ./render-graphs.js ../mu-code');
+    console.error('  ./render-graphs.js ../mu-code --combine');
     process.exit(1);
   }
 

@@ -3,9 +3,9 @@
 ## Four-Layer Architecture
 
 ```
-craft-claude/
+devmuse/
 ├── rules/        "What must be followed" — always-on principles
-├── skills/       "What to do" — user-triggered workflows (/craft-xxx)
+├── skills/       "What to do" — user-triggered workflows (/mu-xxx)
 ├── agents/       "Who does it" — independent roles dispatched by skills
 └── knowledge/    "How to do it" — domain knowledge injected on demand
 ```
@@ -80,41 +80,41 @@ Core pipeline: `scope → design → plan → code → review`
 
 | Name | Role | Dispatches Agent |
 |------|------|------|
-| craft-scope | Use cases + conflict detection + impact analysis | — |
-| craft-design | Ideas → design spec via collaborative dialogue | craft-reviewer (review-design) |
-| craft-plan | Design → implementation plan | — |
-| craft-code | Plan → implementation (subagent or inline, TDD, worktree) | craft-coder, craft-reviewer (review-code + review-compliance) |
-| craft-review | Review + verify + integrate | craft-reviewer (review-code + review-coverage) |
+| mu-scope | Use cases + conflict detection + impact analysis | — |
+| mu-design | Ideas → design spec via collaborative dialogue | mu-reviewer (review-design) |
+| mu-plan | Design → implementation plan | — |
+| mu-code | Plan → implementation (subagent or inline, TDD, worktree) | mu-coder, mu-reviewer (review-code + review-compliance) |
+| mu-review | Review + verify + integrate | mu-reviewer (review-code + review-coverage) |
 
 Independent:
 
 | Name | Role | Dispatches Agent |
 |------|------|------|
-| craft-debug | Systematic root cause analysis | — |
+| mu-debug | Systematic root cause analysis | — |
 
 Meta:
 
 | Name | Role | Dispatches Agent |
 |------|------|------|
-| craft-write-skill | Create/edit skills using TDD methodology | — |
+| mu-write-skill | Create/edit skills using TDD methodology | — |
 
 ### agents/ (2)
 
 | Name | Role | Dispatched by |
 |------|------|---------|
-| craft-reviewer | Four-mode reviewer: design doc (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage) | craft-scope, craft-design, craft-code, craft-review |
-| craft-coder | Implementation specialist | craft-code |
+| mu-reviewer | Four-mode reviewer: design doc (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage) | mu-scope, mu-design, mu-code, mu-review |
+| mu-coder | Implementation specialist | mu-code |
 
 **Design decision:** 2 generic agents + knowledge injection, not N language-specific agents. Review logic is 80% universal; change once, effective globally. Adding a new language only requires a knowledge file.
 
 ### knowledge/ (4 language files)
 
-Language-specific review criteria, referenced by craft-reviewer via `@` paths in review-code mode.
+Language-specific review criteria, referenced by mu-reviewer via `@` paths in review-code mode.
 
 ```
 knowledge/
 ├── templates/
-│   └── scope.md          # Use Case Set template for craft-scope
+│   └── scope.md          # Use Case Set template for mu-scope
 ├── languages/
 │   ├── typescript.md   # Type safety, async patterns, common pitfalls
 │   ├── python.md       # Type hints, pythonic patterns, security
@@ -140,7 +140,7 @@ knowledge/
 
 - **skills → agents: one-way dispatch.** Skills orchestrate, agents execute.
 - **agents → skills: forbidden.** Agents don't trigger user-level workflows.
-- **skills → skills: chain calls allowed.** e.g. craft-scope → craft-design → craft-plan → craft-code → craft-review.
+- **skills → skills: chain calls allowed.** e.g. mu-scope → mu-design → mu-plan → mu-code → mu-review.
 - **rules guide but don't call.** bootstrap.md tells Claude when to invoke which skill.
 - **knowledge is passive.** Only referenced, never calls anything.
 
@@ -165,8 +165,8 @@ rules ──constrain──→ all layers
 {
   "version": "0.2.0",
   "agents": [
-    "./agents/craft-reviewer.md",
-    "./agents/craft-coder.md"
+    "./agents/mu-reviewer.md",
+    "./agents/mu-coder.md"
   ],
   "skills": ["./skills/"]
 }

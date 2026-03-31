@@ -1,5 +1,5 @@
 ---
-name: craft-design
+name: mu-design
 description: "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation."
 ---
 
@@ -14,7 +14,7 @@ Do NOT invoke any implementation skill, write any code, scaffold any project, or
 </HARD-GATE>
 
 <HARD-GATE>
-craft-design requires a scope artifact (docs/scope/*.md) as input. If no scope artifact exists, invoke craft-scope first. Do NOT proceed with design without a scope artifact.
+mu-design requires a scope artifact (docs/scope/*.md) as input. If no scope artifact exists, invoke mu-scope first. Do NOT proceed with design without a scope artifact.
 </HARD-GATE>
 
 ## Anti-Pattern: "This Is Too Simple To Need A Design"
@@ -33,9 +33,9 @@ You MUST create a task for each of these items and complete them in order:
 6. **Propose 2-3 approaches** — with trade-offs, your recommendation, impact on existing architecture, and **UC coverage per approach**
 7. **Present design** — in sections scaled to their complexity, get user approval after each section
 8. **Write design doc** — save to the project's docs directory (default: `docs/specs/YYYY-MM-DD-<topic>-design.md`), **include Requirements Reference field**, and commit
-9. **Spec review loop** — dispatch craft-reviewer subagent (review-design mode) with precisely crafted review context; fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
+9. **Spec review loop** — dispatch mu-reviewer subagent (review-design mode) with precisely crafted review context; fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
 10. **User reviews written spec** — ask user to review the spec file before proceeding
-11. **Transition to implementation** — invoke craft-plan skill to create implementation plan
+11. **Transition to implementation** — invoke mu-plan skill to create implementation plan
 
 ## Process Flow
 
@@ -51,10 +51,10 @@ digraph craft_design {
     "Present design sections" [shape=box];
     "User approves design?" [shape=diamond];
     "Write design doc\n(to target project docs/)" [shape=box];
-    "Spec review loop\n(dispatch craft-reviewer review-design)" [shape=box];
+    "Spec review loop\n(dispatch mu-reviewer review-design)" [shape=box];
     "Spec review passed?" [shape=diamond];
     "User reviews spec?" [shape=diamond];
-    "Invoke craft-plan skill" [shape=doublecircle];
+    "Invoke mu-plan skill" [shape=doublecircle];
 
     "Read scope artifact\n(docs/scope/*.md)" -> "Explore project context";
     "Explore project context" -> "Find architecture doc\n(README, docs/, or ask user)";
@@ -67,16 +67,16 @@ digraph craft_design {
     "Present design sections" -> "User approves design?";
     "User approves design?" -> "Present design sections" [label="no, revise"];
     "User approves design?" -> "Write design doc\n(to target project docs/)" [label="yes"];
-    "Write design doc\n(to target project docs/)" -> "Spec review loop\n(dispatch craft-reviewer review-design)";
-    "Spec review loop\n(dispatch craft-reviewer review-design)" -> "Spec review passed?";
-    "Spec review passed?" -> "Spec review loop\n(dispatch craft-reviewer review-design)" [label="issues found,\nfix and re-dispatch"];
+    "Write design doc\n(to target project docs/)" -> "Spec review loop\n(dispatch mu-reviewer review-design)";
+    "Spec review loop\n(dispatch mu-reviewer review-design)" -> "Spec review passed?";
+    "Spec review passed?" -> "Spec review loop\n(dispatch mu-reviewer review-design)" [label="issues found,\nfix and re-dispatch"];
     "Spec review passed?" -> "User reviews spec?" [label="approved"];
     "User reviews spec?" -> "Write design doc\n(to target project docs/)" [label="changes requested"];
-    "User reviews spec?" -> "Invoke craft-plan skill" [label="approved"];
+    "User reviews spec?" -> "Invoke mu-plan skill" [label="approved"];
 }
 ```
 
-**The terminal state is invoking craft-plan.** Do NOT invoke any other implementation skill. The ONLY skill you invoke after craft-design is craft-plan.
+**The terminal state is invoking mu-plan.** Do NOT invoke any other implementation skill. The ONLY skill you invoke after mu-design is mu-plan.
 
 ## The Process
 
@@ -94,7 +94,7 @@ digraph craft_design {
 - The use cases from scope are your design constraints — your design must cover all of them
 
 - Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
-- If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then design the first sub-project through the normal flow. Each sub-project gets its own spec → plan → implementation cycle. Scope decomposition is handled by craft-scope. If the scope covers multiple subsystems, craft-scope should have decomposed it before reaching craft-design.
+- If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then design the first sub-project through the normal flow. Each sub-project gets its own spec → plan → implementation cycle. Scope decomposition is handled by mu-scope. If the scope covers multiple subsystems, mu-scope should have decomposed it before reaching mu-design.
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
 - Prefer multiple choice questions when possible, but open-ended is fine too
 - Only one question per message - if a topic needs more exploration, break it into multiple questions
@@ -151,7 +151,7 @@ This field establishes the traceability link from design back to scope.
 **Spec Review Loop:**
 After writing the spec document:
 
-1. Dispatch craft-reviewer subagent with review-design mode — see @../../agents/craft-reviewer.md
+1. Dispatch mu-reviewer subagent with review-design mode — see @../../agents/mu-reviewer.md
 2. If Issues Found: fix, re-dispatch, repeat until Approved
 3. If loop exceeds 3 iterations, surface to human for guidance
 
@@ -164,8 +164,8 @@ Wait for the user's response. If they request changes, make them and re-run the 
 
 **Implementation:**
 
-- Invoke the craft-plan skill to create a detailed implementation plan
-- Do NOT invoke any other skill. craft-plan is the next step.
+- Invoke the mu-plan skill to create a detailed implementation plan
+- Do NOT invoke any other skill. mu-plan is the next step.
 
 ## Key Principles
 
@@ -193,4 +193,4 @@ A browser-based companion for showing mockups, diagrams, and visual options duri
 A question about a UI topic is not automatically a visual question. "What does personality mean in this context?" is a conceptual question — use the terminal. "Which wizard layout works better?" is a visual question — use the browser.
 
 If they agree to the companion, read the detailed guide before proceeding:
-`skills/craft-design/visual-companion.md`
+`skills/mu-design/visual-companion.md`

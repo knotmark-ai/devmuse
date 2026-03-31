@@ -1,6 +1,6 @@
 # Academic Test: Systematic Debugging Skill
 
-You have access to the systematic debugging skill at skills/debugging/craft-debug
+You have access to the systematic debugging skill at skills/debugging/mu-debug
 
 Read the skill and answer these questions based SOLELY on what the skill says:
 

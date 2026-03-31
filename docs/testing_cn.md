@@ -8,7 +8,7 @@
 tests/
 ├── claude-code/
 │   ├── test-helpers.sh                    # 共享测试工具
-│   ├── test-subagent-driven-development-integration.sh  # craft-code 集成测试
+│   ├── test-subagent-driven-development-integration.sh  # mu-code 集成测试
 │   └── run-skill-tests.sh                 # 测试运行器
 ├── brainstorm-server/                     # 视觉伴侣服务器测试
 ├── explicit-skill-requests/               # 技能调用测试
@@ -29,15 +29,15 @@ cd tests/claude-code
 
 ### 前提条件
 
-- 从 **craft-claude 插件目录**运行（不是临时目录）
+- 从 **devmuse 插件目录**运行（不是临时目录）
 - `claude` 命令可用
-- 本地开发市场已启用：`~/.claude/settings.json` 中 `"craft-claude@craft-claude-dev": true`
+- 本地开发市场已启用：`~/.claude/settings.json` 中 `"devmuse@devmuse-dev": true`
 
-## 集成测试：craft-code（子 Agent 驱动模式）
+## 集成测试：mu-code（子 Agent 驱动模式）
 
 ### 测试内容
 
-验证 `craft-code` 技能（子 Agent 驱动模式）：
+验证 `mu-code` 技能（子 Agent 驱动模式）：
 
 1. **计划加载** — 开始时读取一次计划
 2. **完整任务文本** — 向子 Agent 提供完整描述
@@ -95,7 +95,7 @@ cd "$SCRIPT_DIR/../.." && timeout 1800 claude -p "$PROMPT" \
 
 # 解析会话日志验证行为
 SESSION_FILE=$(find "$HOME/.claude/projects" -name "*.jsonl" -mmin -60 | sort -r | head -1)
-grep -q '"name":"Skill".*"skill":"craft-code"' "$SESSION_FILE" && echo "[PASS]"
+grep -q '"name":"Skill".*"skill":"mu-code"' "$SESSION_FILE" && echo "[PASS]"
 ```
 
 ### 最佳实践

@@ -45,8 +45,8 @@ digraph skill_flow {
     "Creative work?" [shape=diamond];
     "Scope exists?" [shape=diamond];
     "Bug or failure?" [shape=diamond];
-    "Invoke craft-scope (1 use case: repro steps)" [shape=box];
-    "Invoke craft-scope" [shape=box];
+    "Invoke mu-scope (1 use case: repro steps)" [shape=box];
+    "Invoke mu-scope" [shape=box];
     "Invoke Skill tool" [shape=box];
     "Announce: 'Using [skill] to [purpose]'" [shape=box];
     "Has checklist?" [shape=diamond];
@@ -64,12 +64,12 @@ digraph skill_flow {
     "Might any skill apply?" -> "Respond (including clarifications)" [label="definitely not"];
     "Creative work?" -> "Scope exists?" [label="yes"];
     "Creative work?" -> "Bug or failure?" [label="no"];
-    "Scope exists?" -> "Invoke craft-scope" [label="no"];
+    "Scope exists?" -> "Invoke mu-scope" [label="no"];
     "Scope exists?" -> "Invoke Skill tool" [label="yes"];
-    "Bug or failure?" -> "Invoke craft-scope (1 use case: repro steps)" [label="yes"];
+    "Bug or failure?" -> "Invoke mu-scope (1 use case: repro steps)" [label="yes"];
     "Bug or failure?" -> "Invoke Skill tool" [label="no"];
-    "Invoke craft-scope" -> "Invoke Skill tool";
-    "Invoke craft-scope (1 use case: repro steps)" -> "Invoke Skill tool";
+    "Invoke mu-scope" -> "Invoke Skill tool";
+    "Invoke mu-scope (1 use case: repro steps)" -> "Invoke Skill tool";
     "Invoke Skill tool" -> "Announce: 'Using [skill] to [purpose]'";
     "Announce: 'Using [skill] to [purpose]'" -> "Has checklist?";
     "Has checklist?" -> "Create TodoWrite todo per item" [label="yes"];

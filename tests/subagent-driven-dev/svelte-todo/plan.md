@@ -1,6 +1,6 @@
 # Svelte Todo List - Implementation Plan
 
-Execute this plan using the `craft-claude:craft-code` skill.
+Execute this plan using the `devmuse:mu-code` skill.
 
 ## Context
 

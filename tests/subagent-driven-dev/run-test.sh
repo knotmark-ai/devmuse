@@ -4,7 +4,7 @@
 #
 # Example:
 #   ./run-test.sh go-fractals
-#   ./run-test.sh svelte-todo --plugin-dir /path/to/craft-claude
+#   ./run-test.sh svelte-todo --plugin-dir /path/to/devmuse
 
 set -e
 
@@ -43,7 +43,7 @@ fi
 
 # Create timestamped output directory
 TIMESTAMP=$(date +%s)
-OUTPUT_BASE="/tmp/craft-claude-tests/$TIMESTAMP/subagent-driven-development"
+OUTPUT_BASE="/tmp/devmuse-tests/$TIMESTAMP/subagent-driven-development"
 OUTPUT_DIR="$OUTPUT_BASE/$TEST_NAME"
 mkdir -p "$OUTPUT_DIR"
 
@@ -60,7 +60,7 @@ echo ""
 
 # Prepare the prompt
 PLAN_PATH="$OUTPUT_DIR/project/plan.md"
-PROMPT="Execute this plan using craft-claude:craft-sdd. The plan is at: $PLAN_PATH"
+PROMPT="Execute this plan using devmuse:mu-code. The plan is at: $PLAN_PATH"
 
 # Run Claude with JSON output for token tracking
 LOG_FILE="$OUTPUT_DIR/claude-output.json"

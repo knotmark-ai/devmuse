@@ -82,7 +82,7 @@ Created 4 validation tests following skills/meta/testing-skills-with-subagents:
 - Flowchart for "fix failed" decision
 
 ### Enhancement 1: TDD Reference
-- Added link to skills/testing/craft-tdd
+- Added link to skills/testing/mu-tdd
 - Note explaining TDD's "simplest code" ≠ debugging's "root cause"
 - Prevents confusion between methodologies
 
@@ -104,7 +104,7 @@ Bulletproof skill that:
 ## Usage Example
 
 When encountering a bug:
-1. Load skill: skills/debugging/craft-debug
+1. Load skill: skills/debugging/mu-debug
 2. Read overview (10 sec) - reminded of mandate
 3. Follow Phase 1 checklist - forced investigation
 4. If tempted to skip - see anti-pattern, stop

@@ -8,7 +8,7 @@ Testing skills that involve subagents, workflows, and complex interactions requi
 tests/
 ├── claude-code/
 │   ├── test-helpers.sh                    # Shared test utilities
-│   ├── test-subagent-driven-development-integration.sh  # craft-code integration
+│   ├── test-subagent-driven-development-integration.sh  # mu-code integration
 │   └── run-skill-tests.sh                 # Test runner
 ├── brainstorm-server/                     # Visual companion server tests
 ├── explicit-skill-requests/               # Skill invocation tests
@@ -29,15 +29,15 @@ cd tests/claude-code
 
 ### Requirements
 
-- Run from the **craft-claude plugin directory** (not temp directories)
+- Run from the **devmuse plugin directory** (not temp directories)
 - `claude` command available
-- Local dev marketplace enabled: `"craft-claude@craft-claude-dev": true` in `~/.claude/settings.json`
+- Local dev marketplace enabled: `"devmuse@devmuse-dev": true` in `~/.claude/settings.json`
 
-## Integration Test: craft-code (subagent-driven mode)
+## Integration Test: mu-code (subagent-driven mode)
 
 ### What It Tests
 
-Verifies `craft-code` skill (subagent-driven mode) correctly:
+Verifies `mu-code` skill (subagent-driven mode) correctly:
 
 1. **Plan Loading** — Reads plan once at beginning
 2. **Full Task Text** — Provides complete descriptions to subagents
@@ -95,7 +95,7 @@ cd "$SCRIPT_DIR/../.." && timeout 1800 claude -p "$PROMPT" \
 
 # Parse session transcript to verify behavior
 SESSION_FILE=$(find "$HOME/.claude/projects" -name "*.jsonl" -mmin -60 | sort -r | head -1)
-grep -q '"name":"Skill".*"skill":"craft-code"' "$SESSION_FILE" && echo "[PASS]"
+grep -q '"name":"Skill".*"skill":"mu-code"' "$SESSION_FILE" && echo "[PASS]"
 ```
 
 ### Best Practices

@@ -1,6 +1,6 @@
 # Visual Companion Guide
 
-Browser-based visual craft-design companion for showing mockups, diagrams, and options.
+Browser-based visual mu-design companion for showing mockups, diagrams, and options.
 
 ## When to Use
 
@@ -37,14 +37,14 @@ The server watches a directory for HTML files and serves the newest one to the b
 scripts/start-server.sh --project-dir /path/to/project
 
 # Returns: {"type":"server-started","port":52341,"url":"http://localhost:52341",
-#           "screen_dir":"/path/to/project/.craft-claude/brainstorm/12345-1706000000"}
+#           "screen_dir":"/path/to/project/.devmuse/brainstorm/12345-1706000000"}
 ```
 
 Save `screen_dir` from the response. Tell user to open the URL.
 
-**Finding connection info:** The server writes its startup JSON to `$SCREEN_DIR/.server-info`. If you launched the server in the background and didn't capture stdout, read that file to get the URL and port. When using `--project-dir`, check `<project>/.craft-claude/brainstorm/` for the session directory.
+**Finding connection info:** The server writes its startup JSON to `$SCREEN_DIR/.server-info`. If you launched the server in the background and didn't capture stdout, read that file to get the URL and port. When using `--project-dir`, check `<project>/.devmuse/brainstorm/` for the session directory.
 
-**Note:** Pass the project root as `--project-dir` so mockups persist in `.craft-claude/brainstorm/` and survive server restarts. Without it, files go to `/tmp` and get cleaned up. Remind the user to add `.craft-claude/` to `.gitignore` if it's not already there.
+**Note:** Pass the project root as `--project-dir` so mockups persist in `.devmuse/brainstorm/` and survive server restarts. Without it, files go to `/tmp` and get cleaned up. Remind the user to add `.devmuse/` to `.gitignore` if it's not already there.
 
 **Launching the server by platform:**
 
@@ -264,7 +264,7 @@ If `.events` doesn't exist, the user didn't interact with the browser — use on
 scripts/stop-server.sh $SCREEN_DIR
 ```
 
-If the session used `--project-dir`, mockup files persist in `.craft-claude/brainstorm/` for later reference. Only `/tmp` sessions get deleted on stop.
+If the session used `--project-dir`, mockup files persist in `.devmuse/brainstorm/` for later reference. Only `/tmp` sessions get deleted on stop.
 
 ## Reference
 

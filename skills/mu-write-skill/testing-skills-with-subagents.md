@@ -10,7 +10,7 @@ You run scenarios without the skill (RED - watch agent fail), write skill addres
 
 **Core principle:** If you didn't watch an agent fail without the skill, you don't know if the skill prevents the right failures.
 
-**REQUIRED BACKGROUND:** You MUST understand craft-claude:craft-code before using this skill. That skill defines the fundamental RED-GREEN-REFACTOR cycle. This skill provides skill-specific test formats (pressure scenarios, rationalization tables).
+**REQUIRED BACKGROUND:** You MUST understand devmuse:mu-code before using this skill. That skill defines the fundamental RED-GREEN-REFACTOR cycle. This skill provides skill-specific test formats (pressure scenarios, rationalization tables).
 
 **Complete worked example:** See examples/CLAUDE_MD_TESTING.md for a full test campaign testing CLAUDE.md documentation variants.
 
@@ -139,7 +139,7 @@ Forces explicit choice.
 
 **Best tests combine 3+ pressures.**
 
-**Why this works:** See persuasion-principles.md (in craft-write-skill directory) for research on how authority, scarcity, and commitment principles increase compliance pressure.
+**Why this works:** See persuasion-principles.md (in mu-write-skill directory) for research on how authority, scarcity, and commitment principles increase compliance pressure.
 
 ### Key Elements of Good Scenarios
 
