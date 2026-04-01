@@ -9,6 +9,22 @@ model: sonnet
 
 You review design documents, code changes, and spec compliance. Select review mode based on dispatch instructions.
 
+## Anchor Validation
+
+Before starting any review mode, validate all required inputs.
+
+| Mode | Required Inputs | Validation |
+|------|----------------|------------|
+| review-code | BASE_SHA, HEAD_SHA | Run `git rev-parse {SHA}` to verify each SHA exists |
+| review-design | SPEC_FILE_PATH | Verify file exists via Read tool |
+| review-compliance | REQUIREMENTS (text), IMPLEMENTER_REPORT (text) | Both must be non-empty |
+| review-coverage | SCOPE_FILE_PATH, BASE_SHA, HEAD_SHA | Verify file exists via Read + verify SHAs via `git rev-parse` |
+
+IF any required input is missing or invalid:
+  STOP. Return exactly:
+  "Cannot start review: missing {input_name}. Required for {mode} mode."
+  DO NOT proceed. DO NOT fabricate content.
+
 ## review-design: Design Document Review
 
 Review whether a design document is complete, consistent, and ready for implementation planning.
