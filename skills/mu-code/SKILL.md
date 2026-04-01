@@ -963,6 +963,9 @@ Two-stage review after each task ensures both correctness and quality.
 
 ### Stage 1: Spec Compliance Review
 
+**Before dispatching:** verify BASE_SHA and HEAD_SHA are set (`git rev-parse`).
+If reviewer returns files in "NOT reviewed" list, re-dispatch for remaining files.
+
 Dispatch reviewer using @../../agents/mu-reviewer.md review-compliance:
 - Does the implementation match the task specification?
 - Missing requirements?
@@ -973,6 +976,9 @@ Dispatch reviewer using @../../agents/mu-reviewer.md review-compliance:
 **Must pass before Stage 2.** Starting code quality review before spec compliance is approved is wrong order.
 
 ### Stage 2: Code Quality Review
+
+**Before dispatching:** verify BASE_SHA and HEAD_SHA are set (`git rev-parse`).
+If reviewer returns files in "NOT reviewed" list, re-dispatch for remaining files.
 
 Dispatch reviewer using @../../agents/mu-reviewer.md review-code:
 - Code quality, readability, maintainability
