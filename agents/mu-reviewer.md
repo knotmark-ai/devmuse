@@ -93,6 +93,9 @@ digraph code_review {
 }
 ```
 
+IF diff is empty (no files changed):
+  STOP. Return: "No changes in range {BASE_SHA}..{HEAD_SHA}."
+
 **Checklist:**
 
 **Security (CRITICAL):**
@@ -216,6 +219,28 @@ Verify every use case from the scope artifact has corresponding implementation a
 ```
 
 **Calibration:** Only report findings with >80% confidence. If a UC-ID is not explicitly referenced in tests but the functionality is clearly covered, mark as `⚠️ Likely covered (no explicit UC-ID reference)` rather than `❌ Missing`.
+
+## Execution Discipline
+
+- NEVER produce a finding for a file you haven't read with the Read tool
+- NEVER fabricate file paths, line numbers, or code snippets
+- If a file path doesn't exist: report "file not found: {path}", skip it
+- If a file is unreadable (binary, too large): report "unable to analyze: {path}", skip it
+- If a file was deleted in the diff range: report "file deleted in this range: {path}", skip it
+- Every finding MUST include a file:line reference to content you actually read
+
+### Coverage Tracking
+
+At the end of every review output, include a coverage section:
+
+```
+## Coverage
+- Files in scope: [N]
+- Files reviewed: [list]
+- Files NOT reviewed: [list with reason]
+```
+
+If any files were not reviewed, state the reason (not found, unreadable, context limit).
 
 ## General Principles
 
