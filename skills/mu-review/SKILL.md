@@ -67,11 +67,26 @@ Use Task tool with devmuse:mu-reviewer type, fill template at @../../agents/mu-r
 - `{HEAD_SHA}` - Ending commit
 - `{DESCRIPTION}` - Brief summary
 
-**3. Act on feedback by severity:**
+**3. Validate inputs before dispatch:**
+
+BEFORE dispatching mu-reviewer:
+  - review-code: verify BASE_SHA and HEAD_SHA are valid (`git rev-parse {SHA}`)
+  - review-design: verify spec file path exists (`Read` the file)
+  - review-coverage: verify scope file exists + SHAs valid
+  IF any input invalid: warn user, do NOT dispatch.
+
+**4. Act on feedback by severity:**
 - Fix Critical issues immediately
 - Fix Important issues before proceeding
 - Note Minor issues for later
 - Push back if reviewer is wrong (with reasoning)
+
+**5. Handle incomplete coverage:**
+
+IF reviewer output contains files in "NOT reviewed" list:
+  Re-dispatch a new reviewer instance for the remaining files only.
+  Repeat until all files are covered.
+  Merge findings from all rounds into a single report.
 
 ### Example
 
