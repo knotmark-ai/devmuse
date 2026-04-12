@@ -1,37 +1,6 @@
 # Architecture Assessment
 
-**When to use:** During mu-scope Quick Probe (coarse assessment) and mu-design approach proposal (detailed assessment). Also referenced by mu-reviewer review-design mode.
-
-## Purpose
-
-Understand the current architecture before proposing changes. Map the proposed work onto the architecture to surface cross-boundary impacts, new components, and interface changes early — before they become expensive surprises during implementation.
-
-## Two-Phase Assessment
-
-### Phase 1: Coarse (mu-scope Quick Probe)
-
-Quick, 2-minute assessment. Answer three questions:
-
-1. **What is the current architecture?** — Read architecture doc (README, ARCHITECTURE.md, docs/). If none exists, sketch from codebase structure.
-2. **Which layers/components does this work touch?** — Map the proposed change onto the architecture. List affected components.
-3. **Does this cross architectural boundaries?** — Does data need to flow between components that don't currently communicate? Does a new component need to be introduced?
-
-Output as part of Quick Probe results:
-```
-Architecture impact:
-- Components affected: [list]
-- Boundaries crossed: [yes/no, which ones]
-- New components needed: [yes/no, what]
-- Architecture doc needs update: [yes/no]
-```
-
-### Phase 2: Detailed (mu-design)
-
-After approach selection, before writing the design spec. Produce:
-
-1. **Current architecture diagram** — showing the relevant portion of the system
-2. **Proposed change overlay** — mark what's added (➕), modified (✏️), or removed (➖)
-3. **Data flow for new/changed paths** — how data moves through the modified architecture
+**When to use:** Referenced by mu-scope (Quick Probe) and mu-design (approach proposal) for selecting the right diagram type and level of detail. Also referenced by mu-reviewer review-design mode.
 
 ## Diagram Type by Project Type
 
@@ -116,17 +85,21 @@ graph LR
 
 **When to include:** When the change introduces or modifies a data processing path.
 
+## Change Overlay Notation
+
+When showing proposed changes on an existing architecture diagram:
+- ➕ New component/connection
+- ✏️ Modified component/connection
+- ➖ Removed component/connection
+
 ## Diagram Format
 
 - **Preferred:** Mermaid (renders natively on GitHub, in IDEs, and in design docs)
 - **Fallback:** ASCII art (when working in contexts without Mermaid rendering)
 - **Rule:** Diagrams live in the design spec, not in a separate file. They are part of the design, not standalone artifacts.
 
-## When to Skip
+## When to Skip Detailed Diagrams
 
 - Bug fixes that don't change component boundaries
-- Config changes
-- Documentation-only changes
-- Test-only changes
-
-**Signal:** If Quick Probe Phase 1 shows "Components affected: 1, Boundaries crossed: no, New components: no" → skip the detailed architecture diagram in mu-design. A brief text description suffices.
+- Config changes, documentation-only changes, test-only changes
+- Quick Probe shows: 1 component affected, no boundaries crossed, no new components → brief text description suffices

@@ -9,6 +9,36 @@ Validate the premise before investing in scoping and design. Uses forcing questi
 
 Independent of the main pipeline. Can be invoked standalone via `/mu-premise`, or mu-scope will inline a lightweight version during Quick Probe if no premise artifact exists.
 
+## Process Flow
+
+```dot
+digraph mu_premise {
+    "Load premise-check knowledge" [shape=box];
+    "Detect context:\ngreenfield vs existing?" [shape=diamond];
+    "Frame: Should we build this?" [shape=box];
+    "Frame: Is this change\nworth the disruption?" [shape=box];
+    "Ask forcing questions\n(Q1 → Q2 → Q3 → Q4)" [shape=box];
+    "Evaluate answers" [shape=diamond];
+    "Premise validated" [shape=box];
+    "Weakly validated\n(consider narrowing)" [shape=box];
+    "Not validated\n(proceeding at user request)" [shape=box];
+    "Write premise artifact\n+ commit" [shape=doublecircle];
+
+    "Load premise-check knowledge" -> "Detect context:\ngreenfield vs existing?";
+    "Detect context:\ngreenfield vs existing?" -> "Frame: Should we build this?" [label="greenfield"];
+    "Detect context:\ngreenfield vs existing?" -> "Frame: Is this change\nworth the disruption?" [label="existing"];
+    "Frame: Should we build this?" -> "Ask forcing questions\n(Q1 → Q2 → Q3 → Q4)";
+    "Frame: Is this change\nworth the disruption?" -> "Ask forcing questions\n(Q1 → Q2 → Q3 → Q4)";
+    "Ask forcing questions\n(Q1 → Q2 → Q3 → Q4)" -> "Evaluate answers";
+    "Evaluate answers" -> "Premise validated" [label="3+ strong"];
+    "Evaluate answers" -> "Weakly validated\n(consider narrowing)" [label="2+ weak"];
+    "Evaluate answers" -> "Not validated\n(proceeding at user request)" [label="no useful answers\nafter 3 rounds"];
+    "Premise validated" -> "Write premise artifact\n+ commit";
+    "Weakly validated\n(consider narrowing)" -> "Write premise artifact\n+ commit";
+    "Not validated\n(proceeding at user request)" -> "Write premise artifact\n+ commit";
+}
+```
+
 ## Process
 
 1. **Load knowledge:** Read @../../knowledge/principles/premise-check.md

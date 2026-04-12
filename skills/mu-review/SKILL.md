@@ -679,4 +679,5 @@ git worktree remove <worktree-path>
 - Called by **mu-code** after implementation completes
 - Also independently triggerable for ad-hoc review
 - Agent reference: @../../agents/mu-reviewer.md
+- When reviewing refactoring or code removal, apply @../../knowledge/principles/chestertons-fence.md
 - Worktree cleanup handled in Step 5: Finish
