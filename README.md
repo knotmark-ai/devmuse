@@ -46,6 +46,11 @@ scope → design → plan → code → review
 
 5. **mu-review** — Activates when implementation completes. Dispatches mu-reviewer for code quality review and requirements coverage check (review-coverage), handles feedback with technical rigor, verifies with fresh evidence, then finishes (merge/PR/keep/discard).
 
+**Pipeline-external skills** (independent of the main pipeline, like mu-debug):
+
+- **mu-premise** — Validates the premise before scoping. Invoked standalone or inlined by mu-scope.
+- **mu-retro** — Periodic retrospective gathering git metrics and capturing learnings to memory.
+
 **The agent checks for relevant skills before any task.** Mandatory workflows, not suggestions.
 
 ## Architecture
@@ -58,7 +63,7 @@ devmuse/
 └── knowledge/    Domain knowledge (injected on demand)
 ```
 
-### Skills (7)
+### Skills (9)
 
 | Skill | Role |
 |-------|------|
@@ -68,13 +73,15 @@ devmuse/
 | **mu-code** | Plan → implementation (subagent or inline, with TDD and worktree) |
 | **mu-review** | Review + verify + integrate (feedback handling, verification gates, coverage check, merge/PR) |
 | **mu-debug** | Systematic root cause analysis (independent of pipeline) |
+| **mu-premise** | Premise validation — forcing questions before scoping |
+| **mu-retro** | Periodic retrospective with git metrics and memory capture |
 | **mu-write-skill** | Create/edit skills using TDD methodology |
 
 ### Agents (2)
 
 | Agent | Role |
 |-------|------|
-| **mu-reviewer** | Four-mode reviewer: design doc (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage) |
+| **mu-reviewer** | Five-mode reviewer: design doc (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage), security (review-security) |
 | **mu-coder** | Implementation specialist: builds features from task specs |
 
 ### Rules (1)
@@ -83,9 +90,21 @@ devmuse/
 |------|------|
 | **bootstrap** | Skill discovery and invocation rules, priority ordering, decision flow |
 
+### Hooks
+
+| Hook | Trigger | Role |
+|------|---------|------|
+| **pipeline-gate** | Edit/Write | Enforces scope + design artifact existence before code changes. Exempts plugin self-editing. Fail-open. |
+| **destructive-guard** | Bash | Warns before destructive commands (rm -rf, git push -f, DROP TABLE, git reset --hard). Allows known-safe patterns. |
+
 ### Knowledge
 
-Language/framework-specific review criteria (Java, Go, Python, TypeScript) and templates (scope Use Case Set). Created on demand when needed.
+| Category | Purpose |
+|----------|---------|
+| **languages/** | Language-specific review criteria (Java, Go, Python, TypeScript) |
+| **templates/** | Artifact templates (scope Use Case Set) |
+| **principles/** | Thinking rubrics: inversion reflex (failure mode analysis), premise check (forcing questions) |
+| **reviews/** | Review checklists: security audit (5-phase OWASP), design audit rubric (architecture scoring) |
 
 ## Philosophy
 
@@ -130,3 +149,4 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 - Based on [Superpowers](https://github.com/obra/superpowers) by [Jesse Vincent](https://blog.fsck.com) and [Prime Radiant](https://primeradiant.com)
 - Inspired by [Everything Claude Code](https://github.com/affaan-m/everything-claude-code)
+- Security review, design audit, premise validation, and hook patterns inspired by [gstack](https://github.com/garry/gstack) by [Garry Tan](https://twitter.com/garrytan)

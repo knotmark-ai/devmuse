@@ -43,6 +43,33 @@ Use for ANY technical issue:
 - You're in a hurry (rushing guarantees rework)
 - Manager wants it fixed NOW (systematic is faster than thrashing)
 
+## Process Flow
+
+```dot
+digraph mu_debug {
+    "Phase 1:\nRoot Cause Investigation" [shape=box];
+    "Phase 2:\nPattern Analysis" [shape=box];
+    "Phase 3:\nHypothesis & Testing" [shape=box];
+    "Hypothesis confirmed?" [shape=diamond];
+    "Phase 4:\nImplementation" [shape=box];
+    "Fix works?" [shape=diamond];
+    "Fixes tried >= 3?" [shape=diamond];
+    "Question Architecture\n(discuss with human)" [shape=box style=filled fillcolor=lightyellow];
+    "Done" [shape=doublecircle];
+
+    "Phase 1:\nRoot Cause Investigation" -> "Phase 2:\nPattern Analysis";
+    "Phase 2:\nPattern Analysis" -> "Phase 3:\nHypothesis & Testing";
+    "Phase 3:\nHypothesis & Testing" -> "Hypothesis confirmed?";
+    "Hypothesis confirmed?" -> "Phase 4:\nImplementation" [label="yes"];
+    "Hypothesis confirmed?" -> "Phase 3:\nHypothesis & Testing" [label="no, new hypothesis"];
+    "Phase 4:\nImplementation" -> "Fix works?";
+    "Fix works?" -> "Done" [label="yes"];
+    "Fix works?" -> "Fixes tried >= 3?";
+    "Fixes tried >= 3?" -> "Phase 1:\nRoot Cause Investigation" [label="no, re-analyze"];
+    "Fixes tried >= 3?" -> "Question Architecture\n(discuss with human)" [label="yes, STOP"];
+}
+```
+
 ## The Four Phases
 
 You MUST complete each phase before proceeding to the next.

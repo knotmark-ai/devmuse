@@ -75,6 +75,8 @@ digraph mu_scope {
 
 Before asking the user anything, scan the codebase to understand what this change touches.
 
+**Premise check:** Before scanning the codebase, check if a premise artifact exists at `docs/premise/*.md`. If not found, run a lightweight premise check (3 questions from @../../knowledge/principles/premise-check.md — skip Q4). If the user provides strong evidence immediately, pass quickly. If the user says "just do it" after 3 rounds without substantive answers, flag "Premise not validated — proceeding at user's request" and continue.
+
 **Skip if:** The project is new (empty codebase) or user explicitly says "new project."
 
 **Checks:**
@@ -86,6 +88,9 @@ Before asking the user anything, scan the codebase to understand what this chang
 | Test coverage | Find existing tests for affected code | Safety net status |
 | Historical signals | git log for recent changes and bug fixes | Stability of affected area |
 | Interface risk | Check if change affects public API/contracts | Breaking change potential |
+| Architecture context | Read architecture doc (README, ARCHITECTURE.md, docs/); map change onto components | Which layers/boundaries are affected |
+
+**Architecture context** (see @../../knowledge/principles/architecture-assessment.md Phase 1): Read the project's architecture doc if one exists. Identify which components/layers the proposed work touches, whether it crosses architectural boundaries, and whether new components are needed. This is a coarse 2-minute assessment, not a detailed diagram — that comes in mu-design.
 
 **Output to user:**
 
@@ -94,6 +99,7 @@ Quick Probe Results:
 - Files: [list]
 - Fan-out: [N callers / M dependents]
 - Test coverage: [summary]
+- Architecture impact: [components affected, boundaries crossed, new components needed]
 - Risk: [low/medium/high]
 
 Recommendation: [quick scope (2-3 use cases) / full enumeration]
