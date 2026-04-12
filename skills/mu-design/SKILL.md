@@ -108,12 +108,19 @@ digraph mu_design {
 
 **Inversion test:** Before presenting approaches, apply the inversion reflex from @../../knowledge/principles/inversion.md. For each approach, document "what would make this approach fail?" alongside trade-offs. Present failure modes as a column in the comparison, not as a separate section.
 
+**Architecture diagram:** After the user approves the approach, produce an architecture diagram before presenting the detailed design. Follow the guidelines in @../../knowledge/principles/architecture-assessment.md Phase 2:
+
+- Choose the right diagram type for this project (C1/C2/C3/DFD — see the "Diagram Type by Project Type" table in the knowledge file)
+- Show the **current** relevant architecture, then overlay the **proposed changes** (mark additions ➕, modifications ✏️, removals ➖)
+- Use Mermaid format (renders on GitHub); fall back to ASCII if Mermaid isn't practical
+- **Skip if** the Quick Probe showed "1 component affected, no boundaries crossed, no new components" — a brief text description suffices for small changes
+
 **Presenting the design:**
 
 - Once you believe you understand what you're building, present the design
 - Scale each section to its complexity: a few sentences if straightforward, up to 200-300 words if nuanced
 - Ask after each section whether it looks right so far
-- Cover: architecture, components, data flow, error handling, testing
+- Cover: architecture (diagram already presented above), components, data flow, error handling, testing
 - Be ready to go back and clarify if something doesn't make sense
 
 **Design for isolation and clarity:**
