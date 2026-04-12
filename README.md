@@ -90,9 +90,21 @@ devmuse/
 |------|------|
 | **bootstrap** | Skill discovery and invocation rules, priority ordering, decision flow |
 
+### Hooks
+
+| Hook | Trigger | Role |
+|------|---------|------|
+| **pipeline-gate** | Edit/Write | Enforces scope + design artifact existence before code changes. Exempts plugin self-editing. Fail-open. |
+| **destructive-guard** | Bash | Warns before destructive commands (rm -rf, git push -f, DROP TABLE, git reset --hard). Allows known-safe patterns. |
+
 ### Knowledge
 
-Language/framework-specific review criteria (Java, Go, Python, TypeScript) and templates (scope Use Case Set). Created on demand when needed.
+| Category | Purpose |
+|----------|---------|
+| **languages/** | Language-specific review criteria (Java, Go, Python, TypeScript) |
+| **templates/** | Artifact templates (scope Use Case Set) |
+| **principles/** | Thinking rubrics: inversion reflex (failure mode analysis), premise check (forcing questions) |
+| **reviews/** | Review checklists: security audit (5-phase OWASP), design audit rubric (architecture scoring) |
 
 ## Philosophy
 

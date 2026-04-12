@@ -658,3 +658,21 @@ description: "Weekly or periodic retrospective — gather git metrics, review pa
 - Workflow B (partial): premise-check.md + mu-scope change
 - Workflow D: mu-premise skill
 - Workflow D: mu-retro skill
+
+---
+
+## Implementation Status
+
+**All P0 and P1 tasks completed.** Implemented on branch `feature/gstack-integration` in 12 commits.
+
+| Workflow | Status | Notes |
+|---|---|---|
+| A: PreToolUse Hooks | ✅ Complete | pipeline-gate.sh (7 tests), destructive-guard.sh (11 tests), hooks.json updated |
+| B: Knowledge + Reviewer | ✅ Complete | 4 knowledge files, review-security mode, review-design enhanced, conditional security trigger |
+| C: Knowledge Organization | ✅ Complete | principles/ and reviews/ directories, architecture.md updated |
+| D: Pipeline-External Skills | ✅ Complete | mu-premise and mu-retro skills created |
+
+**Deviations from design:**
+- pipeline-gate.sh: changed from `ls docs/scope/*.md` to `find` approach to avoid pipefail issue with non-existent directories
+- destructive-guard.sh: added escaped-quote handling (`\"` in JSON) for DROP TABLE detection
+- UC-14 (mu-debug exemption): dropped as unnecessary — bootstrap already requires scope for bug fixes
