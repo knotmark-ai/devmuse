@@ -130,6 +130,8 @@ knowledge/
 ├── templates/
 │   └── scope.md        # Use Case Set template for mu-scope
 ├── principles/         # Thinking rubrics loaded at decision points
+│   ├── architecture-assessment.md # C4 model guide + diagram type selection
+│   ├── chestertons-fence.md # Understand before changing/removing code
 │   ├── inversion.md    # Inversion reflex for approach comparison
 │   └── premise-check.md # Premise validation forcing questions
 ├── reviews/            # Review checklists for specific concerns
