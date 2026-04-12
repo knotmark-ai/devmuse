@@ -1,6 +1,6 @@
 ---
 name: mu-reviewer
-description: Four-mode review specialist: design docs (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage). Dispatched by skills with mode instructions.
+description: Five-mode review specialist: design docs (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage), security (review-security). Dispatched by skills with mode instructions.
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: sonnet
 ---
