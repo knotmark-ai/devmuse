@@ -26,6 +26,8 @@ devmuse/
 | Used by only one skill | Stay in skill directory | Locality first |
 | Injected into agents across scenarios | knowledge/ | Cross-role reuse |
 | Language/framework specific patterns | knowledge/ | Same agent, different tech stacks |
+| Thinking rubrics for decision points | knowledge/principles/ | Cross-skill reuse at design/scope time |
+| Review checklists for specific concerns | knowledge/reviews/ | Cross-mode reuse within mu-reviewer |
 
 ---
 
@@ -107,19 +109,30 @@ Meta:
 
 **Design decision:** 2 generic agents + knowledge injection, not N language-specific agents. Review logic is 80% universal; change once, effective globally. Adding a new language only requires a knowledge file.
 
-### knowledge/ (4 language files)
+### knowledge/
 
-Language-specific review criteria, referenced by mu-reviewer via `@` paths in review-code mode.
+| Category | Purpose | Referenced by |
+|---|---|---|
+| languages/ | Language-specific review criteria | mu-reviewer (review-code) |
+| templates/ | Artifact templates | mu-scope |
+| principles/ | Thinking rubrics for decision points | mu-design, mu-scope, mu-premise |
+| reviews/ | Review checklists for specific concerns | mu-reviewer (review-security, review-design) |
 
 ```
 knowledge/
-├── templates/
-│   └── scope.md          # Use Case Set template for mu-scope
 ├── languages/
 │   ├── typescript.md   # Type safety, async patterns, common pitfalls
 │   ├── python.md       # Type hints, pythonic patterns, security
 │   ├── go.md           # Error handling, concurrency, interface design
 │   └── java.md         # Null handling, concurrency, resource management
+├── templates/
+│   └── scope.md        # Use Case Set template for mu-scope
+├── principles/         # Thinking rubrics loaded at decision points
+│   ├── inversion.md    # Inversion reflex for approach comparison
+│   └── premise-check.md # Premise validation forcing questions
+├── reviews/            # Review checklists for specific concerns
+│   ├── security-checklist.md  # 5-phase security audit
+│   └── design-audit-rubric.md # Architecture audit rubric
 └── frameworks/         # (reserved) spring-boot.md, react.md, flutter.md
 ```
 
