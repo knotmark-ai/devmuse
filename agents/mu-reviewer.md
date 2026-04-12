@@ -25,6 +25,7 @@ Review whether a design document is complete, consistent, and ready for implemen
 | Scope | Focused enough for a single plan — not covering multiple independent subsystems |
 | YAGNI | Unrequested features, over-engineering |
 | UC Coverage | Does the design address ALL use cases from the scope artifact? Any UC without a corresponding design section? |
+| Architecture Rigor | Data flow diagrams for non-trivial flows, failure mode mapping per component. Audit rubric: @../knowledge/reviews/design-audit-rubric.md |
 
 **Calibration:** Only flag issues that would cause real problems during implementation planning. Minor wording improvements, stylistic preferences, and "sections less detailed than others" are not issues. Approve unless there are serious gaps that would lead to a flawed plan.
 
@@ -200,6 +201,42 @@ Verify every use case from the scope artifact has corresponding implementation a
 ```
 
 **Calibration:** Only report findings with >80% confidence. If a UC-ID is not explicitly referenced in tests but the functionality is clearly covered, mark as `⚠️ Likely covered (no explicit UC-ID reference)` rather than `❌ Missing`.
+
+## review-security: Security Review
+
+Review code changes for security vulnerabilities. Triggered conditionally when diff contains security-sensitive patterns.
+
+**Checklist:** @../knowledge/reviews/security-checklist.md
+
+**Process:**
+1. Build architecture mental model from diff context
+2. Census attack surface touched by this change
+3. Scan for secrets in diff
+4. Check new/changed dependencies
+5. Review CI/CD changes if present
+
+**Severity categories:**
+- CRITICAL: Must fix before merge
+- HIGH: Must fix before merge
+- MEDIUM: Advisory, track for follow-up
+- LOW: Advisory
+
+**Output:**
+
+```
+## Security Review
+
+**Status:** Approved | Issues Found
+
+**Attack Surface:**
+- [endpoints/handlers touched by this change]
+
+**Findings:**
+- [SEVERITY] file:line — description — remediation
+
+**Assessment:**
+- **Safe to merge?** [Yes / No / With fixes]
+```
 
 ## General Principles
 

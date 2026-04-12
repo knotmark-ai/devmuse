@@ -36,6 +36,18 @@ Dispatch mu-reviewer subagent to catch issues before they cascade. The reviewer 
 
 **Core principle:** Review early, review often.
 
+### Security Check (conditional)
+
+Before dispatching review-code, quick-scan the diff for security signals:
+
+```bash
+git diff $BASE_SHA..$HEAD_SHA | grep -ciE '(auth|password|token|cookie|session|sql|exec|eval|secret|credential|api.key|jwt|oauth|csrf|cors|helmet|bcrypt|crypto)'
+```
+
+If count > 0: dispatch mu-reviewer with **review-security** mode in addition to review-code. Run both reviews (security first, then code quality).
+
+If count = 0: skip review-security, proceed with review-code only.
+
 ### When to Request Review
 
 **Mandatory:**
