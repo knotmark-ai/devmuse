@@ -9,6 +9,30 @@ Gather quantitative git metrics and qualitative reflections for a time period. C
 
 Independent of the main pipeline. Invoke with `/mu-retro` or `/mu-retro 14d`.
 
+## Process Flow
+
+```dot
+digraph mu_retro {
+    "Parse time window\n(default: 7d)" [shape=box];
+    "Gather git data\n(parallel)" [shape=box];
+    "Zero commits?" [shape=diamond];
+    "Report: No activity" [shape=box];
+    "Generate metrics table\n+ per-author breakdown" [shape=box];
+    "Qualitative reflection\n(dialogue with user)" [shape=box];
+    "Write retro artifact\n+ commit" [shape=box];
+    "Write to Claude Code memory\n(non-obvious findings only)" [shape=doublecircle];
+
+    "Parse time window\n(default: 7d)" -> "Gather git data\n(parallel)";
+    "Gather git data\n(parallel)" -> "Zero commits?";
+    "Zero commits?" -> "Report: No activity" [label="yes"];
+    "Zero commits?" -> "Generate metrics table\n+ per-author breakdown" [label="no"];
+    "Report: No activity" -> "Qualitative reflection\n(dialogue with user)";
+    "Generate metrics table\n+ per-author breakdown" -> "Qualitative reflection\n(dialogue with user)";
+    "Qualitative reflection\n(dialogue with user)" -> "Write retro artifact\n+ commit";
+    "Write retro artifact\n+ commit" -> "Write to Claude Code memory\n(non-obvious findings only)";
+}
+```
+
 ## Process
 
 1. **Parse time window** from argument (default: 7d)
