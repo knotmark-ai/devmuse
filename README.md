@@ -149,3 +149,4 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 - Based on [Superpowers](https://github.com/obra/superpowers) by [Jesse Vincent](https://blog.fsck.com) and [Prime Radiant](https://primeradiant.com)
 - Inspired by [Everything Claude Code](https://github.com/affaan-m/everything-claude-code)
+- Security review, design audit, premise validation, and hook patterns inspired by [gstack](https://github.com/garry/gstack) by [Garry Tan](https://twitter.com/garrytan)
