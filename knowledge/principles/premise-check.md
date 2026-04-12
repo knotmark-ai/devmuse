@@ -1,5 +1,7 @@
 # Premise Check
 
+**When to use:** Standalone via /mu-premise (full 4 questions), or inline by mu-scope Quick Probe (lightweight 3 questions, skip Q4).
+
 Validate the premise before investing in scoping/design.
 
 ## Forcing Questions

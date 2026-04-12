@@ -1,5 +1,7 @@
 # Inversion Reflex
 
+**When to use:** During mu-design Step 6 (Propose 2-3 approaches). Apply to each proposed approach before presenting to the user.
+
 For every proposed approach, ask the inverse:
 
 - "How do we succeed?" → "What would make us fail?"
