@@ -46,6 +46,11 @@ scope → design → plan → code → review
 
 5. **mu-review** — Activates when implementation completes. Dispatches mu-reviewer for code quality review and requirements coverage check (review-coverage), handles feedback with technical rigor, verifies with fresh evidence, then finishes (merge/PR/keep/discard).
 
+**Pipeline-external skills** (independent of the main pipeline, like mu-debug):
+
+- **mu-premise** — Validates the premise before scoping. Invoked standalone or inlined by mu-scope.
+- **mu-retro** — Periodic retrospective gathering git metrics and capturing learnings to memory.
+
 **The agent checks for relevant skills before any task.** Mandatory workflows, not suggestions.
 
 ## Architecture
@@ -58,7 +63,7 @@ devmuse/
 └── knowledge/    Domain knowledge (injected on demand)
 ```
 
-### Skills (7)
+### Skills (9)
 
 | Skill | Role |
 |-------|------|
@@ -68,13 +73,15 @@ devmuse/
 | **mu-code** | Plan → implementation (subagent or inline, with TDD and worktree) |
 | **mu-review** | Review + verify + integrate (feedback handling, verification gates, coverage check, merge/PR) |
 | **mu-debug** | Systematic root cause analysis (independent of pipeline) |
+| **mu-premise** | Premise validation — forcing questions before scoping |
+| **mu-retro** | Periodic retrospective with git metrics and memory capture |
 | **mu-write-skill** | Create/edit skills using TDD methodology |
 
 ### Agents (2)
 
 | Agent | Role |
 |-------|------|
-| **mu-reviewer** | Four-mode reviewer: design doc (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage) |
+| **mu-reviewer** | Five-mode reviewer: design doc (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage), security (review-security) |
 | **mu-coder** | Implementation specialist: builds features from task specs |
 
 ### Rules (1)
