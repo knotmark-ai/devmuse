@@ -106,6 +106,8 @@ digraph mu_design {
 - Present options conversationally with your recommendation and reasoning
 - Lead with your recommended option and explain why
 
+**Inversion test:** Before presenting approaches, apply the inversion reflex from @../../knowledge/principles/inversion.md. For each approach, document "what would make this approach fail?" alongside trade-offs. Present failure modes as a column in the comparison, not as a separate section.
+
 **Presenting the design:**
 
 - Once you believe you understand what you're building, present the design

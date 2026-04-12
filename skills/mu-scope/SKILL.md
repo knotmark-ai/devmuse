@@ -75,6 +75,8 @@ digraph mu_scope {
 
 Before asking the user anything, scan the codebase to understand what this change touches.
 
+**Premise check:** Before scanning the codebase, check if a premise artifact exists at `docs/premise/*.md`. If not found, run a lightweight premise check (3 questions from @../../knowledge/principles/premise-check.md — skip Q4). If the user provides strong evidence immediately, pass quickly. If the user says "just do it" after 3 rounds without substantive answers, flag "Premise not validated — proceeding at user's request" and continue.
+
 **Skip if:** The project is new (empty codebase) or user explicitly says "new project."
 
 **Checks:**
