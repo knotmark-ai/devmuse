@@ -149,3 +149,4 @@ MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
 
 - 基于 [Superpowers](https://github.com/obra/superpowers)，作者 [Jesse Vincent](https://blog.fsck.com) 和 [Prime Radiant](https://primeradiant.com)
 - 灵感来自 [Everything Claude Code](https://github.com/affaan-m/everything-claude-code)
+- 安全审查、设计审计、前提验证和 hook 模式受 [gstack](https://github.com/garry/gstack)（[Garry Tan](https://twitter.com/garrytan)）启发
