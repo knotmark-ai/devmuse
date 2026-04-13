@@ -46,6 +46,11 @@ scope → design → plan → code → review
 
 5. **mu-review** — 实现完成后激活。派遣 mu-reviewer 进行代码质量审查和需求覆盖度检查（review-coverage），以技术严谨性处理反馈，用新鲜证据验证，然后完成集成（合并/PR/保留/丢弃）。
 
+**管线外技能**（独立于主管线，类似 mu-debug）：
+
+- **mu-premise** — 在范围界定之前验证前提。可独立调用或由 mu-scope 内联执行。
+- **mu-retro** — 定期回顾，收集 git 指标并将发现写入记忆。
+
 **Agent 在执行任何任务前都会检查相关技能。** 这是强制工作流，不是建议。
 
 ## 架构
@@ -58,7 +63,7 @@ devmuse/
 └── knowledge/    领域知识（按需注入）
 ```
 
-### 技能（7 个）
+### 技能（9 个）
 
 | 技能 | 角色 |
 |------|------|
@@ -68,13 +73,15 @@ devmuse/
 | **mu-code** | 按计划实现（子 Agent 或内联模式，含 TDD 和工作区隔离） |
 | **mu-review** | 审查 + 验证 + 集成（反馈处理、验证门禁、覆盖度检查、合并/PR） |
 | **mu-debug** | 系统化根因分析（独立于管线） |
+| **mu-premise** | 前提验证 — 界定范围前的质询问题 |
+| **mu-retro** | 定期回顾，收集 git 指标并写入记忆 |
 | **mu-write-skill** | 使用 TDD 方法论创建/编辑技能 |
 
 ### 代理（2 个）
 
 | 代理 | 角色 |
 |------|------|
-| **mu-reviewer** | 四模式审查者：设计文档（review-design）、代码质量（review-code）、规格符合性（review-compliance）、需求覆盖（review-coverage） |
+| **mu-reviewer** | 五模式审查者：设计文档（review-design）、代码质量（review-code）、规格符合性（review-compliance）、需求覆盖（review-coverage）、安全审计（review-security） |
 | **mu-coder** | 实现专家：根据任务规格构建功能 |
 
 ### 规则（1 个）
@@ -83,9 +90,21 @@ devmuse/
 |------|------|
 | **bootstrap** | 技能发现和调用规则、优先级排序、决策流程 |
 
+### 钩子
+
+| 钩子 | 触发时机 | 角色 |
+|------|----------|------|
+| **pipeline-gate** | Edit/Write | 在代码变更前强制要求 scope + design 产物存在。豁免插件自身编辑。失败时放行。 |
+| **destructive-guard** | Bash | 在执行破坏性命令（rm -rf、git push -f、DROP TABLE、git reset --hard）前发出警告。允许已知安全模式。 |
+
 ### 知识
 
-语言/框架特定的审查标准（Java、Go、Python、TypeScript）和模板（scope 用例集模板）。按需创建。
+| 类别 | 用途 |
+|------|------|
+| **languages/** | 语言特定审查标准（Java、Go、Python、TypeScript） |
+| **templates/** | 产物模板（scope 用例集模板） |
+| **principles/** | 思维模式：反转思维（失败模式分析）、前提检查（质询问题） |
+| **reviews/** | 审查清单：安全审计（5 阶段 OWASP）、设计审计量表（架构评分） |
 
 ## 理念
 
@@ -130,3 +149,4 @@ MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
 
 - 基于 [Superpowers](https://github.com/obra/superpowers)，作者 [Jesse Vincent](https://blog.fsck.com) 和 [Prime Radiant](https://primeradiant.com)
 - 灵感来自 [Everything Claude Code](https://github.com/affaan-m/everything-claude-code)
+- 安全审查、设计审计、前提验证和 hook 模式受 [gstack](https://github.com/garry/gstack)（[Garry Tan](https://twitter.com/garrytan)）启发

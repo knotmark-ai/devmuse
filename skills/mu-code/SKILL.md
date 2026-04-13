@@ -585,6 +585,7 @@ Separate all changes into two distinct types:
 - Never mix structural and behavioral changes in the same commit
 - Always make structural changes first when both are needed
 - Commit messages must state whether the commit is structural or behavioral
+- Before restructuring or removing existing code, apply Chesterton's Fence (@../../knowledge/principles/chestertons-fence.md): understand why the code exists before changing it
 
 ## TDD Discipline
 
@@ -943,7 +944,7 @@ Never fix bugs without a test.
 
 ### Testing Anti-Patterns
 
-When adding mocks or test utilities, read @testing-anti-patterns.md to avoid common pitfalls:
+When adding mocks or test utilities, avoid these common pitfalls:
 - Testing mock behavior instead of real behavior
 - Adding test-only methods to production classes
 - Mocking without understanding dependencies
@@ -1038,4 +1039,3 @@ After all tasks complete, chain to mu-review for comprehensive review of entire 
 - **mu-plan** creates the plan this skill executes
 - Chain to **mu-review** after all tasks complete
 - Agent references: @../../agents/mu-coder.md, @../../agents/mu-reviewer.md
-- Testing anti-patterns: @testing-anti-patterns.md

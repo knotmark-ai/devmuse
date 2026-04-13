@@ -18,6 +18,35 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 **Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
 - (User preferences for plan location override this default)
 
+## Process Flow
+
+```dot
+digraph mu_plan {
+    "Read design spec" [shape=box];
+    "Scope check:\nsingle subsystem?" [shape=diamond];
+    "Suggest decomposition" [shape=box];
+    "Map file structure" [shape=box];
+    "Define tasks\n(bite-sized, TDD)" [shape=box];
+    "Write plan document" [shape=box];
+    "Plan review loop\n(dispatch reviewer)" [shape=box];
+    "Approved?" [shape=diamond];
+    "Fix issues" [shape=box];
+    "Execution handoff\n(invoke mu-code)" [shape=doublecircle];
+
+    "Read design spec" -> "Scope check:\nsingle subsystem?";
+    "Scope check:\nsingle subsystem?" -> "Map file structure" [label="yes"];
+    "Scope check:\nsingle subsystem?" -> "Suggest decomposition" [label="no"];
+    "Suggest decomposition" -> "Map file structure" [label="after split"];
+    "Map file structure" -> "Define tasks\n(bite-sized, TDD)";
+    "Define tasks\n(bite-sized, TDD)" -> "Write plan document";
+    "Write plan document" -> "Plan review loop\n(dispatch reviewer)";
+    "Plan review loop\n(dispatch reviewer)" -> "Approved?";
+    "Approved?" -> "Execution handoff\n(invoke mu-code)" [label="yes"];
+    "Approved?" -> "Fix issues" [label="no"];
+    "Fix issues" -> "Plan review loop\n(dispatch reviewer)";
+}
+```
+
 ## Scope Check
 
 If the spec covers multiple independent subsystems, it should have been broken into sub-project specs during mu-design. If it wasn't, suggest breaking this into separate plans — one per subsystem. Each plan should produce working, testable software on its own.

@@ -26,6 +26,8 @@ devmuse/
 | Used by only one skill | Stay in skill directory | Locality first |
 | Injected into agents across scenarios | knowledge/ | Cross-role reuse |
 | Language/framework specific patterns | knowledge/ | Same agent, different tech stacks |
+| Thinking rubrics for decision points | knowledge/principles/ | Cross-skill reuse at design/scope time |
+| Review checklists for specific concerns | knowledge/reviews/ | Cross-mode reuse within mu-reviewer |
 
 ---
 
@@ -74,7 +76,7 @@ Skills and agents reference knowledge via `@` relative paths within the plugin:
 
 **Principle:** Rules consume tokens via hook injection. Only put content that must be unconditionally always-on. Anything loadable on-demand via skills should stay in skills.
 
-### skills/ (7)
+### skills/ (9)
 
 Core pipeline: `scope → design → plan → code → review`
 
@@ -84,13 +86,15 @@ Core pipeline: `scope → design → plan → code → review`
 | mu-design | Ideas → design spec via collaborative dialogue | mu-reviewer (review-design) |
 | mu-plan | Design → implementation plan | — |
 | mu-code | Plan → implementation (subagent or inline, TDD, worktree) | mu-coder, mu-reviewer (review-code + review-compliance) |
-| mu-review | Review + verify + integrate | mu-reviewer (review-code + review-coverage) |
+| mu-review | Review + verify + integrate | mu-reviewer (review-code + review-coverage + review-security) |
 
 Independent:
 
 | Name | Role | Dispatches Agent |
 |------|------|------|
 | mu-debug | Systematic root cause analysis | — |
+| mu-premise | Premise validation — forcing questions before scoping | — |
+| mu-retro | Periodic retrospective with git metrics and memory capture | — |
 
 Meta:
 
@@ -102,24 +106,37 @@ Meta:
 
 | Name | Role | Dispatched by |
 |------|------|---------|
-| mu-reviewer | Four-mode reviewer: design doc (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage) | mu-scope, mu-design, mu-code, mu-review |
+| mu-reviewer | Five-mode reviewer: design doc (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage), security (review-security) | mu-scope, mu-design, mu-code, mu-review |
 | mu-coder | Implementation specialist | mu-code |
 
 **Design decision:** 2 generic agents + knowledge injection, not N language-specific agents. Review logic is 80% universal; change once, effective globally. Adding a new language only requires a knowledge file.
 
-### knowledge/ (4 language files)
+### knowledge/
 
-Language-specific review criteria, referenced by mu-reviewer via `@` paths in review-code mode.
+| Category | Purpose | Referenced by |
+|---|---|---|
+| languages/ | Language-specific review criteria | mu-reviewer (review-code) |
+| templates/ | Artifact templates | mu-scope |
+| principles/ | Thinking rubrics for decision points | mu-design, mu-scope, mu-premise |
+| reviews/ | Review checklists for specific concerns | mu-reviewer (review-security, review-design) |
 
 ```
 knowledge/
-├── templates/
-│   └── scope.md          # Use Case Set template for mu-scope
 ├── languages/
 │   ├── typescript.md   # Type safety, async patterns, common pitfalls
 │   ├── python.md       # Type hints, pythonic patterns, security
 │   ├── go.md           # Error handling, concurrency, interface design
 │   └── java.md         # Null handling, concurrency, resource management
+├── templates/
+│   └── scope.md        # Use Case Set template for mu-scope
+├── principles/         # Thinking rubrics loaded at decision points
+│   ├── architecture-assessment.md # C4 model guide + diagram type selection
+│   ├── chestertons-fence.md # Understand before changing/removing code
+│   ├── inversion.md    # Inversion reflex for approach comparison
+│   └── premise-check.md # Premise validation forcing questions
+├── reviews/            # Review checklists for specific concerns
+│   ├── security-checklist.md  # 5-phase security audit
+│   └── design-audit-rubric.md # Architecture audit rubric
 └── frameworks/         # (reserved) spring-boot.md, react.md, flutter.md
 ```
 
