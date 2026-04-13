@@ -151,6 +151,7 @@ This field establishes the traceability link from design back to scope.
 **Spec Review Loop:**
 After writing the spec document:
 
+0. **Before dispatching:** verify the spec file path exists and is readable (Read the file). If not found, fix the path before dispatching.
 1. Dispatch mu-reviewer subagent with review-design mode — see @../../agents/mu-reviewer.md
 2. If Issues Found: fix, re-dispatch, repeat until Approved
 3. If loop exceeds 3 iterations, surface to human for guidance
