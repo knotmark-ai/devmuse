@@ -70,7 +70,7 @@ Produce sections one at a time, approving each before moving on.
 2. **Information architecture / feature map** — hierarchy of features, navigation structure
 3. **Core user flows** — journey maps or sequence diagrams for primary tasks
 4. **Key screen wireframes** — text/mermaid wireframes for critical screens. Use Visual Companion for mockups when visual questions arise.
-5. **Per-feature specs** — for each MVP feature: what it does, why, user-facing rules (edge cases in user terms, not code)
+5. **Per-feature specs** — for each MVP feature: what it does, why, user-facing rules (edge cases in user terms, not code). **Scope boundary:** these are product-level rules (what the user sees and agrees to) — mu-scope later enumerates all concrete paths (happy / edge / error use cases) through those rules on a per-feature basis. Do not pre-enumerate UCs here.
 6. **Tiering rules** — free vs paid behavioral boundaries (quotas, features, upgrade triggers)
 7. **Non-functional requirements** — performance targets, privacy/compliance needs, accessibility, localization
 8. **Success metrics → instrumentation** — which events to track for each flow; how funnel metrics are computed
@@ -148,6 +148,7 @@ Ask the user which MVP feature to start with. Then invoke mu-scope for that feat
 - **Concrete specs** — "rules" are user-observable behaviors, not API contracts
 - **Reference the biz artifact** — personas and MVP scope come from there; don't re-derive
 - **Defer technical choices** — tech stack, API schema, DB design belong in mu-arch, not here
+- **Defer use case enumeration** — per-feature UCs (happy/edge/error paths) are mu-scope's job, not mu-prd's. PRD states product rules; mu-scope enumerates concrete scenarios through them.
 - **Visual when helpful** — flows and wireframes benefit from diagrams; requirements/rules are text
 
 ## Integration
