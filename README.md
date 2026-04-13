@@ -30,26 +30,40 @@ Next up, once you say "go", it launches a *subagent-driven development* process,
 
 Start a new session and ask for something that should trigger a skill (for example, "help me plan this feature" or "let's debug this issue"). The agent should automatically invoke the relevant skill.
 
-## The Core Pipeline
+## Three-Tier Pipeline
+
+DevMuse organizes skills into three tiers:
+
+**Product-level tier** (runs once per product; optional for existing projects):
+- **mu-biz** — Business analysis: validate premise (quick mode, 4 forcing questions) or full analysis (competitive, BMC, VPC, personas, MVP scope, cost model).
+- **mu-prd** — Product requirements: personas, user flows, wireframes, per-feature specs, tiering rules, NFRs, metrics.
+
+**Feature-level tier** (runs per feature iteration):
 
 ```
-scope → design → plan → code → review
+scope → arch → plan → code → review
 ```
 
-1. **mu-scope** — Activates before design. Scans the codebase for impact (Quick Probe), enumerates use cases (happy paths, edge cases, error cases), detects conflicts between use cases, and produces a Use Case Set. Depth adapts to complexity — a bug fix gets 1 use case, a new feature gets full enumeration.
+1. **mu-scope** — Activates before arch. Scans the codebase for impact (Quick Probe), enumerates use cases (happy paths, edge cases, error cases), detects conflicts between use cases, and produces a Use Case Set. Depth adapts to complexity — a bug fix gets 1 use case, a new feature gets full enumeration.
 
-2. **mu-design** — Activates with approved scope. Focuses on technical design only (not "what to build" — that's in the scope). Proposes 2-3 approaches, presents design in sections for validation. Dispatches mu-reviewer (review-design) for spec review.
+2. **mu-arch** — Activates with approved scope. Focuses on technical architecture (components, interfaces, data flow, error handling). Proposes 2-3 approaches with architecture diagrams, presents design in sections for validation. Dispatches mu-reviewer (review-design) for spec review. **For product requirements use mu-prd; for business strategy use mu-biz.**
 
-3. **mu-plan** — Activates with approved design. Breaks work into bite-sized tasks (2-5 minutes each). Every task has exact file paths, complete code, verification steps, and UC-ID traceability.
+3. **mu-plan** — Activates with approved architecture. Breaks work into bite-sized tasks (2-5 minutes each). Every task has exact file paths, complete code, verification steps, and UC-ID traceability.
 
 4. **mu-code** — Activates with plan. Sets up isolated worktree, then executes tasks via subagent-driven development (recommended) or inline mode. Enforces TDD discipline (RED-GREEN-REFACTOR). Tests carry UC-ID annotations for traceability. Dispatches mu-coder for implementation and mu-reviewer for two-stage review (review-compliance, then review-code).
 
 5. **mu-review** — Activates when implementation completes. Dispatches mu-reviewer for code quality review and requirements coverage check (review-coverage), handles feedback with technical rigor, verifies with fresh evidence, then finishes (merge/PR/keep/discard).
 
-**Pipeline-external skills** (independent of the main pipeline, like mu-debug):
+**Orthogonal skills** (pipeline-external, invoke as needed):
 
-- **mu-premise** — Validates the premise before scoping. Invoked standalone or inlined by mu-scope.
+- **mu-debug** — Systematic root cause analysis (4-phase process with architecture escalation).
 - **mu-retro** — Periodic retrospective gathering git metrics and capturing learnings to memory.
+
+### Typical Pipeline Paths
+
+- **Greenfield product**: `mu-biz full → mu-prd → [mu-scope → mu-arch → mu-plan → mu-code → mu-review]` (feature loop)
+- **Feature on existing project**: `mu-scope → mu-arch → mu-plan → mu-code → mu-review`
+- **Quick ideation**: `mu-biz quick → mu-scope → mu-arch → mu-plan → mu-code → mu-review`
 
 **The agent checks for relevant skills before any task.** Mandatory workflows, not suggestions.
 
@@ -63,19 +77,20 @@ devmuse/
 └── knowledge/    Domain knowledge (injected on demand)
 ```
 
-### Skills (9)
+### Skills (10)
 
-| Skill | Role |
-|-------|------|
-| **mu-scope** | Use case elicitation, conflict detection, codebase impact analysis |
-| **mu-design** | Approved scope → technical design spec through collaborative dialogue |
-| **mu-plan** | Design → detailed implementation plan with UC-ID traceability |
-| **mu-code** | Plan → implementation (subagent or inline, with TDD and worktree) |
-| **mu-review** | Review + verify + integrate (feedback handling, verification gates, coverage check, merge/PR) |
-| **mu-debug** | Systematic root cause analysis (independent of pipeline) |
-| **mu-premise** | Premise validation — forcing questions before scoping |
-| **mu-retro** | Periodic retrospective with git metrics and memory capture |
-| **mu-write-skill** | Create/edit skills using TDD methodology |
+| Tier | Skill | Role |
+|------|-------|------|
+| Product | **mu-biz** | Business analysis — premise validation (quick) or full analysis (market, BMC, personas, MVP scope) |
+| Product | **mu-prd** | Product requirements — user flows, wireframes, feature specs, tiering rules |
+| Feature | **mu-scope** | Use case elicitation, conflict detection, codebase impact analysis |
+| Feature | **mu-arch** | Approved scope → technical architecture spec through collaborative dialogue |
+| Feature | **mu-plan** | Architecture → detailed implementation plan with UC-ID traceability |
+| Feature | **mu-code** | Plan → implementation (subagent or inline, with TDD and worktree) |
+| Feature | **mu-review** | Review + verify + integrate (feedback handling, verification gates, coverage check, merge/PR) |
+| Orthogonal | **mu-debug** | Systematic root cause analysis |
+| Orthogonal | **mu-retro** | Periodic retrospective with git metrics and memory capture |
+| Meta | **mu-write-skill** | Create/edit skills using TDD methodology |
 
 ### Agents (2)
 

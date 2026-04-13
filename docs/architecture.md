@@ -76,27 +76,35 @@ Skills and agents reference knowledge via `@` relative paths within the plugin:
 
 **Principle:** Rules consume tokens via hook injection. Only put content that must be unconditionally always-on. Anything loadable on-demand via skills should stay in skills.
 
-### skills/ (9)
+### skills/ (10)
 
-Core pipeline: `scope → design → plan → code → review`
+Organized in three tiers:
+
+**Product-level tier** (runs once per product):
+
+| Name | Role | Dispatches Agent |
+|------|------|------|
+| mu-biz | Business analysis — premise validation (quick) or full analysis (market, BMC, VPC, personas, MVP scope) | — |
+| mu-prd | Product requirements — user flows, wireframes, feature specs, tiering rules | — |
+
+**Feature-level tier** — core pipeline `scope → arch → plan → code → review`:
 
 | Name | Role | Dispatches Agent |
 |------|------|------|
 | mu-scope | Use cases + conflict detection + impact analysis | — |
-| mu-design | Ideas → design spec via collaborative dialogue | mu-reviewer (review-design) |
-| mu-plan | Design → implementation plan | — |
+| mu-arch | Scope → technical architecture spec via collaborative dialogue | mu-reviewer (review-design) |
+| mu-plan | Architecture → implementation plan | — |
 | mu-code | Plan → implementation (subagent or inline, TDD, worktree) | mu-coder, mu-reviewer (review-code + review-compliance) |
 | mu-review | Review + verify + integrate | mu-reviewer (review-code + review-coverage + review-security) |
 
-Independent:
+**Orthogonal tier** (pipeline-external):
 
 | Name | Role | Dispatches Agent |
 |------|------|------|
 | mu-debug | Systematic root cause analysis | — |
-| mu-premise | Premise validation — forcing questions before scoping | — |
 | mu-retro | Periodic retrospective with git metrics and memory capture | — |
 
-Meta:
+**Meta:**
 
 | Name | Role | Dispatches Agent |
 |------|------|------|
@@ -106,7 +114,7 @@ Meta:
 
 | Name | Role | Dispatched by |
 |------|------|---------|
-| mu-reviewer | Five-mode reviewer: design doc (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage), security (review-security) | mu-scope, mu-design, mu-code, mu-review |
+| mu-reviewer | Five-mode reviewer: design doc (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage), security (review-security) | mu-scope, mu-arch, mu-code, mu-review |
 | mu-coder | Implementation specialist | mu-code |
 
 **Design decision:** 2 generic agents + knowledge injection, not N language-specific agents. Review logic is 80% universal; change once, effective globally. Adding a new language only requires a knowledge file.
@@ -117,7 +125,7 @@ Meta:
 |---|---|---|
 | languages/ | Language-specific review criteria | mu-reviewer (review-code) |
 | templates/ | Artifact templates | mu-scope |
-| principles/ | Thinking rubrics for decision points | mu-design, mu-scope, mu-premise |
+| principles/ | Thinking rubrics for decision points | mu-arch, mu-scope, mu-biz |
 | reviews/ | Review checklists for specific concerns | mu-reviewer (review-security, review-design) |
 
 ```
@@ -157,7 +165,7 @@ knowledge/
 
 - **skills → agents: one-way dispatch.** Skills orchestrate, agents execute.
 - **agents → skills: forbidden.** Agents don't trigger user-level workflows.
-- **skills → skills: chain calls allowed.** e.g. mu-scope → mu-design → mu-plan → mu-code → mu-review.
+- **skills → skills: chain calls allowed.** e.g. mu-biz → mu-prd → mu-scope → mu-arch → mu-plan → mu-code → mu-review.
 - **rules guide but don't call.** bootstrap.md tells Claude when to invoke which skill.
 - **knowledge is passive.** Only referenced, never calls anything.
 

@@ -100,17 +100,25 @@ These thoughts mean STOP—you're rationalizing:
 | "I already know what to build" | You know what YOU want. Scope finds what you missed. |
 | "Just a quick fix" | Quick Probe takes 30 seconds. Just do it. |
 
-## Skill Priority
+## Skill Priority & Pipeline Paths
 
-When multiple skills could apply, use this order:
+DevMuse has three tiers: **Product-level** (mu-biz, mu-prd), **Feature-level** (mu-scope → mu-arch → mu-plan → mu-code → mu-review), and **Orthogonal** (mu-debug, mu-retro).
 
-1. **Scoping skill first** (scope) - determines WHAT to build
-2. **Process skills second** (design, debugging) - determines HOW to approach the task
-3. **Implementation skills third** (plan, code, review) - these guide execution
+### Choosing a path
 
-"Let's build X" → scope first, then design, then plan, then code.
-"Fix this bug" → scope first (1 use case: repro steps), then debug, then code.
-"Add a button" → scope first (quick), then design, then plan, then code.
+1. **Greenfield product** (new product from zero — no code, no decisions): `mu-biz → mu-prd → [feature loop]`. Product-level tier first, then per-feature work.
+2. **Quick ideation** (solo, small scope, "is this worth doing?"): `mu-biz quick → mu-scope → mu-arch → mu-plan → mu-code → mu-review`.
+3. **Feature addition to existing project**: `mu-scope → mu-arch → mu-plan → mu-code → mu-review`. Skip product-level tier — product already exists.
+4. **Bug fix**: `mu-scope (1 UC: repro steps) → mu-debug → mu-code`.
+
+### Examples
+
+- "I want to build a new product / startup / Chrome extension" → `mu-biz` (full) first
+- "Let's add feature X to this project" → `mu-scope` first
+- "Fix this bug" → `mu-scope` (1 use case: repro steps), then mu-debug, then mu-code
+- "Add a button" → `mu-scope` (quick), then mu-arch, then mu-plan, then mu-code
+- "Is this worth doing?" / "Should I build this?" → `mu-biz quick`
+- "How did last week go?" → `mu-retro`
 
 ## Skill Types
 
