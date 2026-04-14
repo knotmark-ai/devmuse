@@ -1,6 +1,6 @@
 # Architecture Assessment
 
-**When to use:** Referenced by mu-scope (Quick Probe) and mu-design (approach proposal) for selecting the right diagram type and level of detail. Also referenced by mu-reviewer review-design mode.
+**When to use:** Referenced by mu-scope (Quick Probe) and mu-arch (approach proposal) for selecting the right diagram type and level of detail. Also referenced by mu-reviewer review-design mode.
 
 ## Diagram Type by Project Type
 

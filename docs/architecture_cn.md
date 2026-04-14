@@ -74,25 +74,35 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 
 **原则：** rules 通过 hook 注入消耗 token。只放无条件始终生效的内容，能通过 skill 按需加载的留在 skill 中。
 
-### skills/（7 个）
+### skills/（10 个）
 
-核心管线：`scope → design → plan → code → review`
+分为三层：
+
+**产品层**（每个产品一次）：
+
+| 名称 | 角色 | 派遣 Agent |
+|------|------|------|
+| mu-biz | 商业分析 — 前提验证（quick）或完整分析（市场、BMC、画像、MVP 范围） | — |
+| mu-prd | 产品需求 — 用户流程、线框图、特性规格、分级规则 | — |
+
+**特性层** — 核心管线 `scope → arch → plan → code → review`：
 
 | 名称 | 角色 | 派遣 Agent |
 |------|------|------|
 | mu-scope | 用例枚举 + 冲突检测 + 影响分析 | — |
-| mu-design | 通过协作对话将想法转化为设计方案 | mu-reviewer（review-design） |
-| mu-plan | 将设计转化为详细实施计划 | — |
+| mu-arch | 将确认的范围通过协作对话转化为技术架构设计 | mu-reviewer（review-design） |
+| mu-plan | 将架构转化为详细实施计划 | — |
 | mu-code | 按计划实现（子 Agent 或内联模式，含 TDD 和工作区隔离） | mu-coder, mu-reviewer（review-code + review-compliance） |
-| mu-review | 审查 + 验证 + 集成 | mu-reviewer（review-code + review-coverage） |
+| mu-review | 审查 + 验证 + 集成 | mu-reviewer（review-code + review-coverage + review-security） |
 
-独立流程：
+**正交层**（管线外）：
 
 | 名称 | 角色 | 派遣 Agent |
 |------|------|------|
 | mu-debug | 系统化根因分析 | — |
+| mu-retro | 定期回顾，收集 git 指标并写入记忆 | — |
 
-元技能：
+**元技能：**
 
 | 名称 | 角色 | 派遣 Agent |
 |------|------|------|
@@ -102,7 +112,7 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 
 | 名称 | 角色 | 被谁派遣 |
 |------|------|---------|
-| mu-reviewer | 四模式审查者：设计文档（review-design）、代码质量（review-code）、规格符合性（review-compliance）、需求覆盖（review-coverage） | mu-scope, mu-design, mu-code, mu-review |
+| mu-reviewer | 五模式审查者：设计文档（review-design）、代码质量（review-code）、规格符合性（review-compliance）、需求覆盖（review-coverage）、安全审计（review-security） | mu-scope, mu-arch, mu-code, mu-review |
 | mu-coder | 实现者 | mu-code |
 
 **设计决策：** 2 个通用 agent + knowledge 注入，而非 N 个语言专用 agent。审查逻辑 80% 通用，改一处全局生效。扩展新语言只需加 knowledge 文件。
@@ -136,7 +146,7 @@ knowledge/
 
 - **skills → agents：单向派遣。** skill 是编排者，agent 是执行者。
 - **agents → skills：禁止。** agent 不反向触发用户级工作流。
-- **skills → skills：允许链式调用。** 如 mu-scope → mu-design → mu-plan → mu-code → mu-review。
+- **skills → skills：允许链式调用。** 如 mu-biz → mu-prd → mu-scope → mu-arch → mu-plan → mu-code → mu-review。
 - **rules 引导但不调用。** bootstrap.md 告诉 Claude 遇到什么情况触发哪个 skill。
 - **knowledge 纯被动。** 只被引用，不调用任何层。
 

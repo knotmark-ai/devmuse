@@ -1,6 +1,6 @@
 # Visual Companion Guide
 
-Browser-based visual mu-design companion for showing mockups, diagrams, and options.
+Browser-based visual mu-arch companion for showing mockups, diagrams, and options.
 
 ## When to Use
 

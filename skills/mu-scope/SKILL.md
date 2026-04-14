@@ -1,16 +1,16 @@
 ---
 name: mu-scope
-description: "Use before mu-design to scope work — enumerate use cases, detect conflicts, assess impact on existing code."
+description: "Use before mu-arch to scope work — enumerate use cases, detect conflicts, assess impact on existing code."
 ---
 
 # Scope
 
-Scope work by enumerating use cases, detecting conflicts, and assessing impact on existing code. Produces a Use Case Set that feeds into mu-design.
+Scope work by enumerating use cases, detecting conflicts, and assessing impact on existing code. Produces a Use Case Set that feeds into mu-arch.
 
 Start by probing the codebase for impact, then work with the user to exhaust scenarios and resolve conflicts.
 
 <HARD-GATE>
-Do NOT invoke mu-design or any implementation skill until you have a complete Use Case Set approved by the user. This applies to EVERY task regardless of perceived simplicity.
+Do NOT invoke mu-arch or any implementation skill until you have a complete Use Case Set approved by the user. This applies to EVERY task regardless of perceived simplicity.
 </HARD-GATE>
 
 ## Anti-Pattern: "This Is Too Simple To Need Scoping"
@@ -26,7 +26,7 @@ You MUST create a task for each of these items and complete them in order:
 3. **Use case elicitation** — enumerate happy paths → edge cases → error cases
 4. **Conflict detection** — cross-check all use cases, resolve with user
 5. **Write scope artifact** — save to `docs/scope/YYYY-MM-DD-<name>.md`, user confirms
-6. **Transition to design** — invoke mu-design skill with scope file path
+6. **Transition to design** — invoke mu-arch skill with scope file path
 
 ## Process Flow
 
@@ -46,7 +46,7 @@ digraph mu_scope {
     "User resolves conflicts" [shape=box];
     "Write scope artifact" [shape=box];
     "User approves scope?" [shape=diamond];
-    "Invoke mu-design" [shape=doublecircle];
+    "Invoke mu-arch" [shape=doublecircle];
 
     "Quick Probe\n(inline, automatic)" -> "New/empty project?";
     "New/empty project?" -> "Skip probe" [label="yes"];
@@ -65,17 +65,22 @@ digraph mu_scope {
     "User resolves conflicts" -> "Write scope artifact";
     "Write scope artifact" -> "User approves scope?";
     "User approves scope?" -> "Write scope artifact" [label="changes requested"];
-    "User approves scope?" -> "Invoke mu-design" [label="approved"];
+    "User approves scope?" -> "Invoke mu-arch" [label="approved"];
 }
 ```
 
-**The terminal state is invoking mu-design.** Do NOT invoke any other skill. The ONLY skill you invoke after mu-scope is mu-design.
+**The terminal state is invoking mu-arch.** Do NOT invoke any other skill. The ONLY skill you invoke after mu-scope is mu-arch.
 
 ## Phase 1: Quick Probe
 
 Before asking the user anything, scan the codebase to understand what this change touches.
 
-**Premise check:** Before scanning the codebase, check if a premise artifact exists at `docs/premise/*.md`. If not found, run a lightweight premise check (3 questions from @../../knowledge/principles/premise-check.md — skip Q4). If the user provides strong evidence immediately, pass quickly. If the user says "just do it" after 3 rounds without substantive answers, flag "Premise not validated — proceeding at user's request" and continue.
+**Premise check:** Before scanning the codebase, check if any of these artifacts exist (any one satisfies the gate):
+- `docs/premise/*.md` (legacy premise artifact)
+- `docs/biz/*.md` (biz artifact from mu-biz quick or full mode)
+- `docs/prd/*.md` (PRD artifact from mu-prd)
+
+If any found, skip the premise check. If none found, run a lightweight premise check (3 questions from @../../knowledge/principles/premise-check.md — skip Q4). If the user provides strong evidence immediately, pass quickly. If the user says "just do it" after 3 rounds without substantive answers, flag "Premise not validated — proceeding at user's request" and continue.
 
 **Skip if:** The project is new (empty codebase) or user explicitly says "new project."
 
@@ -90,7 +95,7 @@ Before asking the user anything, scan the codebase to understand what this chang
 | Interface risk | Check if change affects public API/contracts | Breaking change potential |
 | Architecture context | Read architecture doc (README, ARCHITECTURE.md, docs/); map change onto components | Which layers/boundaries are affected |
 
-**Architecture context** (see @../../knowledge/principles/architecture-assessment.md Phase 1): Read the project's architecture doc if one exists. Identify which components/layers the proposed work touches, whether it crosses architectural boundaries, and whether new components are needed. This is a coarse 2-minute assessment, not a detailed diagram — that comes in mu-design.
+**Architecture context** (see @../../knowledge/principles/architecture-assessment.md Phase 1): Read the project's architecture doc if one exists. Identify which components/layers the proposed work touches, whether it crosses architectural boundaries, and whether new components are needed. This is a coarse 2-minute assessment, not a detailed diagram — that comes in mu-arch.
 
 **Output to user:**
 
@@ -116,7 +121,7 @@ Present the probe results and recommend a depth level. The user confirms or over
 
 Work through scenarios with the user, one category at a time.
 
-**Methodology (migrated from mu-design):**
+**Methodology (migrated from mu-arch):**
 - Ask one question at a time — do not overwhelm with multiple questions
 - Prefer multiple choice when possible
 - Focus on understanding: purpose, constraints, success criteria
@@ -181,6 +186,6 @@ Wait for confirmation.
 
 - **Invoked by:** bootstrap rule (highest-priority process skill)
 - **Produces:** Use Case Set artifact at `docs/scope/YYYY-MM-DD-<name>.md`
-- **Consumed by:** mu-design (reads scope, designs to cover all UCs)
-- **Terminal state:** invoke mu-design
+- **Consumed by:** mu-arch (reads scope, designs to cover all UCs)
+- **Terminal state:** invoke mu-arch
 - **Template:** @../../knowledge/templates/scope.md

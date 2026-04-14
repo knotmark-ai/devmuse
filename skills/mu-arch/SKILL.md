@@ -1,11 +1,13 @@
 ---
-name: mu-design
-description: "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation."
+name: mu-arch
+description: "Technical architecture — components, interfaces, data flow, error handling. Use before any creative engineering work. For product/UX requirements (user flows, feature specs), use mu-prd first."
 ---
 
-# Design
+# Technical Architecture
 
-Help turn ideas into fully formed designs and specs through natural collaborative dialogue.
+**Scope:** Technical architecture only (components, interfaces, data flow, error handling, testing strategy). For product requirements (user flows, wireframes, feature specs, tiering rules), use **mu-prd** first. For business strategy (market, business model, MVP scope), use **mu-biz** first.
+
+Help turn approved requirements into fully formed technical designs and specs through natural collaborative dialogue.
 
 Start by understanding the current project context, then ask questions one at a time to refine the idea. Once you understand what you're building, present the design and get user approval.
 
@@ -14,7 +16,7 @@ Do NOT invoke any implementation skill, write any code, scaffold any project, or
 </HARD-GATE>
 
 <HARD-GATE>
-mu-design requires a scope artifact (docs/scope/*.md) as input. If no scope artifact exists, invoke mu-scope first. Do NOT proceed with design without a scope artifact.
+mu-arch requires a scope artifact (docs/scope/*.md) as input. If no scope artifact exists, invoke mu-scope first. Do NOT proceed with design without a scope artifact.
 </HARD-GATE>
 
 ## Anti-Pattern: "This Is Too Simple To Need A Design"
@@ -76,7 +78,7 @@ digraph mu_design {
 }
 ```
 
-**The terminal state is invoking mu-plan.** Do NOT invoke any other implementation skill. The ONLY skill you invoke after mu-design is mu-plan.
+**The terminal state is invoking mu-plan.** Do NOT invoke any other implementation skill. The ONLY skill you invoke after mu-arch is mu-plan.
 
 ## The Process
 
@@ -94,7 +96,7 @@ digraph mu_design {
 - The use cases from scope are your design constraints — your design must cover all of them
 
 - Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
-- If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then design the first sub-project through the normal flow. Each sub-project gets its own spec → plan → implementation cycle. Scope decomposition is handled by mu-scope. If the scope covers multiple subsystems, mu-scope should have decomposed it before reaching mu-design.
+- If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then design the first sub-project through the normal flow. Each sub-project gets its own spec → plan → implementation cycle. Scope decomposition is handled by mu-scope. If the scope covers multiple subsystems, mu-scope should have decomposed it before reaching mu-arch.
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
 - Prefer multiple choice questions when possible, but open-ended is fine too
 - Only one question per message - if a topic needs more exploration, break it into multiple questions
@@ -203,4 +205,4 @@ A browser-based companion for showing mockups, diagrams, and visual options duri
 A question about a UI topic is not automatically a visual question. "What does personality mean in this context?" is a conceptual question — use the terminal. "Which wizard layout works better?" is a visual question — use the browser.
 
 If they agree to the companion, read the detailed guide before proceeding:
-`skills/mu-design/visual-companion.md`
+`skills/mu-arch/visual-companion.md`
