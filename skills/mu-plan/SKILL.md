@@ -146,8 +146,9 @@ git commit -m "feat: add specific feature"
 
 After writing the complete plan:
 
-1. Dispatch a single plan-document-reviewer subagent (see plan-document-reviewer-prompt.md) with precisely crafted review context — never your session history. This keeps the reviewer focused on the plan, not your thought process.
-   - Provide: path to the plan document, path to spec document
+1. Dispatch the **mu-reviewer subagent in `review-plan` mode** with precisely crafted review context — never your session history. This keeps the reviewer focused on the plan, not your thought process.
+   - Provide: `PLAN_FILE_PATH` (path to the plan document), `SPEC_FILE_PATH` (path to spec document)
+   - The reviewer will validate inputs, build an anchor list (UC-IDs, task numbers, file paths) from the documents, and only emit findings tied to those anchors — preventing hallucinated UCs / class names / file paths.
 2. If ❌ Issues Found: fix the issues, re-dispatch reviewer for the whole plan
 3. If ✅ Approved: proceed to execution handoff
 
