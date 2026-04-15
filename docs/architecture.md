@@ -140,8 +140,11 @@ knowledge/
 ├── principles/         # Thinking rubrics loaded at decision points
 │   ├── architecture-assessment.md # C4 model guide + diagram type selection
 │   ├── chestertons-fence.md # Understand before changing/removing code
+│   ├── graphviz-conventions.md # When/how to use digraphs in skills
 │   ├── inversion.md    # Inversion reflex for approach comparison
-│   └── premise-check.md # Premise validation forcing questions
+│   ├── premise-check.md # Premise validation forcing questions
+│   ├── skill-cso.md    # Claude Search Optimization for skill descriptions
+│   └── skill-testing.md # Per-type test strategies + pressure scenarios
 ├── reviews/            # Review checklists for specific concerns
 │   ├── security-checklist.md  # 5-phase security audit
 │   └── design-audit-rubric.md # Architecture audit rubric
