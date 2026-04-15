@@ -96,7 +96,7 @@ devmuse/
 
 | Agent | Role |
 |-------|------|
-| **mu-reviewer** | Five-mode reviewer: design doc (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage), security (review-security) |
+| **mu-reviewer** | Six-mode reviewer: design doc (review-design), implementation plans (review-plan), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage), security (review-security) |
 | **mu-coder** | Implementation specialist: builds features from task specs |
 
 ### Rules (1)
