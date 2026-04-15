@@ -284,18 +284,18 @@ digraph process {
 
 #### Model Selection
 
-Use the least powerful model that can handle each role to conserve cost and increase speed.
+Choose between two tiers only. **Do not use haiku** — implementation and review quality suffers too much to be worth the savings.
 
-**Mechanical implementation tasks** (isolated functions, clear specs, 1-2 files): use a fast, cheap model. Most implementation tasks are mechanical when the plan is well-specified.
+**Simple implementation tasks** (isolated functions, clear specs, 1-2 files, mechanical edits): use **sonnet**.
 
-**Integration and judgment tasks** (multi-file coordination, pattern matching, debugging): use a standard model.
-
-**Architecture, design, and review tasks**: use the most capable available model.
+**Everything else** (multi-file integration, judgment calls, debugging, architecture, design, review): use **opus**.
 
 **Task complexity signals:**
-- Touches 1-2 files with a complete spec → cheap model
-- Touches multiple files with integration concerns → standard model
-- Requires design judgment or broad codebase understanding → most capable model
+- Touches 1-2 files with a complete, mechanical spec → sonnet
+- Touches multiple files, requires integration/judgment → opus
+- Requires design judgment or broad codebase understanding → opus
+
+When in doubt, prefer opus. Never pass `model: "haiku"` when dispatching mu-coder or mu-reviewer.
 
 #### Handling Implementer Status
 
