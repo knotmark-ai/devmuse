@@ -112,7 +112,7 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 
 | 名称 | 角色 | 被谁派遣 |
 |------|------|---------|
-| mu-reviewer | 五模式审查者：设计文档（review-design）、代码质量（review-code）、规格符合性（review-compliance）、需求覆盖（review-coverage）、安全审计（review-security） | mu-scope, mu-arch, mu-code, mu-review |
+| mu-reviewer | 六模式审查者：设计文档（review-design）、实施计划（review-plan）、代码质量（review-code）、规格符合性（review-compliance）、需求覆盖（review-coverage）、安全审计（review-security） | mu-scope, mu-arch, mu-plan, mu-code, mu-review |
 | mu-coder | 实现者 | mu-code |
 
 **设计决策：** 2 个通用 agent + knowledge 注入，而非 N 个语言专用 agent。审查逻辑 80% 通用，改一处全局生效。扩展新语言只需加 knowledge 文件。
@@ -123,11 +123,15 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 
 ```
 knowledge/
-├── templates/
-│   └── scope.md          # mu-scope 使用的用例集模板
 ├── languages/        # java.md, go.md, python.md, typescript.md
-└── frameworks/       # spring-boot.md, react.md, flutter.md
+├── templates/        # scope.md（mu-scope 使用的用例集模板）
+├── principles/       # 思维原则（inversion, premise-check, chestertons-fence,
+│                     #   architecture-assessment, skill-cso, graphviz-conventions,
+│                     #   skill-testing）
+└── reviews/          # 审查清单（security-checklist, design-audit-rubric）
 ```
+
+> **未来扩展：** 需要框架特定审查标准时可新增 `knowledge/frameworks/`（如 spring-boot.md、react.md、flutter.md）。目前未创建。
 
 ---
 

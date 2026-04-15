@@ -114,7 +114,7 @@ Organized in three tiers:
 
 | Name | Role | Dispatched by |
 |------|------|---------|
-| mu-reviewer | Five-mode reviewer: design doc (review-design), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage), security (review-security) | mu-scope, mu-arch, mu-code, mu-review |
+| mu-reviewer | Six-mode reviewer: design doc (review-design), implementation plans (review-plan), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage), security (review-security) | mu-scope, mu-arch, mu-plan, mu-code, mu-review |
 | mu-coder | Implementation specialist | mu-code |
 
 **Design decision:** 2 generic agents + knowledge injection, not N language-specific agents. Review logic is 80% universal; change once, effective globally. Adding a new language only requires a knowledge file.
@@ -145,11 +145,12 @@ knowledge/
 │   ├── premise-check.md # Premise validation forcing questions
 │   ├── skill-cso.md    # Claude Search Optimization for skill descriptions
 │   └── skill-testing.md # Per-type test strategies + pressure scenarios
-├── reviews/            # Review checklists for specific concerns
-│   ├── security-checklist.md  # 5-phase security audit
-│   └── design-audit-rubric.md # Architecture audit rubric
-└── frameworks/         # (reserved) spring-boot.md, react.md, flutter.md
+└── reviews/            # Review checklists for specific concerns
+    ├── security-checklist.md  # 5-phase security audit
+    └── design-audit-rubric.md # Architecture audit rubric
 ```
+
+> **Future expansion:** A `knowledge/frameworks/` subdirectory (e.g., spring-boot.md, react.md, flutter.md) can be added when framework-specific review criteria are needed. Not currently populated.
 
 ---
 

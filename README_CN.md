@@ -96,7 +96,7 @@ devmuse/
 
 | 代理 | 角色 |
 |------|------|
-| **mu-reviewer** | 五模式审查者：设计文档（review-design）、代码质量（review-code）、规格符合性（review-compliance）、需求覆盖（review-coverage）、安全审计（review-security） |
+| **mu-reviewer** | 六模式审查者：设计文档（review-design）、实施计划（review-plan）、代码质量（review-code）、规格符合性（review-compliance）、需求覆盖（review-coverage）、安全审计（review-security） |
 | **mu-coder** | 实现专家：根据任务规格构建功能 |
 
 ### 规则（1 个）
