@@ -341,6 +341,16 @@ Cap: 6 tool calls.
 ```
 Observe: does agent recognize fit, skip re-derivation, and hand off to mu-scope with pass-through history entry?
 
+- [ ] **Step 3c: Dispatch Scenario P5 (`extract` — mu-prd UC-B7)**
+
+```
+Repo has src/pages/ with 20 components (NoteList.tsx, NoteEditor.tsx,
+Settings.tsx, etc.) but docs/prd/ is empty. User says
+"document the prd retrospectively for what's already built."
+Cap: 10 tool calls.
+```
+Observe: does agent synthesize a prd artifact from page components (not from scratch, not chat-only)?
+
 - [ ] **Step 4: Document baseline failures**
 
 ### 4.2 GREEN: Write Phase 0 + handoff receiver
@@ -373,13 +383,14 @@ Update mu-prd/SKILL.md Artifact Format section to include Stance / Sub-type / De
 
 ### 4.3 REFACTOR: Verify
 
-- [ ] **Step 9: Re-dispatch P1-P4 with updated skill**
+- [ ] **Step 9: Re-dispatch P1-P5 with updated skill**
 
 Verify:
 - P1 → `update(gap-fill)`, notifications section appended without disturbing existing features
 - P2 → `create`, no stance dialog (pre-confirmed), proceeds directly
 - P3 → H3 returns `insufficient-signal`, doesn't falsely report fresh/stale
 - P4 → `skip`, no re-derivation, history appended, hand off to mu-scope
+- P5 → `extract`, new prd synthesized from src/pages/ components (not fabricated); each section approved by simulated user confirming with "ok"
 
 - [ ] **Step 10: Close loopholes, commit**
 
@@ -433,7 +444,7 @@ Expected behavior:
 6. mu-prd terminal: invoke mu-scope for first feature (no stance — mu-scope not creative)
 7. mu-scope produces UC set
 8. mu-scope terminal: invoke mu-arch
-9. mu-arch Phase 0 runs — for the first feature, docs/specs/ is empty, code is also empty → should propose `create`; user confirms with bare "ok"
+9. mu-arch Phase 0 runs — for the first feature, docs/specs/ is empty, code is also empty → should propose `create`. The simulated user turn should include the literal string "ok" so the subagent sees a confirmation (subagents have no interactive user; inject the confirmation via the prompt's conversation seed).
 10. mu-arch produces design for the first feature
 
 Validate no unexpected stance dialogs or regressions at ANY of the 3 creative-skill hops (mu-biz, mu-prd, mu-arch). The most important regression to catch is an unsolicited stance confirmation inside the pre-confirmed mu-biz → mu-prd handoff, or a failure mode at mu-arch's Phase 0 on first-run empty repo.
@@ -492,9 +503,14 @@ Inputs: scope path `docs/scope/2026-04-15-creative-skill-stances.md`, commit ran
 
 Focus: internal consistency of the heuristics vs decision table, soundness of thresholds, error-handling completeness. review-design is the right mode for principle-file content.
 
-- [ ] **Step 1c: Lightweight cross-file consistency check (manual or subagent)**
+- [ ] **Step 1c: Lightweight cross-file consistency check**
 
-Verify by grep: per-skill parameter tables in each SKILL.md match the design §2 table; commit-prefix pattern consistent across all 4 new commits (Tasks 2-4 + Task 6); HARD-GATE ordering note present in all 3 SKILL.md files.
+Grep-based, not narrative. Specific strings to verify:
+- `HARD-GATEs evaluated BEFORE Phase 0` — must appear in all 3 of `skills/mu-biz/SKILL.md`, `skills/mu-prd/SKILL.md`, `skills/mu-arch/SKILL.md`
+- `docs(biz):` / `docs(prd):` / `docs(specs):` commit-prefix examples — must each appear in their matching SKILL.md's Commit convention section
+- `stance-detection.md` — must appear as an `@../../knowledge/principles/stance-detection.md` reference in all 3 SKILL.md
+- `--no-stance-meta` — must appear in all 3 SKILL.md Artifact Format sections
+- Per-skill watched-source-dir list must textually match the design §2 per-skill parameter table for each skill
 
 - [ ] **Step 2: Address any findings**
 
@@ -534,7 +550,7 @@ Traceability — which task covers which scope UC:
 |----------|------|
 | UC-A1, UC-A2 | Tasks 2, 3, 4 (each skill's Phase 0) |
 | UC-B1..UC-B4 (mu-biz 4 stances) | Task 3 scenarios B1, B2, B3, B4 |
-| UC-B5..UC-B8 (mu-prd 4 stances) | Task 4 scenarios P1 (B6 update), P2 (B5 create), P3 (B6 update/insufficient-signal), P4 (B8 skip). Note: P1/P3 both exercise update variants; B5 create is covered by P2 pre-confirmed handoff; B7 extract receives implicit coverage via the principle file's Error Handling section and Task 5 e2e — if this proves insufficient, add explicit P5 extract scenario. |
+| UC-B5..UC-B8 (mu-prd 4 stances) | Task 4 scenarios P1 (B6 update gap-fill), P2 (B5 create via pre-confirmed handoff), P3 (B6 update/insufficient-signal fallback), P4 (B8 skip), P5 (B7 extract). All four stances have at least one explicit scenario. |
 | UC-B9..UC-B12 (mu-arch 4 stances) | Task 2 scenarios A1, A2, A3, A4 |
 | UC-C1..UC-C6 | Task 1 (heuristic definitions in principle file) |
 | EC-1 ambiguous-state | Task 1 Error Handling section + Task 3 scenarios observing ambiguous-case behavior |
