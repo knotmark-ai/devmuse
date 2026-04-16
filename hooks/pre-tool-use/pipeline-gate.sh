@@ -35,7 +35,7 @@ fi
 # Check for design spec
 DESIGN_FILES=$(find docs/specs -name "*-design*.md" -maxdepth 1 2>/dev/null | head -1) || true
 if [ -z "$DESIGN_FILES" ]; then
-    printf '{"permissionDecision":"deny","message":"No design spec found under docs/specs/. Run mu-design first."}\n'
+    printf '{"permissionDecision":"deny","message":"No design spec found under docs/specs/. Run mu-arch first."}\n'
     exit 0
 fi
 
