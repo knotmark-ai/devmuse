@@ -15,21 +15,22 @@
 
 ## Task 1: Write shared principle file `stance-detection.md`
 
-**Covers:** UC-C1, UC-C2, UC-C3, UC-C4, UC-C5, UC-C6 (shared heuristics), ER-1 (non-blocking detection), EC-3 (legacy-location handling via Step 1 of algorithm)
+**Covers:** UC-C1, UC-C2, UC-C3, UC-C4, UC-C5, UC-C6 (shared heuristics), ER-1, ER-2, ER-3, ER-4 (all error paths landed in the principle file's Error Handling section so per-skill scenarios can verify behavior), EC-3 (legacy-location handling via Step 1 of algorithm)
 
 **Files:**
 - Create: `knowledge/principles/stance-detection.md`
 
 - [ ] **Step 1: Write the principle document**
 
-Structure must match design §1 exactly:
+Structure must match design §1 (Heuristics / Decision Table / Sub-type priority / Forced-stance overrides) exactly:
 - `## Inputs` section listing artifact type, dir, legacy locations, current task identifier, watched source dirs
 - `## Detection Algorithm` as 9-step procedure
-- `## Heuristics` — H1 (stub), H2 (coverage), H3 (staleness) with exact thresholds from design lines 73-77
-- `## Decision Table` — 6 rows (R1-R6) with "rows evaluated top-to-bottom" note, legacy-location note
-- `## Sub-type priority` — `expand > gap-fill > sync`, with scope CONFLICT-3 cross-reference
-- `## Forced-stance overrides` — 4-row table from design lines 96-103
-- `## Output Format` — stance / sub_type / confidence / reason / candidate_file
+- `## Heuristics` — H1 (stub), H2 (coverage), H3 (staleness) with exact thresholds from design §1 Heuristics table
+- `## Decision Table` — 6 rows (R1-R6) with "rows evaluated top-to-bottom; first match wins" note, legacy-location note
+- `## Sub-type priority` — `expand > gap-fill > sync`, with scope CONFLICT-3 cross-reference (stub → expand 1:1 mapping)
+- `## Forced-stance overrides` — 4-row table from design §1 (forced create / forced extract / forced skip / forced update over missing)
+- `## Error Handling` — ER-1 through ER-4 mapping (non-blocking detection, malformed-artifact parse-fail handling, extract-target-missing degradation, sync-contradiction surfacing) per design §Error Handling
+- `## Output Format` — stance / sub_type / confidence / reason / candidate_file; include the `insufficient-signal` value for H3 when no watched dirs exist
 
 - [ ] **Step 2: Sanity-check the algorithm on a paper scenario**
 
@@ -53,6 +54,8 @@ Refs: docs/specs/2026-04-15-creative-skill-stances-design.md §1"
 ## Task 2: mu-arch SKILL.md edit (Phase 0 integration)
 
 **Covers:** UC-A1, UC-A2, UC-B9, UC-B10, UC-B11, UC-B12, EC-4, EC-5, ER-2, ER-3, ER-4
+
+**Depends on:** Task 1 committed (`stance-detection.md` must exist for Phase 0 `@`-reference to resolve).
 
 mu-arch first because it has no pre-existing Depth-mode concept — simplest integration, validates the Phase 0 pattern before layering it onto mu-biz/mu-prd's existing Mode Selection.
 
@@ -111,13 +114,15 @@ Write findings to task notes (not committed). For each scenario, record: what th
 
 - [ ] **Step 6: Add Phase 0 section to mu-arch SKILL.md**
 
-Insert immediately after the two existing `<HARD-GATE>` blocks, before "Anti-Pattern: This Is Too Simple To Need A Design". Content follows design §2 template. Instantiate parameters per design line 160:
+Insert immediately after the two existing `<HARD-GATE>` blocks, before "Anti-Pattern: This Is Too Simple To Need A Design". Content follows design §2 Phase 0 template. Instantiate parameters per design §2 per-skill parameter table, mu-arch row:
 - Artifact type: `arch`
 - Artifact dir: `docs/specs/*-design*.md`
 - Watched source dirs: `src/, lib/, internal/, pkg/, cmd/` (whichever exist; else `insufficient-signal`)
 - Legacy locations: root `ARCHITECTURE.md`, `DESIGN.md`
 
-Include branch routing table. Include mu-explore optional delegation note (design Appendix A).
+Include branch routing table. Include mu-explore optional delegation note (design Appendix A). Include the "General rule: artifact dir never in its own watched set" line (design §2, per-skill parameter table note).
+
+The recommendation sentence wording (design §2 Phase 0 template: `"Detected: stance=<stance> (sub=<sub-type>), confidence=<high|ambiguous>. Reason: <one-line>. OK to proceed, or override?"`) should be treated as **exemplary, not verbatim** — the skill describes the shape, agents may adapt phrasing while preserving the stance / sub-type / confidence / reason slots.
 
 - [ ] **Step 7: Update checklist to add "Phase 0" as step 0**
 
@@ -131,6 +136,10 @@ Add Phase 0 node at the top of the graph per design §5 pattern. 4 branches rout
 
 Add a short sentence after the existing HARD-GATEs and before Phase 0:
 > "HARD-GATEs evaluated BEFORE Phase 0. A `skip` stance does not bypass them."
+
+- [ ] **Step 9b: Update Artifact Format / output sections per design §4**
+
+Update mu-arch/SKILL.md's artifact-output description to show the new header fields (`Stance`, `Sub-type`, `Detected at`) and a History section template. Add a "Commit convention" sub-section citing the `docs(specs): <stance>[(sub-type)]: ...` prefix pattern per design §4. Include the `--no-stance-meta` opt-out mention per design §4 and scope NFR CONFLICT-5 resolution.
 
 ### 2.3 REFACTOR: Verify compliance
 
@@ -168,6 +177,8 @@ Refs: docs/specs/2026-04-15-creative-skill-stances-design.md §2"
 
 **Covers:** UC-A1, UC-A2, UC-B1, UC-B2, UC-B3, UC-B4, EC-1, EC-2
 
+**Depends on:** Task 1 committed.
+
 mu-biz is second because it has a pre-existing "Mode Selection" (quick/full) that must coexist with Phase 0 without vocabulary collision.
 
 **Files:**
@@ -202,13 +213,23 @@ Cap: 10 tool calls.
 ```
 Observe: does agent synthesize from available signals?
 
-- [ ] **Step 4: Dispatch Scenario B4 (slash precedence)**
+- [ ] **Step 4: Dispatch Scenario B4 (`skip` — mu-biz UC-B4)**
+
+```
+Repo has docs/biz/2026-04-pilot.md — 2200 words, covering current
+product in full. User says "run mu-biz to double-check the biz case
+for this pilot before we invest more."
+Cap: 6 tool calls.
+```
+Observe: does agent recognize artifact is fit and skip the whole analysis flow with a passthrough?
+
+- [ ] **Step 4b: Dispatch Scenario B-slash (slash precedence parsing, UC-A2)**
 
 ```
 User says "/mu-biz create quick — write a quick biz case for project X."
 Cap: 8 tool calls.
 ```
-Observe: does agent parse BOTH tokens correctly (stance=create, depth=quick)?
+Observe: does agent parse BOTH tokens correctly (stance=create, depth=quick) without asking either question?
 
 - [ ] **Step 5: Document baseline failures**
 
@@ -224,7 +245,9 @@ Insert after existing HARD-GATE, before "Mode Selection". Parameters per design 
 
 - [ ] **Step 7: Rename existing "Mode Selection" to "Depth Mode Selection"**
 
-In mu-biz/SKILL.md line 16-24, rename heading + update table header. This is the vocabulary disambiguation called for in design line 270. All references to "mode" within this existing section updated to "depth mode" for clarity. The slash hints `/mu-biz quick` / `/mu-biz full` remain unchanged.
+In mu-biz/SKILL.md line 16-24 (heading `## Mode Selection`), rename heading + update table header to use "Depth Mode" column. This is the vocabulary disambiguation called for in the design §2.5 Stance × Depth-mode interaction. All references to the bare word "mode" within this existing section updated to "depth mode" for clarity. The slash hints `/mu-biz quick` / `/mu-biz full` remain unchanged.
+
+Also update the parameter row for mu-biz at Step 6 to include the explicit "Never watch `docs/prd/` (not a biz staleness signal) or `docs/biz/` itself (circular)" caveat per design §2 mu-biz row.
 
 - [ ] **Step 8: Add §2.5 interaction text inline**
 
@@ -236,7 +259,11 @@ Phase 0 is step 0 of the flow. Graph gets stance-detection node at top with 4 br
 
 - [ ] **Step 10: Full-mode terminal passes `stance=create` to mu-prd**
 
-Update existing Full-mode terminal description (mu-biz/SKILL.md line 97 area): "Invoke `mu-prd create`" instead of "Invoke mu-prd". Preserves biz(full)→prd auto-handoff without regression.
+Update Full-mode terminal in mu-biz/SKILL.md (currently line 97 — exact text: `**Terminal:** Invoke mu-prd skill (greenfield products typically need PRD next).`) to read: `**Terminal:** Invoke mu-prd skill with pre-confirmed stance \`create\` — per design §2.5 Pipeline-handoff regression guard, passes stance hint so mu-prd's Phase 0 does not present a confirmation dialog. (Greenfield products typically need PRD next.)`. Preserves biz(full)→prd auto-handoff without regression.
+
+- [ ] **Step 10b: Update Artifact Format sections per design §4**
+
+Update both the Quick-mode and Full-mode Artifact Format examples in mu-biz/SKILL.md (currently lines 99-125) to show the new header fields (`Stance`, `Sub-type`, `Detected at`) alongside the existing Date/Mode fields. Add a "Commit convention" sub-section citing the `docs(biz): <stance>[(sub-type)]: ...` prefix pattern per design §4. Include the `--no-stance-meta` opt-out mention.
 
 ### 3.3 REFACTOR: Verify
 
@@ -270,6 +297,8 @@ Refs: docs/specs/2026-04-15-creative-skill-stances-design.md §2, §2.5"
 
 **Covers:** UC-A1, UC-A2, UC-B5, UC-B6, UC-B7, UC-B8
 
+**Depends on:** Task 1 committed.
+
 **Files:**
 - Modify: `skills/mu-prd/SKILL.md`
 
@@ -302,6 +331,16 @@ Cap: 10 tool calls.
 ```
 Observe: does H3 fall back gracefully or return wrong staleness signal?
 
+- [ ] **Step 3b: Dispatch Scenario P4 (`skip` — mu-prd UC-B8)**
+
+```
+Repo has docs/prd/notes.md covering "note CRUD" fully (all 3 features
+current, mtime 2 days ago, no watched-dir churn). User says
+"run mu-prd to pick up from where we left off — first MVP feature."
+Cap: 6 tool calls.
+```
+Observe: does agent recognize fit, skip re-derivation, and hand off to mu-scope with pass-through history entry?
+
 - [ ] **Step 4: Document baseline failures**
 
 ### 4.2 GREEN: Write Phase 0 + handoff receiver
@@ -320,20 +359,27 @@ Phase 0's step 4 (user override parsing) must accept `/mu-prd create`, `/mu-prd 
 
 - [ ] **Step 7: Rename existing "Mode Selection" to "Depth Mode Selection"**
 
-Same disambiguation as Task 3 Step 7 — existing lightweight/full concept stays, label changes.
+In mu-prd/SKILL.md line 16-22 (heading `## Mode Selection`), same disambiguation as Task 3 Step 7 — existing lightweight/full concept stays, label changes to "Depth Mode Selection". All references to bare "mode" within this section updated.
+
+Include the explicit "Never watch `docs/prd/` itself (circular)" note per design §2 mu-prd row, and confirm the `src/` fallback wording per design §2.
 
 - [ ] **Step 8: Update checklist + Process Flow**
 
 Phase 0 at the top. 4 branches in the graph.
 
+- [ ] **Step 8b: Update Artifact Format section per design §4**
+
+Update mu-prd/SKILL.md Artifact Format section to include Stance / Sub-type / Detected-at header fields and a History section template. Add a "Commit convention" sub-section citing the `docs(prd): <stance>[(sub-type)]: ...` prefix pattern. Include the `--no-stance-meta` opt-out.
+
 ### 4.3 REFACTOR: Verify
 
-- [ ] **Step 9: Re-dispatch P1-P3 with updated skill**
+- [ ] **Step 9: Re-dispatch P1-P4 with updated skill**
 
 Verify:
 - P1 → `update(gap-fill)`, notifications section appended without disturbing existing features
 - P2 → `create`, no stance dialog (pre-confirmed), proceeds directly
 - P3 → H3 returns `insufficient-signal`, doesn't falsely report fresh/stale
+- P4 → `skip`, no re-derivation, history appended, hand off to mu-scope
 
 - [ ] **Step 10: Close loopholes, commit**
 
@@ -372,20 +418,25 @@ Create `/tmp/stance-e2e-test/` with:
 Prompt:
 ```
 You are in /tmp/stance-e2e-test/. User says:
-"Start a new business analysis for a note-taking app, full mode."
-Follow mu-biz full mode through to the next skill in the chain.
-Cap: 20 tool calls.
+"Start a new business analysis for a note-taking app, full mode,
+then run mu-prd, then pick the first MVP feature and scope + design it."
+Follow mu-biz → mu-prd → mu-scope → mu-arch as far as the chain goes.
+Cap: 35 tool calls.
 ```
 
 Expected behavior:
 1. mu-biz Phase 0 detects `create` (empty `docs/biz/`)
 2. mu-biz Full mode runs (8 sections)
-3. Terminal invocation: `mu-prd create main-product`
+3. Terminal invocation: `mu-prd create main-product` (pre-confirmed)
 4. mu-prd Phase 0 accepts pre-confirmed `create`, no stance dialog
 5. mu-prd produces PRD
-6. mu-prd terminal: invoke mu-scope for first feature
+6. mu-prd terminal: invoke mu-scope for first feature (no stance — mu-scope not creative)
+7. mu-scope produces UC set
+8. mu-scope terminal: invoke mu-arch
+9. mu-arch Phase 0 runs — for the first feature, docs/specs/ is empty, code is also empty → should propose `create`; user confirms with bare "ok"
+10. mu-arch produces design for the first feature
 
-Validate no unexpected stance dialogs or regressions vs current biz→prd flow.
+Validate no unexpected stance dialogs or regressions at ANY of the 3 creative-skill hops (mu-biz, mu-prd, mu-arch). The most important regression to catch is an unsolicited stance confirmation inside the pre-confirmed mu-biz → mu-prd handoff, or a failure mode at mu-arch's Phase 0 on first-run empty repo.
 
 - [ ] **Step 3: Document findings** (no commit; feed into Task 7 if issues)
 
@@ -433,9 +484,17 @@ remains docs/specs/2026-04-15-creative-skill-stances-design.md."
 
 **Files:** (no edits; review-only)
 
-- [ ] **Step 1: Dispatch mu-reviewer in review-code mode**
+- [ ] **Step 1: Dispatch mu-reviewer in review-coverage mode**
 
-Context: all commits from Task 1 through Task 6. Focus: cross-file consistency (stance-detection.md heuristics match per-skill parameter tables; commit prefix pattern used consistently; HARD-GATE ordering preserved).
+Inputs: scope path `docs/scope/2026-04-15-creative-skill-stances.md`, commit range `<Task-1-sha>..HEAD`. This mode produces the UC-coverage matrix and catches any UC orphaned by the implementation.
+
+- [ ] **Step 1b: Dispatch mu-reviewer in review-design mode on `knowledge/principles/stance-detection.md`**
+
+Focus: internal consistency of the heuristics vs decision table, soundness of thresholds, error-handling completeness. review-design is the right mode for principle-file content.
+
+- [ ] **Step 1c: Lightweight cross-file consistency check (manual or subagent)**
+
+Verify by grep: per-skill parameter tables in each SKILL.md match the design §2 table; commit-prefix pattern consistent across all 4 new commits (Tasks 2-4 + Task 6); HARD-GATE ordering note present in all 3 SKILL.md files.
 
 - [ ] **Step 2: Address any findings**
 
@@ -461,7 +520,30 @@ Each phase leaves the codebase in a consistent working state.
 
 ## Out of Scope for This Plan
 
+- **EC-6 (pipeline-level batch confirmation)** — explicitly deferred to mu-route design cycle per spec §Requirements Reference. The `stance=create` pre-confirmed hint added in §2.5 is a targeted regression guard, not a general batch mechanism.
 - mu-route integration (own scope cycle per v3 proposal roadmap step 6)
 - Sign-off gate (own scope cycle per step 5)
 - Retrofitting old artifacts with stance headers (optional follow-up)
 - Stance concept in non-creative skills (mu-scope, mu-plan, mu-code, mu-review) — not applicable
+
+## UC Coverage Map
+
+Traceability — which task covers which scope UC:
+
+| Scope UC | Task |
+|----------|------|
+| UC-A1, UC-A2 | Tasks 2, 3, 4 (each skill's Phase 0) |
+| UC-B1..UC-B4 (mu-biz 4 stances) | Task 3 scenarios B1, B2, B3, B4 |
+| UC-B5..UC-B8 (mu-prd 4 stances) | Task 4 scenarios P1 (B6 update), P2 (B5 create), P3 (B6 update/insufficient-signal), P4 (B8 skip). Note: P1/P3 both exercise update variants; B5 create is covered by P2 pre-confirmed handoff; B7 extract receives implicit coverage via the principle file's Error Handling section and Task 5 e2e — if this proves insufficient, add explicit P5 extract scenario. |
+| UC-B9..UC-B12 (mu-arch 4 stances) | Task 2 scenarios A1, A2, A3, A4 |
+| UC-C1..UC-C6 | Task 1 (heuristic definitions in principle file) |
+| EC-1 ambiguous-state | Task 1 Error Handling section + Task 3 scenarios observing ambiguous-case behavior |
+| EC-2 multiple-artifacts | Task 1 algorithm Step 4 (most-recent-mtime + topic-match) |
+| EC-3 legacy-location | Task 1 algorithm Step 1 (legacy fallbacks) |
+| EC-4 mid-flow-switch | Task 2 (documented in mu-arch via re-enter Phase 0 semantics) |
+| EC-5 partial-overlap | Task 2 update(gap-fill) branch description |
+| **EC-6 batch-confirm** | **DEFERRED** to mu-route cycle; `stance=create` pre-confirmed hint in §2.5 is a partial mitigation |
+| ER-1 detection-impossible | Task 1 Error Handling section |
+| ER-2 malformed-artifact | Task 1 Error Handling section + Task 2 robustness |
+| ER-3 extract-target-missing | Task 1 Error Handling section + Task 2 A2 verification |
+| ER-4 sync-contradicts-code | Task 1 Error Handling section |
