@@ -128,7 +128,7 @@ knowledge/
 ├── templates/        # scope.md（mu-scope 用例集模板），explore.md（mu-explore 心智模型模板）
 ├── principles/       # 思维原则（inversion, premise-check, chestertons-fence,
 │                     #   architecture-assessment, skill-cso, graphviz-conventions,
-│                     #   skill-testing）
+│                     #   skill-testing, stance-detection）
 └── reviews/          # 审查清单（security-checklist, design-audit-rubric）
 ```
 

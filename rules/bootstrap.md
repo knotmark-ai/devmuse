@@ -111,6 +111,8 @@ DevMuse has three tiers: **Product-level** (mu-biz, mu-prd), **Feature-level** (
 3. **Feature addition to existing project**: `mu-scope → mu-arch → mu-plan → mu-code → mu-review`. Skip product-level tier — product already exists.
 4. **Bug fix**: `mu-scope (1 UC: repro steps) → mu-debug → mu-code`.
 
+**Creative-skill stance**: `mu-biz`, `mu-prd`, and `mu-arch` auto-detect artifact state on entry via a Phase 0 stance (`create` / `update` / `extract` / `skip`). The user confirms in one word or overrides via slash hint (e.g., `/mu-arch create`). See `knowledge/principles/stance-detection.md`.
+
 ### Examples
 
 - "I want to build a new product / startup / Chrome extension" → `mu-biz` (full) first

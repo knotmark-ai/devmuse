@@ -126,7 +126,7 @@ Organized in three tiers:
 |---|---|---|
 | languages/ | Language-specific review criteria | mu-reviewer (review-code) |
 | templates/ | Artifact templates | mu-scope, mu-explore |
-| principles/ | Thinking rubrics for decision points | mu-arch, mu-scope, mu-biz |
+| principles/ | Thinking rubrics for decision points | mu-arch, mu-scope, mu-biz, mu-prd (stance-detection.md consumed at Phase 0 of each creative skill) |
 | reviews/ | Review checklists for specific concerns | mu-reviewer (review-security, review-design) |
 
 ```
@@ -146,7 +146,8 @@ knowledge/
 │   ├── inversion.md    # Inversion reflex for approach comparison
 │   ├── premise-check.md # Premise validation forcing questions
 │   ├── skill-cso.md    # Claude Search Optimization for skill descriptions
-│   └── skill-testing.md # Per-type test strategies + pressure scenarios
+│   ├── skill-testing.md # Per-type test strategies + pressure scenarios
+│   └── stance-detection.md # Stance detection for mu-biz/mu-prd/mu-arch Phase 0
 └── reviews/            # Review checklists for specific concerns
     ├── security-checklist.md  # 5-phase security audit
     └── design-audit-rubric.md # Architecture audit rubric

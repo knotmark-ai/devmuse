@@ -35,8 +35,8 @@ Start a new session and ask for something that should trigger a skill (for examp
 DevMuse organizes skills into three tiers:
 
 **Product-level tier** (runs once per product; optional for existing projects):
-- **mu-biz** — Business analysis: validate premise (quick mode, 4 forcing questions) or full analysis (competitive, BMC, VPC, personas, MVP scope, cost model).
-- **mu-prd** — Product requirements: personas, user flows, wireframes, per-feature specs, tiering rules, NFRs, metrics.
+- **mu-biz** — Business analysis: validate premise (quick mode, 4 forcing questions) or full analysis (competitive, BMC, VPC, personas, MVP scope, cost model). Runs Phase 0 stance detection on entry (create / update / extract / skip).
+- **mu-prd** — Product requirements: personas, user flows, wireframes, per-feature specs, tiering rules, NFRs, metrics. Runs Phase 0 stance detection on entry.
 
 **Feature-level tier** (runs per feature iteration):
 
@@ -46,7 +46,7 @@ scope → arch → plan → code → review
 
 1. **mu-scope** — Activates before arch. Scans the codebase for impact (Quick Probe), enumerates use cases (happy paths, edge cases, error cases), detects conflicts between use cases, and produces a Use Case Set. Depth adapts to complexity — a bug fix gets 1 use case, a new feature gets full enumeration.
 
-2. **mu-arch** — Activates with approved scope. Focuses on technical architecture (components, interfaces, data flow, error handling). Proposes 2-3 approaches with architecture diagrams, presents design in sections for validation. Dispatches mu-reviewer (review-design) for spec review. **For product requirements use mu-prd; for business strategy use mu-biz.**
+2. **mu-arch** — Activates with approved scope. Runs Phase 0 stance detection (create / update / extract / skip), then focuses on technical architecture (components, interfaces, data flow, error handling). Proposes 2-3 approaches with architecture diagrams, presents design in sections for validation. Dispatches mu-reviewer (review-design) for spec review. **For product requirements use mu-prd; for business strategy use mu-biz.**
 
 3. **mu-plan** — Activates with approved architecture. Breaks work into bite-sized tasks (2-5 minutes each). Every task has exact file paths, complete code, verification steps, and UC-ID traceability.
 
