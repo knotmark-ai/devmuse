@@ -57,18 +57,25 @@ If any watched dir has a commit timestamp > `(artifact mtime + 7 days)` → stal
 
 **Fallback**: if none of the skill's declared watched dirs exist in the repo, H3 returns `insufficient-signal` and is omitted from the decision. Do NOT treat insufficient-signal as "not stale" — it's a distinct value.
 
+### H4 — Code substance check (qualifies `code exists` in R1/R2)
+
+`code exists` in the decision table does NOT mean "watched dir has any file." It means **substantial** code: at least one watched dir with **≥50 total non-blank lines** across all its files combined. A single placeholder file or a skeleton scaffold does not count.
+
+If watched dirs exist but total substance is below threshold (e.g., greenfield repo with scaffolding stubs), R2 still fires for `extract` but the output **confidence is `ambiguous`** and the recommendation sentence explicitly notes "code is sparse — consider `create` if this is a fresh design." This gives the user a clear override path without taking the decision away from them.
+
 ## Decision Table
 
 Rows evaluated top-to-bottom; first match wins.
 
-| # | 0-candidate | H1 | H2 | H3 | code exists | → stance | → sub-type |
-|---|-------------|----|----|----|-------------|----------|------------|
-| R1 | yes | — | — | — | no | `create` | — |
-| R2 | yes | — | — | — | yes | `extract` | — |
-| R3 | no | stub | — | — | — | `update` | `expand` |
-| R4 | no | not | gap | — | — | `update` | `gap-fill` |
-| R5 | no | not | covered | stale | — | `update` | `sync` |
-| R6 | no | not | covered | not / insufficient | — | `skip` | — |
+| # | 0-candidate | H1 | H2 | H3 | code exists (H4) | → stance | → sub-type | Confidence note |
+|---|-------------|----|----|----|-------------|----------|------------|-----------------|
+| R1 | yes | — | — | — | no (or sparse, <50 LOC) | `create` | — | high |
+| R2 | yes | — | — | — | substantial (≥50 LOC per H4) | `extract` | — | high |
+| R2′ | yes | — | — | — | sparse (<50 LOC, but >0) | `extract` | — | **ambiguous** — note "code is sparse; consider `create`" |
+| R3 | no | stub | — | — | — | `update` | `expand` | high |
+| R4 | no | not | gap | — | — | `update` | `gap-fill` | high |
+| R5 | no | not | covered | stale | — | `update` | `sync` | high |
+| R6 | no | not | covered | not / insufficient | — | `skip` | — | high |
 
 **Legacy-location note**: `0-candidate` considers both the conventional artifact dir and the skill's declared legacy paths (Step 1 of the algorithm). A legacy match flips `0-candidate` to `no`.
 
