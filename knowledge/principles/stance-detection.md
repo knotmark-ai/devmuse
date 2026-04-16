@@ -108,6 +108,17 @@ Four conflict cases are explicitly defined to preserve the "no silent destructio
 
 All error paths are non-blocking — the skill produces a recommendation, not a termination.
 
+## Mid-flow Stance Switch
+
+If the user asks to change stance after Phase 0 has completed and work is in progress (e.g., "actually, let's extract from code instead of writing from scratch"):
+
+1. **Do not hard-stop.** Treat the request as a graceful transition, not an abort.
+2. **Preserve work-in-progress**: append any already-produced content (approved sections, drafted text) to the artifact's **History** section with a note: `mid-flow switch: was <old-stance>, now <new-stance>`.
+3. **Re-run Phase 0** detection with the same inputs. If the user's new stance matches detection, use it. If the user's explicit override differs from detection, honor the user per UC-A2.
+4. **Continue in the new branch.** Prior WIP remains in History; new work builds on the new stance's flow.
+
+This preserves the "guidance over control" philosophy: the user can change their mind mid-flow without losing work and without the skill refusing to transition.
+
 ## Error Handling
 
 Maps directly to scope ER-1..ER-4:
