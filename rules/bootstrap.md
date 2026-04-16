@@ -102,7 +102,7 @@ These thoughts mean STOP—you're rationalizing:
 
 ## Skill Priority & Pipeline Paths
 
-DevMuse has three tiers: **Product-level** (mu-biz, mu-prd), **Feature-level** (mu-scope → mu-arch → mu-plan → mu-code → mu-review), and **Orthogonal** (mu-debug, mu-retro).
+DevMuse has three tiers: **Product-level** (mu-biz, mu-prd), **Feature-level** (mu-scope → mu-arch → mu-plan → mu-code → mu-review), and **Orthogonal** (mu-explore, mu-debug, mu-retro).
 
 ### Choosing a path
 
@@ -119,6 +119,7 @@ DevMuse has three tiers: **Product-level** (mu-biz, mu-prd), **Feature-level** (
 - "Add a button" → `mu-scope` (quick), then mu-arch, then mu-plan, then mu-code
 - "Is this worth doing?" / "Should I build this?" → `mu-biz quick`
 - "How did last week go?" → `mu-retro`
+- "Help me understand this repo / take over this project / evaluate this library" → `mu-explore`
 
 ## Skill Types
 

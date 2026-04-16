@@ -76,7 +76,7 @@ Skills and agents reference knowledge via `@` relative paths within the plugin:
 
 **Principle:** Rules consume tokens via hook injection. Only put content that must be unconditionally always-on. Anything loadable on-demand via skills should stay in skills.
 
-### skills/ (10)
+### skills/ (11)
 
 Organized in three tiers:
 
@@ -101,6 +101,7 @@ Organized in three tiers:
 
 | Name | Role | Dispatches Agent |
 |------|------|------|
+| mu-explore | Systematic code-comprehension — produces living mental-model artifact for unfamiliar code | — |
 | mu-debug | Systematic root cause analysis | — |
 | mu-retro | Periodic retrospective with git metrics and memory capture | — |
 
@@ -124,7 +125,7 @@ Organized in three tiers:
 | Category | Purpose | Referenced by |
 |---|---|---|
 | languages/ | Language-specific review criteria | mu-reviewer (review-code) |
-| templates/ | Artifact templates | mu-scope |
+| templates/ | Artifact templates | mu-scope, mu-explore |
 | principles/ | Thinking rubrics for decision points | mu-arch, mu-scope, mu-biz |
 | reviews/ | Review checklists for specific concerns | mu-reviewer (review-security, review-design) |
 
@@ -136,7 +137,8 @@ knowledge/
 │   ├── go.md           # Error handling, concurrency, interface design
 │   └── java.md         # Null handling, concurrency, resource management
 ├── templates/
-│   └── scope.md        # Use Case Set template for mu-scope
+│   ├── scope.md        # Use Case Set template for mu-scope
+│   └── explore.md      # Mental-model artifact template for mu-explore
 ├── principles/         # Thinking rubrics loaded at decision points
 │   ├── architecture-assessment.md # C4 model guide + diagram type selection
 │   ├── chestertons-fence.md # Understand before changing/removing code

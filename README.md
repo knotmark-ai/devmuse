@@ -56,6 +56,7 @@ scope → arch → plan → code → review
 
 **Orthogonal skills** (pipeline-external, invoke as needed):
 
+- **mu-explore** — Systematic code comprehension for unfamiliar code (onboarding, takeover, dependency evaluation, pre-change, pre-debug). Produces a living mental-model artifact under `docs/explore/`.
 - **mu-debug** — Systematic root cause analysis (4-phase process with architecture escalation).
 - **mu-retro** — Periodic retrospective gathering git metrics and capturing learnings to memory.
 
@@ -77,7 +78,7 @@ devmuse/
 └── knowledge/    Domain knowledge (injected on demand)
 ```
 
-### Skills (10)
+### Skills (11)
 
 | Tier | Skill | Role |
 |------|-------|------|
@@ -88,6 +89,7 @@ devmuse/
 | Feature | **mu-plan** | Architecture → detailed implementation plan with UC-ID traceability |
 | Feature | **mu-code** | Plan → implementation (subagent or inline, with TDD and worktree) |
 | Feature | **mu-review** | Review + verify + integrate (feedback handling, verification gates, coverage check, merge/PR) |
+| Orthogonal | **mu-explore** | Code comprehension for unfamiliar code — produces a living mental-model artifact |
 | Orthogonal | **mu-debug** | Systematic root cause analysis |
 | Orthogonal | **mu-retro** | Periodic retrospective with git metrics and memory capture |
 | Meta | **mu-write-skill** | Create/edit skills using TDD methodology |
