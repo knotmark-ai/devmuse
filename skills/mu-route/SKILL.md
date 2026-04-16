@@ -126,9 +126,14 @@ This matches industry convention (Aider `/ask`/`/code`/`/architect`, Roo Code `/
 
 - **2+ moves tie on routing rules** → propose the one that fires first in R1..R9 ordering; note in the proposal sentence: `"(tied with <other move>)"`. User overrides with one word.
 - **No verb matches Axis-Intent** → R9 fires (default Explore). Safe default: understand before acting.
-- **Repo state is unusual** (shallow clone, empty repo, submodule root) → fall through to R9; proposal sentence adds `"(repo state ambiguous)"`.
+- **Repo state is pathological** (empty repo, shallow clone, submodule root, repo outside git) → skip the routing table and ask user directly: *"Can't confidently route — repo state is unusual (`<detected anomaly>`). Which opening move? (explore / validate / design-product / design-tech / reproduce / plan / implement)"*. This is the explicit "ask user" fallback per scope EC-R4.
 
-All paths non-blocking — mu-route always produces a proposal.
+## Failure Handling
+
+- **ER-R1 Heuristics computation error** (git command fails, file read fails, regex error, etc.) → do NOT fabricate a signal. Surface the error briefly and ask user: *"Couldn't compute routing signals (`<specific failure>`). Which opening move?"*. Non-blocking.
+- **ER-R2 User reply cannot be parsed** (multi-word / off-topic / typo) → ask user to restate with one word from the accepted list. Non-blocking.
+
+All paths non-blocking — mu-route always produces a proposal or a single clarifying ask.
 
 ## Interaction with Sign-off Gate
 

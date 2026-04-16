@@ -67,8 +67,9 @@ The consuming skill does NOT reimplement the detection or the protocol — it ju
 
 - **ER-S1 CODEOWNERS missing + single-author history + no user declaration** → stakeholder-scope defaults to solo; gate does NOT fire. No ask.
 - **ER-S2 CODEOWNERS exists but malformed** → treat as present (signal S1 fires); ask user in protocol for stakeholder list if names can't be parsed.
-- **ER-S3 user never replies after announcement** → not this principle's problem; conversation is suspended until user returns. Agent should not force proceed.
-- **ER-S4 user replies with something ambiguous** (e.g., "meh") → treat as "skip sign-off" with a History note: `"ambiguous reply: <verbatim>"`. Non-blocking.
+- **ER-S3 Gate fires (via S2 multi-author OR S3 user declaration) but CODEOWNERS absent** → do NOT guess stakeholder names from git-log authors alone. Agent MUST ask: "Gate fired via `<which signal>` but no CODEOWNERS file exists. Please name stakeholders who should sign off, or say 'skip sign-off'." Matches scope ER-R2.
+- **ER-S4 user never replies after announcement** → not this principle's problem; conversation is suspended until user returns. Agent should not force proceed.
+- **ER-S5 user replies with something ambiguous** (e.g., "meh") → treat as "skip sign-off" with a History note: `"ambiguous reply: <verbatim>"`. Non-blocking.
 
 ## Interaction with Stance
 
