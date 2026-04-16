@@ -78,7 +78,7 @@ devmuse/
 └── knowledge/    Domain knowledge (injected on demand)
 ```
 
-### Skills (11)
+### Skills (12)
 
 | Tier | Skill | Role |
 |------|-------|------|
@@ -92,6 +92,7 @@ devmuse/
 | Orthogonal | **mu-explore** | Code comprehension for unfamiliar code — produces a living mental-model artifact |
 | Orthogonal | **mu-debug** | Systematic root cause analysis |
 | Orthogonal | **mu-retro** | Periodic retrospective with git metrics and memory capture |
+| Router | **mu-route** | Pattern-matching router — proposes the right opening move for unprefixed user messages; bypassed by `/mu-<skill>` slash hints |
 | Meta | **mu-write-skill** | Create/edit skills using TDD methodology |
 
 ### Agents (2)

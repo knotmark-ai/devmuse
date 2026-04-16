@@ -76,7 +76,7 @@ Skills and agents reference knowledge via `@` relative paths within the plugin:
 
 **Principle:** Rules consume tokens via hook injection. Only put content that must be unconditionally always-on. Anything loadable on-demand via skills should stay in skills.
 
-### skills/ (11)
+### skills/ (12)
 
 Organized in three tiers:
 
@@ -104,6 +104,12 @@ Organized in three tiers:
 | mu-explore | Systematic code-comprehension — produces living mental-model artifact for unfamiliar code | — |
 | mu-debug | Systematic root cause analysis | — |
 | mu-retro | Periodic retrospective with git metrics and memory capture | — |
+
+**Router:**
+
+| Name | Role | Dispatches Agent |
+|------|------|------|
+| mu-route | Pattern-matching router — proposes one of 7 routable opening moves for unprefixed user messages; bypassed by /mu-<skill> slash hints | — |
 
 **Meta:**
 
@@ -147,7 +153,8 @@ knowledge/
 │   ├── premise-check.md # Premise validation forcing questions
 │   ├── skill-cso.md    # Claude Search Optimization for skill descriptions
 │   ├── skill-testing.md # Per-type test strategies + pressure scenarios
-│   └── stance-detection.md # Stance detection for mu-biz/mu-prd/mu-arch Phase 0
+│   ├── stance-detection.md # Stance detection for mu-biz/mu-prd/mu-arch Phase 0
+│   └── sign-off-gate.md # Sign-off protocol when stakeholder-scope = team-touching
 └── reviews/            # Review checklists for specific concerns
     ├── security-checklist.md  # 5-phase security audit
     └── design-audit-rubric.md # Architecture audit rubric
