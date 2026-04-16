@@ -72,22 +72,35 @@ Single source of truth for how to compute a stance from artifact + source-dir st
 
 | ID | Heuristic | Thresholds |
 |----|-----------|------------|
-| H1 | Stub | Clear stub: <100 words OR ≥3 placeholders (`TODO`/`<TBD>`/`FIXME`/`...`). Clear non-stub: >500 words AND 0 placeholders. Gray zone (100-500 words, 1-2 placeholders): flag AMBIGUOUS, lean update(expand). |
+| H1 | Stub | **Clear stub**: <300 words OR ≥3 placeholders (`TODO`/`<TBD>`/`FIXME`/`...`). **Clear non-stub**: >500 words AND 0 placeholders. **Gray zone** (300-500 words, 1-2 placeholders): flag AMBIGUOUS, lean `update(expand)`. Threshold aligned with scope UC-C1. |
 | H2 | Coverage | Parse artifact's top-level headings (H1 + H2). Match against current task identifier using substring match or ≥60% Jaccard token overlap. ≥1 match = covered; 0 = gap. |
-| H3 | Staleness | Strategy B (fixed directory mapping). Compute `git log -1 --format=%at -- <watched_dirs>`. If any watched dir has a commit timestamp > artifact mtime + 7-day grace → stale. Grace period prevents noise from "wrote artifact, made a follow-up tweak" scenarios. |
+| H3 | Staleness | Strategy B (fixed directory mapping). Compute `git log -1 --format=%at -- <watched_dirs>`. If any watched dir has a commit timestamp > artifact mtime + 7-day grace → stale. Grace period prevents noise from "wrote artifact, made a follow-up tweak" scenarios. **Fallback**: if none of the skill's declared watched dirs exist in the repo, H3 returns `insufficient-signal` and is omitted from the decision (not treated as `not stale`). |
 
-**Decision table**:
+**Decision table** (rows evaluated top-to-bottom; first match wins):
 
-| 0-candidate | H1 stub | H2 cover | H3 stale | code exists | → stance | → sub-type |
-|-------------|---------|----------|----------|-------------|----------|------------|
-| yes | — | — | — | no | `create` | — |
-| yes | — | — | — | yes | `extract` | — |
-| no | — | covered | not | — | `skip` | — |
-| no | stub | — | — | — | `update` | `expand` |
-| no | not | gap | — | — | `update` | `gap-fill` |
-| no | not | covered | stale | — | `update` | `sync` |
+| # | 0-candidate | H1 stub | H2 cover | H3 stale | code exists | → stance | → sub-type |
+|---|-------------|---------|----------|----------|-------------|----------|------------|
+| R1 | yes | — | — | — | no | `create` | — |
+| R2 | yes | — | — | — | yes | `extract` | — |
+| R3 | no | stub | — | — | — | `update` | `expand` |
+| R4 | no | not | gap | — | — | `update` | `gap-fill` |
+| R5 | no | not | covered | stale | — | `update` | `sync` |
+| R6 | no | not | covered | not / insufficient | — | `skip` | — |
 
-**Sub-type priority when multiple update signals fire**: `expand > gap-fill > sync` (structure first, then coverage, then content). Commit message shows highest-priority sub-type; History section records all signals observed.
+**Legacy-location note**: `0-candidate` considers both conventional and legacy paths (Step 1 of the algorithm). A legacy match flips `0-candidate` to `no`.
+
+**Sub-type priority when multiple update signals fire simultaneously**: `expand > gap-fill > sync` (structure first, then coverage, then content). Because rows are evaluated top-to-bottom and R3 (expand) precedes R4 (gap-fill) which precedes R5 (sync), the priority is enforced implicitly. Commit message shows the sub-type from the winning row; History section records all signals that fired.
+
+**Stub signal → expand sub-type equivalence**: scope CONFLICT-3 resolution states priority as `stub > gap-fill > sync`; since `stub` (detection signal from H1) maps 1:1 to `expand` (sub-type), design priority `expand > gap-fill > sync` is equivalent.
+
+**User-overridden stance behavior**:
+
+| Forced stance | Conflict with detection | Behavior |
+|---------------|-------------------------|----------|
+| user forces `create`, artifact exists | Yes | Warn once; create new file; do NOT archive/move/delete existing (scope NFR "no silent destruction"). |
+| user forces `extract`, artifact exists | Yes | Warn once; extract to a timestamped sibling `docs/<type>/<base>-extracted-YYYY-MM-DD.md`; original untouched. |
+| user forces `skip`, artifact missing | Yes | Error: cannot skip what doesn't exist. Degrade to propose `create` and ask. |
+| user forces `update`, artifact missing | Yes | Error: nothing to update. Degrade to propose `create` and ask. |
 
 **Output shape**:
 ```
@@ -100,7 +113,13 @@ candidate_file: <path or null>
 
 ### 2. Per-skill SKILL.md integration pattern
 
-Each of the 3 creative skills gets a new **Phase 0** section at the top (immediately after existing HARD-GATEs).
+Each of the 3 creative skills gets a new **Phase 0** section at the top — **placed AFTER existing HARD-GATE blocks but BEFORE any process step**. Ordering guarantee:
+
+```
+(existing frontmatter) → (existing HARD-GATE blocks, unchanged) → Phase 0: Stance Detection → (existing Process steps)
+```
+
+HARD-GATEs are evaluated before Phase 0 runs. A `skip` stance does not bypass HARD-GATEs: if mu-arch's scope-artifact gate isn't satisfied, Phase 0 never even runs — the skill errors out per the existing gate. Stance orthogonality holds in both directions (gates can't be bypassed via stance; stance doesn't weaken gates).
 
 **Template** (parameterized per skill):
 
@@ -119,7 +138,7 @@ Before engaging the existing process, detect the artifact's current state and pi
 
    > "Detected: stance=<stance> (sub=<sub-type>), confidence=<high|ambiguous>. Reason: <one-line>. OK to proceed, or override?"
 
-4. Accept user override in one word (`create` / `update` / `extract` / `skip`) or proceed on bare "ok". Slash-command hints (`/mu-<skill> create`) treated as pre-confirmed override.
+4. Accept user override in one word (`create` / `update` / `extract` / `skip`) or proceed on bare "ok". Slash-command hints (`/mu-<skill> create`) treated as pre-confirmed override. See §2.5 for Stance × Depth-mode interaction (mu-biz / mu-prd have a pre-existing Depth mode concept; slash hints like `/mu-biz create full` or `/mu-biz quick` are handled together).
 5. Record approved stance. Route to matching branch below.
 
 **Branch routing**:
@@ -136,9 +155,43 @@ Before engaging the existing process, detect the artifact's current state and pi
 
 | Skill | Artifact dir | Watched source dirs (H3) | Legacy locations |
 |-------|--------------|--------------------------|------------------|
-| mu-biz | `docs/biz/` | `docs/biz/`, root `README*`, `docs/prd/` | `docs/premise/` (deprecated), root `BUSINESS.md` |
-| mu-prd | `docs/prd/` | `docs/prd/`, `src/pages/`, `src/screens/`, `src/views/`, `app/` | root `PRD.md` |
-| mu-arch | `docs/specs/*-design*.md` | `src/`, `lib/`, `internal/`, `pkg/`, `cmd/` (whichever exist) | root `ARCHITECTURE.md`, `DESIGN.md` |
+| mu-biz | `docs/biz/` | root `README*` only. **Note**: biz staleness is weakly defined — the business model shifting is a human judgment, not a file-signal. H3 for mu-biz catches only the coarse "README says something very different now" case. Users are expected to override to `update(sync)` manually when they know a pivot has happened. Never watch `docs/prd/` (PRD edits don't imply biz staleness) or `docs/biz/` itself (circular). | `docs/premise/` (deprecated), root `BUSINESS.md` |
+| mu-prd | `docs/prd/` (excluded from self-watch) | `src/pages/`, `src/screens/`, `src/views/`, `app/`. **Fallback**: if none of those exist (backend/CLI/library projects), fall back to top-level `src/` directly; if that also doesn't exist, H3 returns `insufficient-signal`. | root `PRD.md` |
+| mu-arch | `docs/specs/*-design*.md` | `src/`, `lib/`, `internal/`, `pkg/`, `cmd/` (whichever exist). If none exist, H3 returns `insufficient-signal`. | root `ARCHITECTURE.md`, `DESIGN.md` |
+
+**General rule**: a skill's artifact dir is never in its own watched set (prevents circular staleness).
+
+### 2.5 Stance × Depth-mode interaction (mu-biz / mu-prd)
+
+mu-biz and mu-prd each have a pre-existing **Depth mode** concept (mu-biz: `quick` / `full`; mu-prd: `lightweight` / `full`) that is orthogonal to Stance. Slash hints may specify either or both:
+
+| User input | Stance extracted | Depth mode extracted |
+|------------|------------------|----------------------|
+| `/mu-biz` | (auto-detect in Phase 0) | (auto-detect in existing Mode Selection) |
+| `/mu-biz create` | `create` (forces stance) | (auto-detect) |
+| `/mu-biz quick` | (auto-detect) | `quick` (forces depth mode) |
+| `/mu-biz create quick` | `create` | `quick` |
+| `/mu-biz full` | (auto-detect) | `full` |
+
+**Parsing rule**: Phase 0 parses only the stance token (`create` / `update` / `extract` / `skip`) from the slash args; all other args pass through to the existing Mode Selection step. The two steps are sequential and independent:
+
+```
+Phase 0 (Stance Detection)  →  existing Mode Selection (Depth mode)  →  existing Process
+```
+
+Phase 0 never consumes depth-mode tokens; Mode Selection never consumes stance tokens. User input is split cleanly between them via the token list.
+
+**Pipeline-handoff regression guard** (workaround until mu-route lands):
+
+Today, `mu-biz` in `full` depth mode auto-invokes mu-prd after approval (mu-biz/SKILL.md "Full mode Terminal"). Adding Phase 0 to mu-prd would interrupt that auto-invocation with a stance dialog — a functional regression.
+
+**Mitigation**: when an upstream creative skill auto-invokes a downstream creative skill as a terminal action, it MUST pass a `stance=create` hint via the invocation args (e.g., `mu-prd create ...`). Downstream Phase 0 treats this as a pre-confirmed override per UC-A2, presents no confirmation dialog, and proceeds directly to the create branch. This preserves the smooth biz(full) → prd → (arch via mu-scope chain) handoff that exists today.
+
+Documented per skill:
+- mu-biz Full terminal → invokes `mu-prd create ...`
+- mu-prd Full terminal → invokes `mu-scope ...` (no stance — mu-scope isn't a creative skill; nothing to pass)
+
+When mu-route lands, it will own all stance decisions across the chain and this workaround becomes unnecessary.
 
 ### 3. Stance-specific branch behaviors
 
@@ -160,6 +213,7 @@ All three reuse the skill's existing section-approval dialog; no new UX pattern.
 - Write same as create, but commit message prefix = `extract:` and reason cites which code regions were read.
 
 **skip branch** — shortest path.
+- **Existing HARD-GATEs still apply**: skip does not bypass gates. Phase 0 runs only after HARD-GATEs pass.
 - Append an entry to the artifact's History section: `| <date> | <commit-hash> | skip | — | passthrough for <task> |`
 - Commit only if header/History needed initialization (backward-compat for old artifacts).
 - Invoke downstream skill per existing Integration section.
@@ -251,16 +305,32 @@ All error paths are non-blocking — detection always produces an output, even i
 
 ## Testing Strategy
 
-Per mu-write-skill Iron Law, every SKILL.md edit goes through RED-GREEN-REFACTOR.
+Per mu-write-skill Iron Law, every SKILL.md edit goes through RED-GREEN-REFACTOR. Each skill must test all 4 stance branches it introduces, not only `update`.
 
-**Per-skill test scenarios** (RED baseline):
-- **mu-arch**: subagent invoked on repo with existing stale arch doc; user says "add new module X". Baseline behavior expected (without stance): mu-arch creates a new doc from scratch, ignoring the existing stale one. GREEN behavior: mu-arch proposes `update(sync)`.
-- **mu-biz**: subagent invoked with stub biz doc (<100 words, placeholder); user says "complete the biz plan". Baseline: mu-biz may start from scratch. GREEN: propose `update(expand)`.
-- **mu-prd**: subagent invoked with full prd covering 3 features; user says "add feature Y". Baseline: mu-prd may rewrite entire prd. GREEN: propose `update(gap-fill)`.
+**Per-skill RED scenarios** (the 4 branches × relevant edge cases):
 
-**Shared test** (after all 3 done): end-to-end dogfood on a synthetic small repo — does mu-biz → mu-prd → mu-arch chain produce 3 correct stance recommendations in sequence without contradictions?
+mu-arch:
+- Scenario A1 (`update(sync)`): existing stale arch doc; user says "add new module X"
+- Scenario A2 (`extract`): empty `docs/specs/` but substantial `src/`; user says "document current architecture"
+- Scenario A3 (`skip`): existing arch doc fits current scope UC-set; user invokes mu-arch
+- Scenario A4 (`create` over existing, forced): existing arch doc exists; user says `/mu-arch create` — verify warning fires and existing file is preserved
 
-**Rollout order**: mu-arch first (no mode-word collision, simplest integration) → mu-biz next → mu-prd last (most complex existing Process structure). Write stance-detection.md alongside the first skill edit.
+mu-biz:
+- Scenario B1 (`update(expand)`): stub biz doc (<300 words, 1 placeholder); user says "complete the biz plan"
+- Scenario B2 (`update(gap-fill)`): existing biz doc covers product A; user says "add new sister product B under same org"
+- Scenario B3 (`extract`): no `docs/biz/` but product code exists; user says "write the biz case for this product retrospectively"
+- Scenario B4 (slash precedence): `/mu-biz create quick` — verify stance parser extracts `create`, depth parser extracts `quick`
+
+mu-prd:
+- Scenario P1 (`update(gap-fill)`): existing prd covers 3 features; user says "add feature Y"
+- Scenario P2 (`create` from downstream of mu-biz): simulate mu-biz full-mode terminal invoking `mu-prd create` — verify the pre-confirmed override path works and no stance dialog appears
+- Scenario P3 (no watched dirs exist): backend-only repo (no `src/pages/` etc.); verify H3 falls back to `src/` or returns `insufficient-signal`
+
+**Shared end-to-end** (after all 3 done): dogfood on a synthetic small repo — does `mu-biz full → mu-prd → mu-scope → mu-arch` chain produce correct stance recommendations at each creative-skill hop without user-visible regressions vs today?
+
+**Rollout order**: mu-arch first, then mu-biz, then mu-prd. Rationale: mu-arch has no existing depth-mode concept, so its Phase 0 can be written and tested without also working out §2.5 interaction logic. However, this creates a blind spot for the depth×stance disambiguation — §2.5 must be reviewed and locked BEFORE writing the mu-biz/mu-prd edits (i.e., solve the design, sequence the implementation). Alternative considered: reverse order (mu-biz first to stress-test collision) — rejected because (a) mu-biz's pre-existing quick/full detection is the most intricate of the three, stacking stance on top of that makes the first skill edit the riskiest; (b) §2.5 + Scenario B4 explicitly test the collision path before mu-biz ships, giving adequate coverage.
+
+Write `knowledge/principles/stance-detection.md` alongside the first skill edit.
 
 ## Rollout Plan
 
@@ -286,6 +356,7 @@ Per mu-write-skill Iron Law, every SKILL.md edit goes through RED-GREEN-REFACTOR
 
 - Old artifacts without Stance header continue to work. On first touch by a stance-aware skill, header is lazily initialized.
 - `hooks/pre-tool-use/pipeline-gate.sh` still passes for `skip` stance because the existing spec file still satisfies the `*-design*.md` glob; no hook changes needed.
+- **Hook coarseness vs stance fitness**: the hook's existence-check is strictly coarser than the stance fitness-check (UC-C6). The hook passes as long as any `*-design*.md` file exists in `docs/specs/`, even if stale or unrelated to the current task. Phase 0's fitness-check would catch this mismatch and recommend `update(sync)` or `update(gap-fill)`. In the edge case where a user bypasses Phase 0 (e.g., directly invokes mu-code on a task unrelated to the existing spec), the hook still passes — they haven't gained protection from stance, but they haven't lost the existing hook protection either. The two systems are compatible but not equivalent; users get fitness-checking only when Phase 0 runs.
 - Commit messages without stance prefix still work; stance prefix is additive.
 
 ## Appendix A: Integration with mu-explore
