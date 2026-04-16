@@ -214,9 +214,13 @@ Ask the user which MVP feature to start with. Then invoke mu-scope for that feat
 - **Defer use case enumeration** — per-feature UCs (happy/edge/error paths) are mu-scope's job, not mu-prd's. PRD states product rules; mu-scope enumerates concrete scenarios through them.
 - **Visual when helpful** — flows and wireframes benefit from diagrams; requirements/rules are text
 
+**Sign-off gate (before terminal):**
+
+Before invoking mu-scope, consult `@../../knowledge/principles/sign-off-gate.md`. If stakeholder-scope indicates team-touching, run the gate protocol. Sign-off gate is skipped when stance was `skip`.
+
 ## Integration
 
-- **Invoked by:** user manually (`/mu-prd`); or auto-invoked by `mu-biz full` on completion
-- **Reads:** `docs/biz/*.md` (biz artifact if present)
+- **Invoked by:** user manually (`/mu-prd`); or auto-invoked by `mu-biz full` on completion (passing `stance=create` pre-confirmed per spec §2.5)
+- **Reads:** `docs/biz/*.md` (biz artifact if present); `@../../knowledge/principles/stance-detection.md` (Phase 0); `@../../knowledge/principles/sign-off-gate.md` (terminal if team-touching)
 - **Produces:** `docs/prd/YYYY-MM-DD-<product>.md`
 - **Terminal state:** Invoke mu-scope for the first MVP feature. Further features iterate through mu-scope one at a time.

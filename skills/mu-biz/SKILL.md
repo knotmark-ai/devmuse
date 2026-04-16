@@ -199,11 +199,15 @@ Commit message prefix reflects the stance and (if update) sub-type:
 - **No technical design** — that's mu-arch's job
 - **No feature specs** — that's mu-prd's job (product-level feature list is OK here; user-facing rules/wireframes/flows belong in mu-prd)
 
+**Sign-off gate (before terminal):**
+
+Before terminal (user-decides in Quick mode, invoke mu-prd in Full mode), consult `@../../knowledge/principles/sign-off-gate.md`. If stakeholder-scope indicates team-touching, run the gate protocol. Sign-off gate is skipped when stance was `skip`.
+
 ## Integration
 
 - **Invoked by:** user manually (`/mu-biz` or `/mu-biz quick` / `/mu-biz full`); or implicitly during greenfield ideation
-- **Reads:** @../../knowledge/principles/premise-check.md (always); prior biz/premise artifacts if present
+- **Reads:** @../../knowledge/principles/premise-check.md (always); @../../knowledge/principles/stance-detection.md (Phase 0); @../../knowledge/principles/sign-off-gate.md (terminal if team-touching); prior biz/premise artifacts if present
 - **Produces:** `docs/biz/YYYY-MM-DD-<name>[-quick].md`
 - **Terminal state:**
   - Quick mode → user decides (no chaining)
-  - Full mode → invoke mu-prd
+  - Full mode → invoke `mu-prd create` (pre-confirmed stance, per spec §2.5)

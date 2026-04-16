@@ -211,6 +211,10 @@ After the spec review loop passes, ask the user to review the written spec befor
 
 Wait for the user's response. If they request changes, make them and re-run the spec review loop. Only proceed once the user approves.
 
+**Sign-off gate (before terminal):**
+
+Before invoking mu-plan, consult `@../../knowledge/principles/sign-off-gate.md`. If stakeholder-scope indicates team-touching (per that principle's detection heuristics), run the gate protocol and collect sign-off. Otherwise proceed directly. Sign-off gate is skipped when stance was `skip`.
+
 **Implementation:**
 
 - Invoke the mu-plan skill to create a detailed implementation plan
