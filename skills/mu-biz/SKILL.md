@@ -10,18 +10,60 @@ description: "Business analysis — validate premise and define product strategy
 Independent of the main feature-level pipeline. Product-level skill that runs **once per product**, not per feature.
 
 <HARD-GATE>
-Do NOT invoke mu-prd or any feature-level skill until the user has approved the biz artifact. Two modes — pick one explicitly.
+Do NOT invoke mu-prd or any feature-level skill until the user has approved the biz artifact. Two depth modes — pick one explicitly.
 </HARD-GATE>
 
-## Mode Selection
+**HARD-GATEs evaluated BEFORE Phase 0.** A `skip` stance does not bypass them.
 
-Detect mode from user signal, then confirm:
+## Phase 0: Stance Detection
 
-| Signal | Mode | Rationale |
+Before Depth Mode Selection, detect the current state of any existing biz artifact and pick an entry stance.
+
+1. Read `@../../knowledge/principles/stance-detection.md`
+2. Run the detection algorithm with:
+   - **Artifact type**: `biz`
+   - **Artifact dir**: `docs/biz/`
+   - **Watched source dirs**: root `README*` only. **Note**: biz staleness is weakly defined — the business model shifting is a human judgment, not a file signal. H3 for mu-biz catches only the coarse "README says something very different now" case. Users override to `update(sync)` manually when they know a pivot has happened. **Never watch** `docs/prd/` (PRD edits don't imply biz staleness) or `docs/biz/` itself (circular).
+   - **Legacy locations**: `docs/premise/` (deprecated), root `BUSINESS.md`
+3. Present the recommendation in one sentence (exact phrasing may adapt):
+   > "Detected: stance=`<stance>` (sub=`<sub-type>`), confidence=`<high|ambiguous>`. Reason: `<one-line>`. OK to proceed, or override?"
+4. Accept user override in one word (`create` / `update` / `extract` / `skip`) or proceed on bare "ok". Slash-command hints (`/mu-biz <stance>`) are treated as **pre-confirmed** — no dialog, proceed directly. See **Stance × Depth Mode interaction** below for how stance tokens interact with depth-mode tokens like `quick` / `full`.
+5. Record approved stance. Route to matching branch below.
+
+**Branch routing**:
+
+| Stance | Action |
+|--------|--------|
+| `create` | Run Depth Mode Selection, then existing Process (Quick or Full) unchanged. |
+| `update` | Load existing biz artifact → apply sub-type logic (`expand` fills stub sections; `gap-fill` adds a new section for a sister-product / new-market; `sync` updates stale market/product claims to current state) → merge via section approval. |
+| `extract` | Read product signals (code, commits, README, user interviews if user provides them) and synthesize a biz artifact section-by-section. Commit prefix: `extract:`. |
+| `skip` | Append pass-through history entry; move to downstream (manually if Quick depth mode, or `mu-prd create` if Full depth mode — see Full-mode Terminal). |
+
+**Stance × Depth Mode interaction**:
+
+mu-biz has two independent concepts: **Stance** (Phase 0, `create`/`update`/`extract`/`skip`) and **Depth Mode** (below, `quick`/`full`). Slash hints may specify either or both; tokens are split cleanly:
+
+| User input | Stance | Depth mode |
+|------------|--------|-----------|
+| `/mu-biz` | auto-detect in Phase 0 | auto-detect in Depth Mode Selection |
+| `/mu-biz create` | `create` (forced) | auto-detect |
+| `/mu-biz quick` | auto-detect | `quick` (forced) |
+| `/mu-biz create quick` | `create` | `quick` |
+| `/mu-biz full` | auto-detect | `full` |
+
+Phase 0 parses only the stance token; Depth Mode Selection parses only the depth token. They run sequentially and do not interfere.
+
+**Stance → artifact metadata**: add `> **Stance:** <stance>`, `> **Sub-type:** <sub-type or —>`, `> **Detected at:** YYYY-MM-DD (commit <short-sha>)` to the Artifact Format header (below). Commit prefix: `docs(biz): <stance>[(sub-type)]: ...`. User opts out per invocation via `--no-stance-meta`.
+
+## Depth Mode Selection
+
+Detect depth mode from user signal, then confirm:
+
+| Signal | Depth mode | Rationale |
 |---|---|---|
 | "new product", "startup", "business plan", `/mu-biz full` | **Full** | Comprehensive analysis warranted |
 | "quick version", "solo project", "is this worth doing?", `/mu-biz quick`, existing premise/biz artifact | **Quick** | Lightweight validation sufficient |
-| Unclear | Ask the user which mode; default to quick |
+| Unclear | Ask the user which depth mode; default to quick |
 
 ## Process Flow
 
@@ -94,7 +136,7 @@ Use when: greenfield product, team project, investor-facing analysis, major pivo
 3. Write artifact to `docs/biz/YYYY-MM-DD-<product>.md`
 4. Commit
 
-**Terminal:** Invoke mu-prd skill (greenfield products typically need PRD next).
+**Terminal:** Invoke mu-prd skill with pre-confirmed stance `create` — per spec §2.5 (Pipeline-handoff regression guard), passes stance hint so mu-prd's Phase 0 does not present a confirmation dialog. (Greenfield products typically need PRD next.)
 
 ## Artifact Format
 
@@ -104,7 +146,10 @@ Use when: greenfield product, team project, investor-facing analysis, major pivo
 # Biz Quick Check: <topic>
 
 > **Date:** YYYY-MM-DD
-> **Mode:** quick
+> **Depth mode:** quick
+> **Stance:** <create | update | extract | skip>
+> **Sub-type:** <expand | gap-fill | sync | —>
+> **Detected at:** YYYY-MM-DD (commit `<short-sha>`)
 
 ## Context
 - Greenfield or existing project
@@ -120,9 +165,28 @@ Use when: greenfield product, team project, investor-facing analysis, major pivo
 | Observation test | <answer> | ✅ / ⚠️ / ❌ |
 
 **Status:** Validated / Weakly validated / Not validated (proceeding at user's request)
+
+## History
+
+| Date | Commit | Stance | Sub-type | Change |
+|------|--------|--------|----------|--------|
+| YYYY-MM-DD | `<sha>` | create | — | Initial creation |
 ```
 
-**Full mode:** Same header + Validation section + 8 business sections (each its own `##` heading).
+**Full mode:** Same header + Validation section + 8 business sections (each its own `##` heading) + History section at the bottom.
+
+### Commit Convention
+
+Commit message prefix reflects the stance and (if update) sub-type:
+
+- `docs(biz): create: ...` — from-zero creation
+- `docs(biz): update(expand): ...` — filled stub sections
+- `docs(biz): update(gap-fill): ...` — added section for sister product / new market
+- `docs(biz): update(sync): ...` — aligned to current market/product state
+- `docs(biz): extract: ...` — reverse-engineered from product signals
+- `docs(biz): skip: passthrough for <task>` — short history-only commit if header needed initialization
+
+**Opt-out**: the user can pass `--no-stance-meta` on invocation to suppress the Stance / Sub-type / Detected-at header fields for that session and fall back to the legacy commit convention. Default is on.
 
 ## Key Principles
 
