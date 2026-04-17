@@ -102,23 +102,37 @@ These thoughts mean STOP—you're rationalizing:
 
 ## Skill Priority & Pipeline Paths
 
-DevMuse has three tiers: **Product-level** (mu-biz, mu-prd), **Feature-level** (mu-scope → mu-arch → mu-plan → mu-code → mu-review), and **Orthogonal** (mu-debug, mu-retro).
+DevMuse has three tiers: **Product-level** (mu-biz, mu-prd), **Feature-level** (mu-scope → mu-arch → mu-plan → mu-code → mu-review), **Orthogonal** (mu-explore, mu-debug, mu-retro), and a **Router** (mu-route).
 
-### Choosing a path
+### Routing: how tasks get started
 
-1. **Greenfield product** (new product from zero — no code, no decisions): `mu-biz → mu-prd → [feature loop]`. Product-level tier first, then per-feature work.
-2. **Quick ideation** (solo, small scope, "is this worth doing?"): `mu-biz quick → mu-scope → mu-arch → mu-plan → mu-code → mu-review`.
-3. **Feature addition to existing project**: `mu-scope → mu-arch → mu-plan → mu-code → mu-review`. Skip product-level tier — product already exists.
-4. **Bug fix**: `mu-scope (1 UC: repro steps) → mu-debug → mu-code`.
+**For any unprefixed user message, invoke `mu-route` first.** It pattern-matches the user's intent + repo state and proposes one of 7 routable opening moves (Explore / Validate / Design-product / Design-tech / Reproduce / Plan / Implement). User confirms with bare "ok" or overrides with one word.
 
-### Examples
+**Direct slash invocation bypasses mu-route** — `/mu-arch`, `/mu-biz`, `/mu-explore`, etc. route directly to the named skill (power-user escape hatch, matches industry convention: Aider / Roo / Continue).
 
-- "I want to build a new product / startup / Chrome extension" → `mu-biz` (full) first
-- "Let's add feature X to this project" → `mu-scope` first
-- "Fix this bug" → `mu-scope` (1 use case: repro steps), then mu-debug, then mu-code
-- "Add a button" → `mu-scope` (quick), then mu-arch, then mu-plan, then mu-code
-- "Is this worth doing?" / "Should I build this?" → `mu-biz quick`
-- "How did last week go?" → `mu-retro`
+See `skills/mu-route/SKILL.md` for the full routing decision table and trigger signals.
+
+### Creative-skill stance
+
+`mu-biz`, `mu-prd`, and `mu-arch` each run a **Phase 0 stance detection** (`create` / `update` / `extract` / `skip`) on entry. The user confirms in one word or overrides via slash hint (e.g., `/mu-arch create`). See `knowledge/principles/stance-detection.md`.
+
+### Sign-off gate
+
+When stakeholder-scope indicates team-touching (CODEOWNERS present + multi-author git history, or user declaration), creative skills run a sign-off gate protocol at terminal. Non-blocking; user can always override with "skip sign-off". See `knowledge/principles/sign-off-gate.md`.
+
+### Examples (mu-route would propose these)
+
+| User message | mu-route proposes |
+|-------------|-------------------|
+| "I want to build a new product / startup / Chrome extension" | `Validate` (then Design-product etc.) |
+| "Let's add feature X to this project" | `Design-product` or `Design-tech` depending on prd/specs presence |
+| "Fix this bug" | `Reproduce` (via mu-scope 1-UC + mu-debug) |
+| "Help me understand this repo / take over / evaluate" | `Explore` |
+| "Is this worth doing?" / "Should I build this?" | `Validate` |
+| "Refactor the auth module" | `Design-tech` (or `Explore` first if unfamiliar) |
+| "How did last week go?" | `Retrospect` (cadence — prefer `/mu-retro` direct) |
+
+Users who know exactly where they're going can bypass mu-route with slash hints: `/mu-biz full`, `/mu-arch`, etc.
 
 ## Skill Types
 

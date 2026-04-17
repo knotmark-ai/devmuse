@@ -74,7 +74,7 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 
 **原则：** rules 通过 hook 注入消耗 token。只放无条件始终生效的内容，能通过 skill 按需加载的留在 skill 中。
 
-### skills/（10 个）
+### skills/（12 个）
 
 分为三层：
 
@@ -99,8 +99,15 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 
 | 名称 | 角色 | 派遣 Agent |
 |------|------|------|
+| mu-explore | 系统化代码理解 — 为不熟悉的代码产出活文档形式的心智模型 | — |
 | mu-debug | 系统化根因分析 | — |
 | mu-retro | 定期回顾，收集 git 指标并写入记忆 | — |
+
+**路由层：**
+
+| 名称 | 角色 | 派遣 Agent |
+|------|------|------|
+| mu-route | 模式匹配路由器 — 根据用户意图+仓库状态提议一个 opening move；被 /mu-<skill> 斜杠调用绕过 | — |
 
 **元技能：**
 
@@ -124,10 +131,10 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 ```
 knowledge/
 ├── languages/        # java.md, go.md, python.md, typescript.md
-├── templates/        # scope.md（mu-scope 使用的用例集模板）
+├── templates/        # scope.md（mu-scope 用例集模板），explore.md（mu-explore 心智模型模板）
 ├── principles/       # 思维原则（inversion, premise-check, chestertons-fence,
 │                     #   architecture-assessment, skill-cso, graphviz-conventions,
-│                     #   skill-testing）
+│                     #   skill-testing, stance-detection, sign-off-gate）
 └── reviews/          # 审查清单（security-checklist, design-audit-rubric）
 ```
 

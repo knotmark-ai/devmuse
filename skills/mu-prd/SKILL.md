@@ -13,9 +13,52 @@ Independent of the feature-level pipeline. Product-level skill that runs **once 
 Do NOT invoke mu-scope or any feature-level skill until the user has approved the PRD artifact. The PRD must cover all MVP features from the biz artifact.
 </HARD-GATE>
 
-## Mode Selection
+**HARD-GATEs evaluated BEFORE Phase 0.** A `skip` stance does not bypass them.
 
-| Signal | Mode | Scope |
+## Phase 0: Stance Detection
+
+Before Depth Mode Selection, detect the current state of any existing PRD artifact and pick an entry stance.
+
+1. Read `@../../knowledge/principles/stance-detection.md`
+2. Run the detection algorithm with:
+   - **Artifact type**: `prd`
+   - **Artifact dir**: `docs/prd/`
+   - **Watched source dirs**: `src/pages/`, `src/screens/`, `src/views/`, `app/`. **Fallback**: if none of those exist (backend/CLI/library projects), fall back to top-level `src/` directly; if that also doesn't exist, H3 returns `insufficient-signal`.
+   - **Legacy locations**: root `PRD.md`
+   - Never watch `docs/prd/` itself (circular).
+3. Present the recommendation in one sentence (exact phrasing may adapt):
+   > "Detected: stance=`<stance>` (sub=`<sub-type>`), confidence=`<high|ambiguous>`. Reason: `<one-line>`. OK to proceed, or override?"
+4. Accept user override in one word (`create` / `update` / `extract` / `skip`) or proceed on bare "ok". **Slash-command hints (`/mu-prd <stance>`) and upstream-invoked hints (e.g., `mu-prd create` passed from mu-biz Full-mode terminal per spec §2.5) are treated as pre-confirmed — no dialog, proceed directly.** This is how the biz→prd auto-handoff stays smooth in Full-mode chains.
+5. Record approved stance. Route to matching branch below.
+
+**Branch routing**:
+
+| Stance | Action |
+|--------|--------|
+| `create` | Run Depth Mode Selection, then existing Process (Lightweight or Full) unchanged. |
+| `update` | Load existing PRD artifact → apply sub-type logic (`expand` fills stub sections; `gap-fill` appends a new feature spec section titled "Gap-fill: `<feature>`"; `sync` aligns feature descriptions to current code behavior) → merge via section approval. |
+| `extract` | Read source dirs (pages/screens/views/app or fallback src/) section-by-section, synthesize a PRD covering observed features + flows + screens. Commit prefix: `extract:`. |
+| `skip` | Append pass-through history entry; invoke `mu-scope` for the first MVP feature per existing Integration. No stance hint is passed to `mu-scope` since it isn't a creative skill. |
+
+**Stance × Depth Mode interaction**:
+
+mu-prd has two independent concepts: **Stance** (Phase 0) and **Depth Mode** (lightweight/full, below). Slash hints may specify either or both; tokens are split cleanly per spec §2.5:
+
+| User / upstream input | Stance | Depth mode |
+|-----------------------|--------|-----------|
+| `/mu-prd` | auto-detect in Phase 0 | auto-detect in Depth Mode Selection |
+| `/mu-prd create` | `create` (forced) | auto-detect |
+| `/mu-prd lightweight` | auto-detect | `lightweight` (forced) |
+| `/mu-prd create full` | `create` | `full` |
+| `mu-prd create` (upstream-invoked from mu-biz Full-mode terminal) | `create` (pre-confirmed, no dialog) | auto-detect |
+
+Phase 0 parses only the stance token; Depth Mode Selection parses only the depth token.
+
+**Stance → artifact metadata**: add `> **Stance:** <stance>`, `> **Sub-type:** <sub-type or —>`, `> **Detected at:** YYYY-MM-DD (commit <short-sha>)` to the PRD header. Commit prefix: `docs(prd): <stance>[(sub-type)]: ...`. Opt-out per invocation via `--no-stance-meta`.
+
+## Depth Mode Selection
+
+| Signal | Depth mode | Scope |
 |---|---|---|
 | Solo dev, small project, "lightweight PRD", `/mu-prd lightweight` | **Lightweight** | Core flows + key specs only |
 | Team project, investor-facing, formal product, `/mu-prd full` | **Full** | All 9 sections |
@@ -101,7 +144,10 @@ Ask the user which MVP feature to start with. Then invoke mu-scope for that feat
 # PRD: <product name>
 
 > **Date:** YYYY-MM-DD
-> **Mode:** lightweight | full
+> **Depth mode:** lightweight | full
+> **Stance:** <create | update | extract | skip>
+> **Sub-type:** <expand | gap-fill | sync | —>
+> **Detected at:** YYYY-MM-DD (commit `<short-sha>`)
 > **Biz reference:** docs/biz/YYYY-MM-DD-<name>.md (or "inline" if none)
 
 ## 1. Persona Deepening
@@ -139,7 +185,24 @@ Ask the user which MVP feature to start with. Then invoke mu-scope for that feat
 
 ## 9. Open Questions
 - ...
+
+## History
+
+| Date | Commit | Stance | Sub-type | Change |
+|------|--------|--------|----------|--------|
+| YYYY-MM-DD | `<sha>` | create | — | Initial creation |
 ```
+
+### Commit Convention
+
+- `docs(prd): create: ...` — from-zero PRD
+- `docs(prd): update(expand): ...` — filled stub sections
+- `docs(prd): update(gap-fill): ...` — added new feature section
+- `docs(prd): update(sync): ...` — aligned to current code behavior
+- `docs(prd): extract: ...` — reverse-engineered from source dirs
+- `docs(prd): skip: passthrough for <task>` — history-only commit if needed
+
+**Opt-out**: user can pass `--no-stance-meta` to suppress the Stance / Sub-type / Detected-at header fields. Default is on.
 
 ## Key Principles
 
@@ -151,9 +214,13 @@ Ask the user which MVP feature to start with. Then invoke mu-scope for that feat
 - **Defer use case enumeration** — per-feature UCs (happy/edge/error paths) are mu-scope's job, not mu-prd's. PRD states product rules; mu-scope enumerates concrete scenarios through them.
 - **Visual when helpful** — flows and wireframes benefit from diagrams; requirements/rules are text
 
+**Sign-off gate (before terminal):**
+
+Before invoking mu-scope, consult `@../../knowledge/principles/sign-off-gate.md`. If stakeholder-scope indicates team-touching, run the gate protocol. Sign-off gate is skipped when stance was `skip`.
+
 ## Integration
 
-- **Invoked by:** user manually (`/mu-prd`); or auto-invoked by `mu-biz full` on completion
-- **Reads:** `docs/biz/*.md` (biz artifact if present)
+- **Invoked by:** user manually (`/mu-prd`); or auto-invoked by `mu-biz full` on completion (passing `stance=create` pre-confirmed per spec §2.5)
+- **Reads:** `docs/biz/*.md` (biz artifact if present); `@../../knowledge/principles/stance-detection.md` (Phase 0); `@../../knowledge/principles/sign-off-gate.md` (terminal if team-touching)
 - **Produces:** `docs/prd/YYYY-MM-DD-<product>.md`
 - **Terminal state:** Invoke mu-scope for the first MVP feature. Further features iterate through mu-scope one at a time.

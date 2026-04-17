@@ -19,6 +19,35 @@ Do NOT invoke any implementation skill, write any code, scaffold any project, or
 mu-arch requires a scope artifact (docs/scope/*.md) as input. If no scope artifact exists, invoke mu-scope first. Do NOT proceed with design without a scope artifact.
 </HARD-GATE>
 
+**HARD-GATEs evaluated BEFORE Phase 0.** A `skip` stance does not bypass them.
+
+## Phase 0: Stance Detection
+
+Before engaging the design process, detect the current state of any existing arch artifact and pick an entry stance.
+
+1. Read `@../../knowledge/principles/stance-detection.md`
+2. Run the detection algorithm with:
+   - **Artifact type**: `arch`
+   - **Artifact dir**: `docs/specs/*-design*.md`
+   - **Watched source dirs**: `src/`, `lib/`, `internal/`, `pkg/`, `cmd/` (whichever exist; else H3 returns `insufficient-signal`)
+   - **Legacy locations**: root `ARCHITECTURE.md`, `DESIGN.md`
+   - **General rule**: artifact dir (`docs/specs/`) is never in its own watched set — prevents circular staleness.
+3. Present the recommendation in one sentence (example wording; exact phrasing may adapt):
+   > "Detected: stance=`<stance>` (sub=`<sub-type>`), confidence=`<high|ambiguous>`. Reason: `<one-line>`. OK to proceed, or override?"
+4. Accept user override in one word (`create` / `update` / `extract` / `skip`) or proceed on bare "ok". Slash-command hints (`/mu-arch <stance>`) are treated as **pre-confirmed** — no dialog, proceed directly.
+5. Record approved stance. Route to matching branch below.
+
+**Branch routing**:
+
+| Stance | Action |
+|--------|--------|
+| `create` | Run the full existing Process (checklist steps 1-11) unchanged. |
+| `update` | Load existing design artifact → apply sub-type logic (`expand` fills stub sections; `gap-fill` appends a new section titled "Gap-fill: `<task>`"; `sync` diffs against current code and proposes paragraph updates) → merge via the existing section-approval loop. |
+| `extract` | If target code region is unfamiliar, optionally delegate to `mu-explore` first (pre-change variant) for a mental model. Then read source dirs section-by-section and populate the arch artifact from current code, with each section approved by the user. Commit prefix: `extract:`. |
+| `skip` | Append a pass-through entry to the existing artifact's History section (`| <date> | <sha> | skip | — | passthrough for <task> |`); commit only if header/History needed initialization; invoke `mu-plan` per existing Integration. |
+
+**Stance → artifact metadata**: update the artifact's header with `> **Stance:** <stance>`, `> **Sub-type:** <sub-type or —>`, `> **Detected at:** YYYY-MM-DD (commit <short-sha>)`. Commit message prefix uses `docs(specs): <stance>[(sub-type)]: ...` pattern. Users who want to opt out of stance metadata this invocation pass `--no-stance-meta`.
+
 ## Anti-Pattern: "This Is Too Simple To Need A Design"
 
 Every project goes through this process. A todo list, a single-function utility, a config change — all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but you MUST present it and get approval.
@@ -27,6 +56,7 @@ Every project goes through this process. A todo list, a single-function utility,
 
 You MUST create a task for each of these items and complete them in order:
 
+0. **Phase 0: Stance Detection** — see §Phase 0 above; establishes entry stance before any other work. Branch routing below assumes stance is already picked and confirmed.
 1. **Read scope artifact** — read the Use Case Set, understand all use cases, conflicts, and constraints
 2. **Explore project context** — check files, docs, recent commits
 3. **Find architecture doc** — look for existing architecture/design docs in the project (README, docs/, ARCHITECTURE.md, DESIGN.md, or similar). If found, read it. If not found or unclear, ask the user.
@@ -43,6 +73,9 @@ You MUST create a task for each of these items and complete them in order:
 
 ```dot
 digraph mu_design {
+    "Phase 0: Detect stance\n(create|update|extract|skip)" [shape=box];
+    "User confirms stance" [shape=diamond];
+    "skip branch\n(append history, handoff)" [shape=doublecircle];
     "Read scope artifact\n(docs/scope/*.md)" [shape=box];
     "Explore project context" [shape=box];
     "Find architecture doc\n(README, docs/, or ask user)" [shape=box];
@@ -58,6 +91,10 @@ digraph mu_design {
     "User reviews spec?" [shape=diamond];
     "Invoke mu-plan skill" [shape=doublecircle];
 
+    "Phase 0: Detect stance\n(create|update|extract|skip)" -> "User confirms stance";
+    "User confirms stance" -> "skip branch\n(append history, handoff)" [label="skip"];
+    "User confirms stance" -> "Read scope artifact\n(docs/scope/*.md)" [label="create / update / extract"];
+    "skip branch\n(append history, handoff)" -> "Invoke mu-plan skill";
     "Read scope artifact\n(docs/scope/*.md)" -> "Explore project context";
     "Explore project context" -> "Find architecture doc\n(README, docs/, or ask user)";
     "Find architecture doc\n(README, docs/, or ask user)" -> "Visual questions ahead?";
@@ -173,6 +210,10 @@ After the spec review loop passes, ask the user to review the written spec befor
 > "Spec written and committed to `<path>`. Please review it and let me know if you want to make any changes before we start writing out the implementation plan."
 
 Wait for the user's response. If they request changes, make them and re-run the spec review loop. Only proceed once the user approves.
+
+**Sign-off gate (before terminal):**
+
+Before invoking mu-plan, consult `@../../knowledge/principles/sign-off-gate.md`. If stakeholder-scope indicates team-touching (per that principle's detection heuristics), run the gate protocol and collect sign-off. Otherwise proceed directly. Sign-off gate is skipped when stance was `skip`.
 
 **Implementation:**
 

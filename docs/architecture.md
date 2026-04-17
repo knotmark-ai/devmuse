@@ -76,7 +76,7 @@ Skills and agents reference knowledge via `@` relative paths within the plugin:
 
 **Principle:** Rules consume tokens via hook injection. Only put content that must be unconditionally always-on. Anything loadable on-demand via skills should stay in skills.
 
-### skills/ (10)
+### skills/ (12)
 
 Organized in three tiers:
 
@@ -101,8 +101,15 @@ Organized in three tiers:
 
 | Name | Role | Dispatches Agent |
 |------|------|------|
+| mu-explore | Systematic code-comprehension — produces living mental-model artifact for unfamiliar code | — |
 | mu-debug | Systematic root cause analysis | — |
 | mu-retro | Periodic retrospective with git metrics and memory capture | — |
+
+**Router:**
+
+| Name | Role | Dispatches Agent |
+|------|------|------|
+| mu-route | Pattern-matching router — proposes one of 7 routable opening moves for unprefixed user messages; bypassed by /mu-<skill> slash hints | — |
 
 **Meta:**
 
@@ -124,8 +131,8 @@ Organized in three tiers:
 | Category | Purpose | Referenced by |
 |---|---|---|
 | languages/ | Language-specific review criteria | mu-reviewer (review-code) |
-| templates/ | Artifact templates | mu-scope |
-| principles/ | Thinking rubrics for decision points | mu-arch, mu-scope, mu-biz |
+| templates/ | Artifact templates | mu-scope, mu-explore |
+| principles/ | Thinking rubrics for decision points | mu-arch, mu-scope, mu-biz, mu-prd (stance-detection.md consumed at Phase 0 of each creative skill) |
 | reviews/ | Review checklists for specific concerns | mu-reviewer (review-security, review-design) |
 
 ```
@@ -136,7 +143,8 @@ knowledge/
 │   ├── go.md           # Error handling, concurrency, interface design
 │   └── java.md         # Null handling, concurrency, resource management
 ├── templates/
-│   └── scope.md        # Use Case Set template for mu-scope
+│   ├── scope.md        # Use Case Set template for mu-scope
+│   └── explore.md      # Mental-model artifact template for mu-explore
 ├── principles/         # Thinking rubrics loaded at decision points
 │   ├── architecture-assessment.md # C4 model guide + diagram type selection
 │   ├── chestertons-fence.md # Understand before changing/removing code
@@ -144,7 +152,9 @@ knowledge/
 │   ├── inversion.md    # Inversion reflex for approach comparison
 │   ├── premise-check.md # Premise validation forcing questions
 │   ├── skill-cso.md    # Claude Search Optimization for skill descriptions
-│   └── skill-testing.md # Per-type test strategies + pressure scenarios
+│   ├── skill-testing.md # Per-type test strategies + pressure scenarios
+│   ├── stance-detection.md # Stance detection for mu-biz/mu-prd/mu-arch Phase 0
+│   └── sign-off-gate.md # Sign-off protocol when stakeholder-scope = team-touching
 └── reviews/            # Review checklists for specific concerns
     ├── security-checklist.md  # 5-phase security audit
     └── design-audit-rubric.md # Architecture audit rubric
