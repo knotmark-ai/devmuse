@@ -68,6 +68,8 @@ scope → arch → plan → code → review
 
 **Agent 在执行任何任务前都会检查相关技能。** 这是强制工作流，不是建议。
 
+**Sign-off gate**：当 `CODEOWNERS` 文件或多作者 git 历史表明涉及团队协作时，creative skill（mu-biz / mu-prd / mu-arch）会在制品输出时提示获取利益相关者签字。非阻塞 — 用户可随时跳过。
+
 ## 架构
 
 ```

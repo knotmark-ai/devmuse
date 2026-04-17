@@ -68,6 +68,8 @@ scope → arch → plan → code → review
 
 **The agent checks for relevant skills before any task.** Mandatory workflows, not suggestions.
 
+**Sign-off gate**: when `CODEOWNERS` or multi-author git history indicates team-touching work, creative skills (mu-biz / mu-prd / mu-arch) prompt for stakeholder sign-off at artifact exit. Non-blocking — user can always override.
+
 ## Architecture
 
 ```
