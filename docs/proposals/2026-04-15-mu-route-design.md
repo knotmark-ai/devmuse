@@ -59,22 +59,22 @@ Different artifacts, different downstream. Keeping separate.
 Earlier drafts treated these as opening moves. They are not — they fold into existing structure:
 
 - **Document** = `extract` mode of mu-biz / mu-prd / mu-arch (reverse-engineer artifact from existing code). Pure README-level edits don't need a skill. *(Note: "answer questions about codebase" was incorrectly tagged Document in v3 Part 1 — it's actually Explore: build mental model, don't persist as a doc.)*
-- **Align** = consequence of the **Stakeholder-scope axis**, not a move. When `stakeholder = team-touching`, every creative skill's exit criterion **upgrades** to require sign-off (in addition to user approval). Orthogonal to all modes.
+- **Align** = consequence of the **Stakeholder-scope axis**, not a move. When `stakeholder = team-touching`, every creative skill's exit criterion **upgrades** to require sign-off (in addition to user approval). Orthogonal to all stances. See `knowledge/principles/sign-off-gate.md`.
 
 Time estimates deliberately omitted — they vary by orders of magnitude within each move. **Exit artifact + exit criterion** are the right definition.
 
-### Modes shared by creative skills (mu-biz / mu-prd / mu-arch)
+### Stances shared by creative skills (mu-biz / mu-prd / mu-arch)
 
-| Mode | Trigger | Action |
-|------|---------|--------|
+> **Implementation note**: the v3 proposal originally listed 6 modes. During implementation (scope `docs/scope/2026-04-15-creative-skill-stances.md`), these collapsed to **4 stances** per user-facing simplicity feedback ("guidance > control"). `expand`, `gap-fill`, and `sync` merged into `update` as internal sub-types. The term was renamed from "mode" to **"stance"** to avoid collision with mu-biz's existing quick/full depth mode and mu-prd's lightweight/full depth mode.
+
+| Stance | Trigger | Action |
+|--------|---------|--------|
 | `create` | Artifact absent | Produce from zero |
-| `expand` | Artifact is a stub | Flesh it out |
-| `gap-fill` | Partial coverage | Add only the section for current task |
-| `sync` | Artifact stale vs code | Align to current reality |
+| `update` | Artifact exists but needs work (stub / partial / stale) | Modify in place; agent internally picks sub-type: `expand` / `gap-fill` / `sync` |
 | `extract` | Code exists, artifact doesn't | Reverse-engineer from code |
-| `skip` | Artifact complete & fit | Pass through |
+| `skip` | Artifact complete & fit for current task | Pass through |
 
-Stakeholder-scope axis is **orthogonal**: any of the above modes adds a sign-off gate when team-touching.
+Stakeholder-scope axis is **orthogonal**: any of the above stances (except `skip`) adds a sign-off gate when team-touching. See `knowledge/principles/sign-off-gate.md`.
 
 ## Part 2.5 — Axes: Discovery Tool, Not Routing Logic
 

@@ -162,7 +162,7 @@ When README/docs disagree with code (ER-4): record BOTH versions in the artifact
 
 ## Integration
 
-- **Invoked by**: `mu-route` (when Axis B = add/reshape/fix AND familiarity = unfamiliar); direct `/mu-explore` from user.
+- **Invoked by**: `mu-route` (when Axis-Intent = understand, OR Axis-Familiarity = unfamiliar for any intent); direct `/mu-explore` from user.
 - **Produces**: Living artifact at `docs/explore/_overview.md` or `docs/explore/<area>.md`.
 - **Consumed by**: `mu-scope` (for change tasks), `mu-arch` (for design), `mu-debug` (for bug investigation), `mu-code` (as context). Artifact path is passed as input; downstream skills MAY read it.
 - **Terminal state**: hand-off to the next skill determined by the original user intent, NOT by mu-explore. If intent was "understand only," terminal state is commit + done.
