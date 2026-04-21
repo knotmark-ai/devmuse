@@ -13,6 +13,12 @@
 - Test coverage: [existing test coverage for affected code]
 - Risk signal: [low / medium / high]
 
+## Guard Analysis (if replacing existing conditions)
+- **Old condition:** `<original guard/filter>`
+- **New condition:** `<proposed replacement>`
+- **Regression gap:**
+  - <scenario> — disposition: [intentionally allowed / must still block]
+
 ## Use Cases
 
 ### Happy Paths
@@ -23,6 +29,9 @@
 
 ### Error Cases
 - UC-N: When <failure condition>, Then <error handling>
+
+### Reverse Cases (must NOT happen)
+- UC-R1: When <scenario that worked before>, Then <must still behave the same>
 
 ## Conflicts
 - ⚠️ CONFLICT: UC-X vs UC-Y — <description of contradiction>

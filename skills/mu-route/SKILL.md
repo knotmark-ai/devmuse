@@ -67,6 +67,7 @@ Create tasks for each and complete in order:
    - Axis-Familiarity: `git log --author="$USER" --since="30 days ago" -- <area>` if target area inferable
    - Axis-Missing-artifact: file-exists on `docs/biz/`, `docs/prd/`, `docs/specs/`
    - Axis-Stakeholder: `test -f .github/CODEOWNERS || test -f CODEOWNERS` + git log multi-author check (feeds sign-off gate later; informational to user here)
+   - **Axis-Plugin**: scan the available skills list (from system-reminder) for **non-DevMuse skills** (i.e. skills whose name does NOT start with `devmuse:`). Check if the user's message plausibly matches any such skill's description or triggers. Record matched skill name(s), if any.
 3. **Apply routing decision table** (below) top-to-bottom, first match wins → one opening move
 4. **Propose** in one sentence with axis rationale
 5. **Accept user reply**: `ok` / bare confirm → proceed; one-word override → use overridden move; anything else → ask user to clarify (non-blocking)
@@ -100,17 +101,24 @@ Rows evaluated top-to-bottom; first match wins.
 | R6 | none | create-product | no prd | — | **Design-product** | stance=auto |
 | R7 | none | reshape / create-product | no specs | familiar | **Design-tech** | stance=auto |
 | R8 | none | implement | specs exist | — | **Implement** | — |
+| R8.5 | none | Axis-Plugin matched | — | — | **Delegate to plugin** (invoke matched skill via Skill tool) | — |
 | R9 | none (no verb match) | — | — | — | **Explore** (safe default per spec §2.5 and scope EC-R2) | — |
 
 **Hint semantics**: when the target is a creative skill (mu-biz / mu-prd / mu-arch), mu-route MAY pass a `stance=auto` hint indicating Phase 0 should run its own detection without further pre-confirmation. This is a no-op refinement; target still runs Phase 0. For the mu-biz full → mu-prd auto-handoff (spec §2.5), the pre-confirmed `stance=create` token is still passed by mu-biz terminal, not by mu-route — mu-route only routes the first move.
 
 ## Proposal Wording
 
-Template:
+Template (DevMuse move):
 > "Looks like **<Opening Move>**. Axes: Intent=`<verb>`, Familiarity=`<familiar|unfamiliar|n/a>`, Missing=`<biz|prd|specs|none>`. Confirm (`ok`) or override (one word: explore / validate / design-product / design-tech / reproduce / plan / implement / retrospect)?"
 
-Example:
+Template (plugin delegation):
+> "Detected installed skill **<skill-name>** matching your request. Route to `/<skill-name>`? Confirm (`ok`) or override with a DevMuse move."
+
+Example (DevMuse):
 > "Looks like **Explore**. Axes: Intent=take-over, Familiarity=unfamiliar, Missing=none. Confirm (`ok`) or override?"
+
+Example (plugin):
+> "Detected installed skill **stele** (brand identity generator). Route to `/stele`? Confirm (`ok`) or override with a DevMuse move."
 
 ## Slash-Command Escape Hatch
 
@@ -126,7 +134,7 @@ This matches industry convention (Aider `/ask`/`/code`/`/architect`, Roo Code `/
 
 - **2+ moves tie on routing rules** → propose the one that fires first in R1..R9 ordering; note in the proposal sentence: `"(tied with <other move>)"`. User overrides with one word.
 - **No verb matches Axis-Intent** → R9 fires (default Explore). Safe default: understand before acting.
-- **Repo state is pathological** (empty repo, shallow clone, submodule root, repo outside git) → skip the routing table and ask user directly: *"Can't confidently route — repo state is unusual (`<detected anomaly>`). Which opening move? (explore / validate / design-product / design-tech / reproduce / plan / implement)"*. This is the explicit "ask user" fallback per scope EC-R4.
+- **Repo state is pathological** (empty repo, shallow clone, submodule root, repo outside git) → skip the routing table and ask user directly: *"Can't confidently route — repo state is unusual (`<detected anomaly>`). Which opening move? (explore / validate / design-product / design-tech / reproduce / plan / implement / retrospect)"*. This is the explicit "ask user" fallback per scope EC-R4.
 
 ## Failure Handling
 

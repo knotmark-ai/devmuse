@@ -442,6 +442,7 @@ After all tasks complete and verified:
 - Reference skills when plan says to
 - Stop when blocked, don't guess
 - Never start implementation on main/master branch without explicit user consent
+- Before any branch operation (checkout, create, rebase), follow Git Safety Protocol (@../../knowledge/principles/git-safety.md): verify current state before acting
 
 ### Parallel Dispatch
 
@@ -996,6 +997,7 @@ After all tasks complete, chain to mu-review for comprehensive review of entire 
 
 **Never:**
 - Start implementation on main/master branch without explicit user consent
+- Switch branches, create branches, or run destructive git commands without verifying current state first (@../../knowledge/principles/git-safety.md)
 - Skip reviews (spec compliance OR code quality)
 - Proceed with unfixed issues
 - Dispatch multiple implementation subagents in parallel (conflicts)

@@ -123,7 +123,7 @@ devmuse/
 |----------|---------|
 | **languages/** | Language-specific review criteria (Java, Go, Python, TypeScript) |
 | **templates/** | Artifact templates (scope Use Case Set) |
-| **principles/** | Thinking rubrics: inversion reflex (failure mode analysis), premise check (forcing questions) |
+| **principles/** | Thinking rubrics: inversion reflex, premise check, Chesterton's Fence, guard analysis (via mu-scope), git safety protocol, stance detection, sign-off gate, architecture assessment, graphviz conventions, skill CSO, skill testing |
 | **reviews/** | Review checklists: security audit (5-phase OWASP), design audit rubric (architecture scoring) |
 
 ## Philosophy

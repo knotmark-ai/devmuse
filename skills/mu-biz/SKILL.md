@@ -1,6 +1,6 @@
 ---
 name: mu-biz
-description: "Business analysis — validate premise and define product strategy (market, BMC, VPC, personas, MVP scope). Two modes: quick (4 forcing questions) or full (comprehensive analysis)."
+description: "Use when validating a business premise or defining product strategy (market, BMC, VPC, personas, MVP scope). Two modes: quick (4 forcing questions) or full (comprehensive analysis)."
 ---
 
 # Business Analysis

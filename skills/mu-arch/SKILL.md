@@ -1,6 +1,6 @@
 ---
 name: mu-arch
-description: "Technical architecture — components, interfaces, data flow, error handling. Use before any creative engineering work. For product/UX requirements (user flows, feature specs), use mu-prd first."
+description: "Use before any creative engineering work to design technical architecture — components, interfaces, data flow, error handling. For product/UX requirements (user flows, feature specs), use mu-prd first."
 ---
 
 # Technical Architecture
@@ -247,3 +247,11 @@ A question about a UI topic is not automatically a visual question. "What does p
 
 If they agree to the companion, read the detailed guide before proceeding:
 `skills/mu-arch/visual-companion.md`
+
+## Integration
+
+- **Invoked by:** mu-scope (terminal state) or mu-route (Design-tech move)
+- **Produces:** Architecture spec at `docs/specs/YYYY-MM-DD-<name>.md`
+- **Consumed by:** mu-plan (reads spec, breaks into tasks)
+- **Terminal state:** invoke mu-plan
+- **Principle references:** stance-detection.md, inversion.md, architecture-assessment.md, sign-off-gate.md

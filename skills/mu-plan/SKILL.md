@@ -170,3 +170,10 @@ After saving the plan, offer execution choice:
 **Which approach?"**
 
 **Invoke devmuse:mu-code** to execute the plan. mu-code supports both modes.
+
+## Integration
+
+- **Invoked by:** mu-arch (terminal state)
+- **Produces:** Implementation plan at `docs/plans/<name>.md`
+- **Consumed by:** mu-code (reads plan, executes tasks)
+- **Terminal state:** invoke mu-code
