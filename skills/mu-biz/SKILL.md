@@ -25,9 +25,10 @@ Before Depth Mode Selection, detect the current state of any existing biz artifa
    - **Artifact dir**: `docs/biz/`
    - **Watched source dirs**: root `README*` only. **Note**: biz staleness is weakly defined — the business model shifting is a human judgment, not a file signal. H3 for mu-biz catches only the coarse "README says something very different now" case. Users override to `update(sync)` manually when they know a pivot has happened. **Never watch** `docs/prd/` (PRD edits don't imply biz staleness) or `docs/biz/` itself (circular).
    - **Legacy locations**: `docs/premise/` (deprecated), root `BUSINESS.md`
-3. Present the recommendation in one sentence (exact phrasing may adapt):
-   > "Detected: stance=`<stance>` (sub=`<sub-type>`), confidence=`<high|ambiguous>`. Reason: `<one-line>`. OK to proceed, or override?"
-4. Accept user override in one word (`create` / `update` / `extract` / `skip`) or proceed on bare "ok". Slash-command hints (`/mu-biz <stance>`) are treated as **pre-confirmed** — no dialog, proceed directly. See **Stance × Depth Mode interaction** below for how stance tokens interact with depth-mode tokens like `quick` / `full`.
+3. Act based on confidence:
+   - **High confidence** → proceed silently, no confirmation dialog
+   - **Ambiguous** → present recommendation and ask: "Detected: stance=`<stance>`, confidence=`ambiguous`. Reason: `<one-line>`. Override? (`create` / `update` / `extract` / `skip`)"
+   - Slash-command hints (`/mu-biz <stance>`) are treated as **pre-confirmed** — no dialog, proceed directly. See **Stance × Depth Mode interaction** below for how stance tokens interact with depth-mode tokens like `quick` / `full`.
 5. Record approved stance. Route to matching branch below.
 
 **Branch routing**:
@@ -205,7 +206,7 @@ Before terminal (user-decides in Quick mode, invoke mu-prd in Full mode), consul
 
 ## Integration
 
-- **Invoked by:** user manually (`/mu-biz` or `/mu-biz quick` / `/mu-biz full`); or implicitly during greenfield ideation
+- **Invoked by:** user manually (`/mu-biz` or `/mu-biz quick` / `/mu-biz full`). On-demand only — never auto-routed by mu-route
 - **Reads:** @../../knowledge/principles/premise-check.md (always); @../../knowledge/principles/stance-detection.md (Phase 0); @../../knowledge/principles/sign-off-gate.md (terminal if team-touching); prior biz/premise artifacts if present
 - **Produces:** `docs/biz/YYYY-MM-DD-<name>[-quick].md`
 - **Terminal state:**

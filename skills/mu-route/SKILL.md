@@ -1,35 +1,36 @@
 ---
 name: mu-route
-description: "Use at the start of any unprefixed user message to propose the right opening move (Explore / Validate / Design-product / Design-tech / Reproduce / Plan / Implement). Pattern-matches user intent + repo state; produces a one-sentence proposal the user confirms or overrides in a single word. Bypassed by direct slash invocations (`/mu-<skill>`)."
+description: "Use at the start of any unprefixed user message within DevMuse's domain (dev or product work) to route to the right skill. Confidence-based: high confidence invokes silently, medium gives a one-line proposal, low gives full proposal with override options. Bypassed by direct slash invocations (`/mu-<skill>`)."
 ---
 
 # Route
 
-Pick the correct opening move for the user's task by pattern-matching intent + cheap repo signals against a routing table. Propose in one sentence; user confirms "ok" or overrides with a single word. Not a HARD-GATE — a **checkpoint**.
+Pick the correct opening move for the user's task by pattern-matching intent + cheap repo signals against a routing table. Confidence determines behavior: high confidence invokes silently, medium gives a one-line check, low gives a full proposal. Not a HARD-GATE — a **smart router**.
 
 Consumes `@../../knowledge/principles/stance-detection.md` heuristics indirectly (target creative skill runs its own Phase 0). Does NOT run stance detection itself.
 
 ## When to Use
 
-- **Every unprefixed user message** at session start (via `rules/bootstrap.md` delegation)
-- **NOT** invoked when user prefixes their message with `/mu-<skill>` — those are direct-invocation escape hatches per v3 proposal Part 6
+- **Every unprefixed user message within DevMuse's domain** (software engineering or product analysis work)
+- Bootstrap pre-filters: messages outside DevMuse's domain (general chat, non-software topics) never reach mu-route
+- **NOT** invoked when user prefixes their message with `/mu-<skill>` — those are direct-invocation escape hatches
 
 ## When NOT to Use
 
 - User typed `/mu-arch`, `/mu-biz`, etc. → honor direct invocation, skip routing
 - Cadence work (e.g., user explicitly asks for weekly retro) → direct `/mu-retro`
 - User's CLAUDE.md or AGENTS.md pins a specific skill for a repo → Instruction Priority honors that
+- **Not a dev/product task** → bootstrap filters this out before mu-route is invoked
 
-## Design Principle: Plan-as-Checkpoint, Not HARD-GATE
+## Confidence Levels
 
-mu-route follows the **plan-as-checkpoint pattern** (industry convention: Devin Interactive Planning, Cline Plan Mode, Cursor Plan Mode). Concretely:
+| Confidence | Criteria | Behavior |
+|------------|----------|----------|
+| **High** | Single verb match, unambiguous intent, sufficient context | **Silent invoke** — no proposal |
+| **Medium** | Two possible moves, one clearly dominant | **One-line check** — "→ Skill, ok?" |
+| **Low** | Three+ possible moves, or two equally plausible | **Full proposal** — axes + override options |
 
-- **Propose** the move in one structured sentence
-- **Accept** a one-word override or bare confirmation ("ok")
-- **Never block** waiting for perfect clarification
-- **Default to proceed** on bare confirmation
-
-This distinguishes mu-route from HARD-GATE-style enforcement (the old bootstrap "every task starts with scope"). mu-route is a **suggestion mechanism**, not a gate. Users who know where they're going can override in one word or bypass entirely via slash hint.
+Default to medium when unsure.
 
 ## Process Flow
 
@@ -39,21 +40,28 @@ digraph mu_route {
     "Slash prefix?" [shape=diamond];
     "Direct skill invocation\n(bypass mu-route)" [shape=doublecircle];
     "Gather cheap signals\n(verbs, artifacts, git, CODEOWNERS)" [shape=box];
-    "Apply routing table R1..R9" [shape=box];
-    "Propose opening move\n(one sentence + axes)" [shape=box];
+    "Apply routing table R1..R7" [shape=box];
+    "Assess confidence" [shape=diamond];
+    "Silent invoke\n(no proposal)" [shape=doublecircle];
+    "One-line check\n('→ Skill, ok?')" [shape=box];
+    "Full proposal\n(axes + overrides)" [shape=box];
     "User confirms?" [shape=diamond];
-    "Invoke target skill\n(with hint if applicable)" [shape=doublecircle];
-    "Accept one-word override" [shape=box];
+    "Invoke target skill" [shape=doublecircle];
+    "Accept override" [shape=box];
 
     "User message arrives" -> "Slash prefix?";
     "Slash prefix?" -> "Direct skill invocation\n(bypass mu-route)" [label="yes (/mu-*)"];
     "Slash prefix?" -> "Gather cheap signals\n(verbs, artifacts, git, CODEOWNERS)" [label="no"];
-    "Gather cheap signals\n(verbs, artifacts, git, CODEOWNERS)" -> "Apply routing table R1..R9";
-    "Apply routing table R1..R9" -> "Propose opening move\n(one sentence + axes)";
-    "Propose opening move\n(one sentence + axes)" -> "User confirms?";
-    "User confirms?" -> "Invoke target skill\n(with hint if applicable)" [label="ok / bare confirm"];
-    "User confirms?" -> "Accept one-word override" [label="one-word override"];
-    "Accept one-word override" -> "Invoke target skill\n(with hint if applicable)";
+    "Gather cheap signals\n(verbs, artifacts, git, CODEOWNERS)" -> "Apply routing table R1..R7";
+    "Apply routing table R1..R7" -> "Assess confidence";
+    "Assess confidence" -> "Silent invoke\n(no proposal)" [label="high"];
+    "Assess confidence" -> "One-line check\n('→ Skill, ok?')" [label="medium"];
+    "Assess confidence" -> "Full proposal\n(axes + overrides)" [label="low"];
+    "One-line check\n('→ Skill, ok?')" -> "User confirms?";
+    "Full proposal\n(axes + overrides)" -> "User confirms?";
+    "User confirms?" -> "Invoke target skill" [label="ok"];
+    "User confirms?" -> "Accept override" [label="override"];
+    "Accept override" -> "Invoke target skill";
 }
 ```
 
@@ -69,23 +77,25 @@ Create tasks for each and complete in order:
    - Axis-Stakeholder: `test -f .github/CODEOWNERS || test -f CODEOWNERS` + git log multi-author check (feeds sign-off gate later; informational to user here)
    - **Axis-Plugin**: scan the available skills list (from system-reminder) for **non-DevMuse skills** (i.e. skills whose name does NOT start with `devmuse:`). Check if the user's message plausibly matches any such skill's description or triggers. Record matched skill name(s), if any.
 3. **Apply routing decision table** (below) top-to-bottom, first match wins → one opening move
-4. **Propose** in one sentence with axis rationale
-5. **Accept user reply**: `ok` / bare confirm → proceed; one-word override → use overridden move; anything else → ask user to clarify (non-blocking)
-6. **Invoke target skill** (via Skill tool) with optional hint (e.g., `stance=create` for downstream creative skills per spec §2.5 preservation)
+4. **Assess confidence** and act accordingly:
+   - **High** (single unambiguous verb match + sufficient context) → silently invoke target skill, no proposal
+   - **Medium** (clear direction but some ambiguity) → one-line check: "→ `<Skill>`, ok?"
+   - **Low** (multiple possible moves, vague intent) → full proposal with axes + override options
+5. **If proposing**, accept user reply: `ok` / bare confirm → proceed; one-word override → use overridden move; anything else → ask user to clarify (non-blocking)
+6. **Invoke target skill** (via Skill tool) with optional hint (e.g., `stance=create` for downstream creative skills)
 
 ## Trigger Signal Table
 
 | Verb / phrase in user message | Axis-Intent | Default opening move |
 |-------------------------------|-------------|----------------------|
 | "understand", "figure out", "read", "take over", "evaluate", "what does this do" | understand | **Explore** |
-| "should I build", "is this worth", "validate idea", "vague idea", "pivot" | validate | **Validate** |
-| "add feature", "build feature", "product idea" | create-product | **Design-product** (or Validate if no biz) |
+| "add feature", "build feature" | create-feature | **Design-tech** (or Explore if unfamiliar) |
 | "refactor", "clean up", "rename", "restructure" | reshape | **Design-tech** (or Explore if unfamiliar) |
 | "fix", "broken", "error", "bug", "test failing", "crash" | fix | **Reproduce** |
 | "implement", "write this", "build this", "code it up" | implement | **Implement** (if design exists; else Design-tech) |
-| "retro", "look back", "how did X go" | retrospect | **Retrospect** (cadence — use `/mu-retro` directly) |
+**On-demand only (not auto-routed):** "validate idea", "business model", "product requirements", "user flows", "competitive analysis" → respond with a pointer to `/mu-biz` or `/mu-prd`. "retro", "look back", "how did X go" → respond with a pointer to `/mu-retro`.
 
-When multiple verbs fire, Axis-Intent prefers the **primary action** — fix > reshape > create-product > implement > understand > validate (most-specific wins).
+When multiple verbs fire, Axis-Intent prefers the **primary action** — fix > reshape > create-feature > implement > understand (most-specific wins).
 
 ## Routing Decision Table
 
@@ -97,28 +107,35 @@ Rows evaluated top-to-bottom; first match wins.
 | R2 | none | understand | — | — | **Explore** | — |
 | R3 | none | fix | — | — | **Reproduce** (via `mu-scope` 1 UC repro) | — |
 | R4 | none | reshape | — | unfamiliar | **Explore** (pre-change variant) → then Design-tech | — |
-| R5 | none | validate / create-product | no biz | — | **Validate** | — |
-| R6 | none | create-product | no prd | — | **Design-product** | stance=auto |
-| R7 | none | reshape / create-product | no specs | familiar | **Design-tech** | stance=auto |
-| R8 | none | implement | specs exist | — | **Implement** | — |
-| R8.5 | none | Axis-Plugin matched | — | — | **Delegate to plugin** (invoke matched skill via Skill tool) | — |
-| R9 | none (no verb match) | — | — | — | **Explore** (safe default per spec §2.5 and scope EC-R2) | — |
+| R5 | none | reshape / create-feature | no specs | familiar | **Design-tech** | stance=auto |
+| R6 | none | implement | specs exist | — | **Implement** | — |
+| R6.5 | none | Axis-Plugin matched | — | — | **Delegate to plugin** (invoke matched skill via Skill tool) | — |
+| R7 | none (no verb match) | — | — | — | **Explore** (safe default) | — |
 
-**Hint semantics**: when the target is a creative skill (mu-biz / mu-prd / mu-arch), mu-route MAY pass a `stance=auto` hint indicating Phase 0 should run its own detection without further pre-confirmation. This is a no-op refinement; target still runs Phase 0. For the mu-biz full → mu-prd auto-handoff (spec §2.5), the pre-confirmed `stance=create` token is still passed by mu-biz terminal, not by mu-route — mu-route only routes the first move.
+**On-demand skills (mu-biz, mu-prd, mu-retro) are not auto-routed.** mu-route responds with a pointer to the appropriate slash command instead of invoking the skill.
+
+**Hint semantics**: when the target is mu-arch, mu-route MAY pass a `stance=auto` hint indicating Phase 0 should run its own detection without further pre-confirmation.
 
 ## Proposal Wording
 
-Template (DevMuse move):
-> "Looks like **<Opening Move>**. Axes: Intent=`<verb>`, Familiarity=`<familiar|unfamiliar|n/a>`, Missing=`<biz|prd|specs|none>`. Confirm (`ok`) or override (one word: explore / validate / design-product / design-tech / reproduce / plan / implement / retrospect)?"
+### High confidence (silent invoke)
+No proposal. Directly invoke the target skill. The user sees the skill's output, not a routing question.
 
-Template (plugin delegation):
-> "Detected installed skill **<skill-name>** matching your request. Route to `/<skill-name>`? Confirm (`ok`) or override with a DevMuse move."
+### Medium confidence (one-line check)
+> "→ **<Skill>**, ok?"
 
-Example (DevMuse):
-> "Looks like **Explore**. Axes: Intent=take-over, Familiarity=unfamiliar, Missing=none. Confirm (`ok`) or override?"
+Example:
+> "→ **Design-tech**, ok?"
 
-Example (plugin):
-> "Detected installed skill **stele** (brand identity generator). Route to `/stele`? Confirm (`ok`) or override with a DevMuse move."
+### Low confidence (full proposal)
+> "Looks like **<Opening Move>**. Axes: Intent=`<verb>`, Familiarity=`<familiar|unfamiliar|n/a>`, Missing=`<specs|none>`. Confirm (`ok`) or override (one word: explore / design-tech / reproduce / implement)?"
+
+### On-demand skill pointer
+When on-demand skill language is detected:
+> "This sounds like `<biz/product/retro>` work. Use `/mu-biz`, `/mu-prd`, or `/mu-retro` to start."
+
+### Plugin delegation
+> "Detected installed skill **<skill-name>** matching your request. Route to `/<skill-name>`? Confirm (`ok`) or override."
 
 ## Slash-Command Escape Hatch
 
@@ -132,9 +149,9 @@ This matches industry convention (Aider `/ask`/`/code`/`/architect`, Roo Code `/
 
 ## Ambiguity Handling
 
-- **2+ moves tie on routing rules** → propose the one that fires first in R1..R9 ordering; note in the proposal sentence: `"(tied with <other move>)"`. User overrides with one word.
-- **No verb matches Axis-Intent** → R9 fires (default Explore). Safe default: understand before acting.
-- **Repo state is pathological** (empty repo, shallow clone, submodule root, repo outside git) → skip the routing table and ask user directly: *"Can't confidently route — repo state is unusual (`<detected anomaly>`). Which opening move? (explore / validate / design-product / design-tech / reproduce / plan / implement / retrospect)"*. This is the explicit "ask user" fallback per scope EC-R4.
+- **2+ moves tie on routing rules** → propose the one that fires first in R1..R7 ordering; note in the proposal sentence: `"(tied with <other move>)"`. User overrides with one word.
+- **No verb matches Axis-Intent** → R7 fires (default Explore). Safe default: understand before acting.
+- **Repo state is pathological** (empty repo, shallow clone, submodule root, repo outside git) → skip the routing table and ask user directly: *"Can't confidently route — repo state is unusual (`<detected anomaly>`). Which opening move? (explore / design-tech / reproduce / implement)"*.
 
 ## Failure Handling
 
@@ -147,17 +164,13 @@ All paths non-blocking — mu-route always produces a proposal or a single clari
 
 mu-route does NOT run the sign-off-gate protocol itself. It surfaces Axis-Stakeholder as context (e.g., "CODEOWNERS detected; sign-off will be required at artifact exit") but the gate itself fires inside the target creative skill's exit step, per `@../../knowledge/principles/sign-off-gate.md`.
 
-## HARD-GATE Status
-
-mu-route has **no HARD-GATE**. It's a router. Target skills enforce their own gates.
-
 ## Key Principles
 
-- **Propose, don't enforce** — plan-as-checkpoint, one-word override always honored
+- **Confidence adapts friction** — clear intent gets silent routing, ambiguity gets proposals
 - **Cheap signals only** — detection must complete in <5s (file exists, git log --format)
 - **Slash hints bypass** — power users never see mu-route unless they want to
-- **R9 safe default** — when ambiguous, propose Explore (understand before acting)
-- **No new abstraction** — routing table replaces bootstrap's pipeline-path section, not adds to it
+- **R7 safe default** — when ambiguous, propose Explore (understand before acting)
+- **No HARD-GATE** — mu-route is a router, target skills enforce their own gates
 
 ## Integration
 

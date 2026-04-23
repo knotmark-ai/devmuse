@@ -78,16 +78,9 @@ Skills and agents reference knowledge via `@` relative paths within the plugin:
 
 ### skills/ (12)
 
-Organized in three tiers:
+Organized in four categories:
 
-**Product-level tier** (runs once per product):
-
-| Name | Role | Dispatches Agent |
-|------|------|------|
-| mu-biz | Business analysis — premise validation (quick) or full analysis (market, BMC, VPC, personas, MVP scope) | — |
-| mu-prd | Product requirements — user flows, wireframes, feature specs, tiering rules | — |
-
-**Feature-level tier** — core pipeline `scope → arch → plan → code → review`:
+**Pipeline** — core dev workflow `scope → arch → plan → code → review` (auto-routed):
 
 | Name | Role | Dispatches Agent |
 |------|------|------|
@@ -97,7 +90,7 @@ Organized in three tiers:
 | mu-code | Plan → implementation (subagent or inline, TDD, worktree) | mu-coder, mu-reviewer (review-code + review-compliance) |
 | mu-review | Review + verify + integrate | mu-reviewer (review-code + review-coverage + review-security) |
 
-**Orthogonal tier** (pipeline-external):
+**Orthogonal** (auto-routed, pipeline-external):
 
 | Name | Role | Dispatches Agent |
 |------|------|------|
@@ -105,11 +98,18 @@ Organized in three tiers:
 | mu-debug | Systematic root cause analysis | — |
 | mu-retro | Periodic retrospective with git metrics and memory capture | — |
 
+**On-demand** (direct `/slash` invocation only, NOT auto-routed):
+
+| Name | Role | Dispatches Agent |
+|------|------|------|
+| mu-biz | Business analysis — premise validation (quick) or full analysis (market, BMC, VPC, personas, MVP scope) | — |
+| mu-prd | Product requirements — user flows, wireframes, feature specs, tiering rules | — |
+
 **Router:**
 
 | Name | Role | Dispatches Agent |
 |------|------|------|
-| mu-route | Pattern-matching router — proposes one of 7 routable opening moves for unprefixed user messages; bypassed by /mu-<skill> slash hints | — |
+| mu-route | Confidence-based router — silently invokes for clear intent, proposes for ambiguous; bypassed by /mu-<skill> slash hints | — |
 
 **Meta:**
 

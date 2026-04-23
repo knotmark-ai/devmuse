@@ -33,48 +33,34 @@ Use the `Skill` tool. When you invoke a skill, its content is loaded and present
 
 ## The Rule
 
-**Invoke relevant or requested skills BEFORE any response or action.** Even a 1% chance a skill might apply means that you should invoke the skill to check. If an invoked skill turns out to be wrong for the situation, you don't need to use it.
+**Invoke relevant or requested skills BEFORE any response or action.** But not every message is a task — DevMuse only activates for software engineering and product analysis work.
+
+### Domain Filter (before routing)
+
+DevMuse handles two categories of work:
+1. **Software engineering** — coding, architecture, debugging, refactoring, testing, code review, deployment
+2. **Product/business analysis** — premise validation, product requirements, competitive analysis, business modeling
+
+**Not in scope:** general questions, open-ended discussion, brainstorming without a concrete goal, non-software topics. For these, respond normally without invoking any skill.
+
+### Routing Flow
 
 ```dot
 digraph skill_flow {
     "User message received" [shape=doublecircle];
-    "About to EnterPlanMode?" [shape=doublecircle];
-    "Already designed?" [shape=diamond];
-    "Invoke design skill" [shape=box];
-    "Might any skill apply?" [shape=diamond];
-    "Creative work?" [shape=diamond];
-    "Scope exists?" [shape=diamond];
-    "Bug or failure?" [shape=diamond];
-    "Invoke mu-scope (1 use case: repro steps)" [shape=box];
-    "Invoke mu-scope" [shape=box];
-    "Invoke Skill tool" [shape=box];
-    "Announce: 'Using [skill] to [purpose]'" [shape=box];
-    "Has checklist?" [shape=diamond];
-    "Create TodoWrite todo per item" [shape=box];
-    "Follow skill exactly" [shape=box];
-    "Respond (including clarifications)" [shape=doublecircle];
+    "Slash prefix (/mu-*)?" [shape=diamond];
+    "Direct skill invocation" [shape=doublecircle];
+    "In DevMuse domain?\n(dev or product work)" [shape=diamond];
+    "Respond normally\n(no skill)" [shape=doublecircle];
+    "Invoke mu-route\n(classify + confidence)" [shape=box];
+    "mu-route invokes\ntarget skill" [shape=doublecircle];
 
-    "About to EnterPlanMode?" -> "Already designed?";
-    "Already designed?" -> "Invoke design skill" [label="no"];
-    "Already designed?" -> "Might any skill apply?" [label="yes"];
-    "Invoke design skill" -> "Might any skill apply?";
-
-    "User message received" -> "Might any skill apply?";
-    "Might any skill apply?" -> "Creative work?" [label="yes, even 1%"];
-    "Might any skill apply?" -> "Respond (including clarifications)" [label="definitely not"];
-    "Creative work?" -> "Scope exists?" [label="yes"];
-    "Creative work?" -> "Bug or failure?" [label="no"];
-    "Scope exists?" -> "Invoke mu-scope" [label="no"];
-    "Scope exists?" -> "Invoke Skill tool" [label="yes"];
-    "Bug or failure?" -> "Invoke mu-scope (1 use case: repro steps)" [label="yes"];
-    "Bug or failure?" -> "Invoke Skill tool" [label="no"];
-    "Invoke mu-scope" -> "Invoke Skill tool";
-    "Invoke mu-scope (1 use case: repro steps)" -> "Invoke Skill tool";
-    "Invoke Skill tool" -> "Announce: 'Using [skill] to [purpose]'";
-    "Announce: 'Using [skill] to [purpose]'" -> "Has checklist?";
-    "Has checklist?" -> "Create TodoWrite todo per item" [label="yes"];
-    "Has checklist?" -> "Follow skill exactly" [label="no"];
-    "Create TodoWrite todo per item" -> "Follow skill exactly";
+    "User message received" -> "Slash prefix (/mu-*)?";
+    "Slash prefix (/mu-*)?" -> "Direct skill invocation" [label="yes"];
+    "Slash prefix (/mu-*)?" -> "In DevMuse domain?\n(dev or product work)" [label="no"];
+    "In DevMuse domain?\n(dev or product work)" -> "Respond normally\n(no skill)" [label="no"];
+    "In DevMuse domain?\n(dev or product work)" -> "Invoke mu-route\n(classify + confidence)" [label="yes"];
+    "Invoke mu-route\n(classify + confidence)" -> "mu-route invokes\ntarget skill";
 }
 ```
 
@@ -84,14 +70,12 @@ These thoughts mean STOP—you're rationalizing:
 
 | Thought | Reality |
 |---------|---------|
-| "This is just a simple question" | Questions are tasks. Check for skills. |
 | "I need more context first" | Skill check comes BEFORE clarifying questions. |
 | "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
 | "I can check git/files quickly" | Files lack conversation context. Check for skills. |
 | "Let me gather information first" | Skills tell you HOW to gather information. |
 | "This doesn't need a formal skill" | If a skill exists, use it. |
 | "I remember this skill" | Skills evolve. Read current version. |
-| "This doesn't count as a task" | Action = task. Check for skills. |
 | "The skill is overkill" | Simple things become complex. Use it. |
 | "I'll just do this one thing first" | Check BEFORE doing anything. |
 | "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
@@ -100,17 +84,29 @@ These thoughts mean STOP—you're rationalizing:
 | "I already know what to build" | You know what YOU want. Scope finds what you missed. |
 | "Just a quick fix" | Quick Probe takes 30 seconds. Just do it. |
 
+**Not a red flag:** "This isn't a dev or product task" — if the user is having an open-ended discussion, asking a general question, or talking about non-software topics, it's correct to respond normally without routing.
+
 ## Skill Priority & Pipeline Paths
 
-DevMuse has three tiers: **Product-level** (mu-biz, mu-prd), **Feature-level** (mu-scope → mu-arch → mu-plan → mu-code → mu-review), **Orthogonal** (mu-explore, mu-debug, mu-retro), and a **Router** (mu-route).
+DevMuse organizes skills into four categories:
+
+**Core pipeline** (auto-routed via mu-route): mu-scope → mu-arch → mu-plan → mu-code → mu-review
+
+**Orthogonal** (auto-routed via mu-route): mu-explore, mu-debug, mu-retro
+
+**On-demand** (direct `/slash` invocation only, NOT auto-routed): mu-biz, mu-prd
+
+**Meta**: mu-route (router), mu-write-skill (skill authoring)
 
 ### Routing: how tasks get started
 
-**For any unprefixed user message, invoke `mu-route` first.** It pattern-matches the user's intent + repo state and proposes one of 7 routable opening moves (Explore / Validate / Design-product / Design-tech / Reproduce / Plan / Implement). User confirms with bare "ok" or overrides with one word.
+**For any unprefixed user message that falls within DevMuse's domain**, invoke `mu-route`. It pattern-matches intent + repo state, assesses confidence, and either silently invokes the target skill or proposes for user confirmation.
 
 **Direct slash invocation bypasses mu-route** — `/mu-arch`, `/mu-biz`, `/mu-explore`, etc. route directly to the named skill (power-user escape hatch, matches industry convention: Aider / Roo / Continue).
 
-See `skills/mu-route/SKILL.md` for the full routing decision table and trigger signals.
+**On-demand skills (mu-biz, mu-prd)** are never auto-routed. Users invoke them explicitly with `/mu-biz` or `/mu-prd` when they need business analysis or product requirements.
+
+See `skills/mu-route/SKILL.md` for the full routing decision table, trigger signals, and confidence-based proposal behavior.
 
 ### Creative-skill stance
 
@@ -120,19 +116,15 @@ See `skills/mu-route/SKILL.md` for the full routing decision table and trigger s
 
 When stakeholder-scope indicates team-touching (CODEOWNERS present + multi-author git history, or user declaration), creative skills run a sign-off gate protocol at terminal. Non-blocking; user can always override with "skip sign-off". See `knowledge/principles/sign-off-gate.md`.
 
-### Examples (mu-route would propose these)
+### Examples
 
-| User message | mu-route proposes |
-|-------------|-------------------|
-| "I want to build a new product / startup / Chrome extension" | `Validate` (then Design-product etc.) |
-| "Let's add feature X to this project" | `Design-product` or `Design-tech` depending on prd/specs presence |
-| "Fix this bug" | `Reproduce` (via mu-scope 1-UC + mu-debug) |
-| "Help me understand this repo / take over / evaluate" | `Explore` |
-| "Is this worth doing?" / "Should I build this?" | `Validate` |
-| "Refactor the auth module" | `Design-tech` (or `Explore` first if unfamiliar) |
-| "How did last week go?" | `Retrospect` (cadence — prefer `/mu-retro` direct) |
-
-Users who know exactly where they're going can bypass mu-route with slash hints: `/mu-biz full`, `/mu-arch`, etc.
+| User message | Behavior |
+|-------------|----------|
+| "Fix this bug" | mu-route → **Reproduce** (silent) |
+| "Refactor the auth module" | mu-route → **Design-tech** (one-line check) |
+| "Is this worth building?" | mu-route → pointer to `/mu-biz` |
+| "我想聊聊这个项目的方向" | Not in domain → respond normally |
+| `/mu-biz full` | Direct invocation (bypass mu-route) |
 
 ## Skill Types
 

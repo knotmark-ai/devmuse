@@ -23,19 +23,19 @@ Four-layer architecture (rules / skills / agents / knowledge) plus hooks and doc
   - `marketplace.json` — Marketplace registration metadata.
 - **`rules/`** — Always-on principles, loaded via SessionStart hook (not plugin auto-discovery).
   - `bootstrap.md` — The single rule. Decision flow for "which skill to invoke", red flags, priority ordering (user > skill > default).
-- **`skills/`** — 11 user-triggered workflow skills, each a directory with `SKILL.md` (and optionally scripts/ancillary docs).
-  - Product tier: `mu-biz`, `mu-prd`
-  - Feature tier: `mu-scope` → `mu-arch` → `mu-plan` → `mu-code` → `mu-review`
-  - Orthogonal: `mu-debug`, `mu-retro`
+- **`skills/`** — 12 user-triggered workflow skills, each a directory with `SKILL.md` (and optionally scripts/ancillary docs).
+  - Pipeline (auto-routed): `mu-scope` → `mu-arch` → `mu-plan` → `mu-code` → `mu-review`
+  - Orthogonal (auto-routed): `mu-explore`, `mu-debug`, `mu-retro`
+  - On-demand (slash-only): `mu-biz`, `mu-prd`
+  - Router: `mu-route`
   - Meta: `mu-write-skill`
-  - Exploration: `mu-explore` (the skill driving this very artifact)
 - **`agents/`** — Two dispatchable sub-agents with isolated context.
   - `mu-reviewer.md` — Six modes: review-design, review-plan, review-code, review-compliance, review-coverage, review-security.
   - `mu-coder.md` — Implementation specialist invoked by `mu-code`.
 - **`knowledge/`** — On-demand reference material, pulled via `@../../knowledge/...` relative paths.
   - `languages/` — Per-language review criteria (java, go, python, typescript).
-  - `templates/` — Artifact templates (scope.md, explore.md).
-  - `principles/` — Thinking rubrics (inversion, premise-check, chesterton's-fence, architecture-assessment, graphviz-conventions, skill-cso, skill-testing).
+  - `templates/` — Artifact templates (scope.md, explore.md, architecture.md).
+  - `principles/` — Thinking rubrics (10 files: inversion, premise-check, chesterton's-fence, git-safety, stance-detection, sign-off-gate, architecture-assessment, graphviz-conventions, skill-cso, skill-testing).
   - `reviews/` — Review checklists (security-checklist, design-audit-rubric).
 - **`hooks/`** — Shell hooks registered via `hooks.json`.
   - `session-start` — Reads `rules/bootstrap.md` and injects as `additionalContext` on SessionStart (startup/clear/compact).
@@ -104,7 +104,7 @@ Execution is not "program start" — it is Claude Code session start. Entry poin
 | `mu-reviewer modes` | Six review stances selectable per invocation: review-design, review-plan, review-code, review-compliance, review-coverage, review-security. |
 | `pipeline gate` | The pre-tool-use hook that refuses Edit/Write unless scope+design artifacts exist. Enforces the scope→arch→plan→code→review order. |
 | `fail-open` | Hooks exit 0 on any internal error so plugin bugs never block the user. |
-| `three tiers` | Product-level (mu-biz, mu-prd) / Feature-level (scope→arch→plan→code→review) / Orthogonal (mu-debug, mu-retro). |
+| `four categories` | Pipeline (scope→arch→plan→code→review, auto-routed) / Orthogonal (explore, debug, retro, auto-routed) / On-demand (mu-biz, mu-prd, slash-only) / Router (mu-route). |
 | `quick mode` (of mu-biz) | 4 forcing questions instead of full business-model-canvas analysis. |
 | `Quick Probe` | Rapid codebase impact scan inside `mu-scope` before formal UC enumeration. |
 | `dogfooding` | devmuse uses its own skills on itself — see `docs/scope/`, `docs/specs/`, `docs/plans/` populated with internal devmuse work. |
@@ -114,7 +114,7 @@ Execution is not "program start" — it is Claude Code session start. Entry poin
 ## Unknowns
 
 - **`tests/` harness mechanics** — Six scenario dirs exist but I didn't read any of their contents. It is unclear whether they are executable test suites, markdown scenario scripts, or manual checklists; no CI config is visible at the repo root (no `.github/workflows/`). How are regressions caught?
-- **`mu-route` skill status** — `docs/proposals/2026-04-15-mu-route-design.md` exists but there is no `skills/mu-route/` directory. Proposal only, or shipped and I missed it?
+- **`mu-route` skill** — Shipped. Confidence-based router: silently invokes for clear intent, proposes for ambiguous. On-demand skills (mu-biz, mu-prd, mu-retro) are not auto-routed.
 - **Marketplace.json contents** — Read `plugin.json` but not `.claude-plugin/marketplace.json`; its schema and what it controls (discovery metadata vs. install recipe) is unverified.
 - **Skill-internal mechanics** — For brevity, only `rules/bootstrap.md` and the `mu-explore` / template files were read in full. `SKILL.md` bodies of `mu-scope`, `mu-arch`, `mu-plan`, `mu-code`, `mu-review`, `mu-debug`, `mu-biz`, `mu-prd`, `mu-retro`, `mu-write-skill`, `mu-reviewer`, `mu-coder` are inferred from README/architecture.md — have not directly verified their invocation shape or internal checklists.
 - **Knowledge file contents** — Category/filenames taken from architecture.md; none of the actual language/review/principles markdown was opened. Inversion, premise-check, etc. are known only by name.

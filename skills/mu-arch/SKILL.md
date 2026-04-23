@@ -32,9 +32,10 @@ Before engaging the design process, detect the current state of any existing arc
    - **Watched source dirs**: `src/`, `lib/`, `internal/`, `pkg/`, `cmd/` (whichever exist; else H3 returns `insufficient-signal`)
    - **Legacy locations**: root `ARCHITECTURE.md`, `DESIGN.md`
    - **General rule**: artifact dir (`docs/specs/`) is never in its own watched set — prevents circular staleness.
-3. Present the recommendation in one sentence (example wording; exact phrasing may adapt):
-   > "Detected: stance=`<stance>` (sub=`<sub-type>`), confidence=`<high|ambiguous>`. Reason: `<one-line>`. OK to proceed, or override?"
-4. Accept user override in one word (`create` / `update` / `extract` / `skip`) or proceed on bare "ok". Slash-command hints (`/mu-arch <stance>`) are treated as **pre-confirmed** — no dialog, proceed directly.
+3. Act based on confidence:
+   - **High confidence** → proceed silently, no confirmation dialog
+   - **Ambiguous** → present recommendation and ask: "Detected: stance=`<stance>`, confidence=`ambiguous`. Reason: `<one-line>`. Override? (`create` / `update` / `extract` / `skip`)"
+   - Slash-command hints (`/mu-arch <stance>`) are treated as **pre-confirmed** — no dialog, proceed directly.
 5. Record approved stance. Route to matching branch below.
 
 **Branch routing**:
@@ -254,4 +255,5 @@ If they agree to the companion, read the detailed guide before proceeding:
 - **Produces:** Architecture spec at `docs/specs/YYYY-MM-DD-<name>.md`
 - **Consumed by:** mu-plan (reads spec, breaks into tasks)
 - **Terminal state:** invoke mu-plan
+- **Template:** @../../knowledge/templates/architecture.md
 - **Principle references:** stance-detection.md, inversion.md, architecture-assessment.md, sign-off-gate.md

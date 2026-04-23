@@ -26,9 +26,10 @@ Before Depth Mode Selection, detect the current state of any existing PRD artifa
    - **Watched source dirs**: `src/pages/`, `src/screens/`, `src/views/`, `app/`. **Fallback**: if none of those exist (backend/CLI/library projects), fall back to top-level `src/` directly; if that also doesn't exist, H3 returns `insufficient-signal`.
    - **Legacy locations**: root `PRD.md`
    - Never watch `docs/prd/` itself (circular).
-3. Present the recommendation in one sentence (exact phrasing may adapt):
-   > "Detected: stance=`<stance>` (sub=`<sub-type>`), confidence=`<high|ambiguous>`. Reason: `<one-line>`. OK to proceed, or override?"
-4. Accept user override in one word (`create` / `update` / `extract` / `skip`) or proceed on bare "ok". **Slash-command hints (`/mu-prd <stance>`) and upstream-invoked hints (e.g., `mu-prd create` passed from mu-biz Full-mode terminal per spec §2.5) are treated as pre-confirmed — no dialog, proceed directly.** This is how the biz→prd auto-handoff stays smooth in Full-mode chains.
+3. Act based on confidence:
+   - **High confidence** → proceed silently, no confirmation dialog
+   - **Ambiguous** → present recommendation and ask: "Detected: stance=`<stance>`, confidence=`ambiguous`. Reason: `<one-line>`. Override? (`create` / `update` / `extract` / `skip`)"
+   - Slash-command hints (`/mu-prd <stance>`) and upstream-invoked hints (e.g., `mu-prd create` from mu-biz Full-mode terminal) are treated as **pre-confirmed** — no dialog, proceed directly.
 5. Record approved stance. Route to matching branch below.
 
 **Branch routing**:
