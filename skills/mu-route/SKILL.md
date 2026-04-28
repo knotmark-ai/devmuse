@@ -11,8 +11,9 @@ Consumes `@../../knowledge/principles/stance-detection.md` heuristics indirectly
 
 ## When to Use
 
-- **Every unprefixed user message within DevMuse's domain** (software engineering or product analysis work)
-- Bootstrap pre-filters: messages outside DevMuse's domain (general chat, non-software topics) never reach mu-route
+- **First message in a conversation** within DevMuse's domain
+- **Task transition**: user's intent shifts to a different skill category (e.g., debug→fix, explore→implement). Bootstrap detects this via the Continuation vs Transition table.
+- Bootstrap pre-filters: messages outside DevMuse's domain never reach mu-route
 - **NOT** invoked when user prefixes their message with `/mu-<skill>` — those are direct-invocation escape hatches
 
 ## When NOT to Use
@@ -21,6 +22,7 @@ Consumes `@../../knowledge/principles/stance-detection.md` heuristics indirectly
 - Cadence work (e.g., user explicitly asks for weekly retro) → direct `/mu-retro`
 - User's CLAUDE.md or AGENTS.md pins a specific skill for a repo → Instruction Priority honors that
 - **Not a dev/product task** → bootstrap filters this out before mu-route is invoked
+- **Continuation of the same task type** → same-type follow-ups during an active skill (e.g., "查下另一个日志" during mu-debug) don't need re-routing
 
 ## Confidence Levels
 

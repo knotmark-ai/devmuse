@@ -52,6 +52,8 @@ digraph skill_flow {
     "Direct skill invocation" [shape=doublecircle];
     "In DevMuse domain?\n(dev or product work)" [shape=diamond];
     "Respond normally\n(no skill)" [shape=doublecircle];
+    "Task transition?" [shape=diamond];
+    "Continue current skill\n(no re-route)" [shape=doublecircle];
     "Invoke mu-route\n(classify + confidence)" [shape=box];
     "mu-route invokes\ntarget skill" [shape=doublecircle];
 
@@ -59,10 +61,33 @@ digraph skill_flow {
     "Slash prefix (/mu-*)?" -> "Direct skill invocation" [label="yes"];
     "Slash prefix (/mu-*)?" -> "In DevMuse domain?\n(dev or product work)" [label="no"];
     "In DevMuse domain?\n(dev or product work)" -> "Respond normally\n(no skill)" [label="no"];
-    "In DevMuse domain?\n(dev or product work)" -> "Invoke mu-route\n(classify + confidence)" [label="yes"];
+    "In DevMuse domain?\n(dev or product work)" -> "Task transition?" [label="yes"];
+    "Task transition?" -> "Invoke mu-route\n(classify + confidence)" [label="yes or no active skill"];
+    "Task transition?" -> "Continue current skill\n(no re-route)" [label="no, same task type"];
     "Invoke mu-route\n(classify + confidence)" -> "mu-route invokes\ntarget skill";
 }
 ```
+
+### Continuation vs Transition
+
+Not every message needs re-routing. During an active skill (e.g., mu-debug), follow-up questions of the **same type** are continuations — just respond. But when the user's intent **shifts category**, mu-route must re-fire.
+
+**Continuations (skip mu-route):**
+- Same-type follow-ups: "查下这个日志", "再看下 authId=xxx" during active debugging
+- Clarifying questions about current work
+- Providing requested info back to the active skill
+
+**Transitions (re-invoke mu-route):**
+
+| From | Signal words | Likely target |
+|------|-------------|---------------|
+| debug/explore → fix | "修复", "fix", "改掉", "解决" | mu-code |
+| debug/explore → implement | "实现", "implement", "加上", "做这个" | mu-arch or mu-code |
+| any → review | "review", "检查", "提交" | mu-review |
+| any → new feature | "接下来做", "新增", "加个功能" | mu-arch |
+| fix → design | "重新设计", "重构", "这个架构不对" | mu-arch |
+
+**The test:** If you removed all prior conversation context, would this message route to a **different** skill than the one currently active? If yes → transition → re-route.
 
 ## Red Flags
 
@@ -83,6 +108,7 @@ These thoughts mean STOP—you're rationalizing:
 | "This is too simple to need scoping" | Simple tasks are where omissions hurt most. Scope can be 1 use case. |
 | "I already know what to build" | You know what YOU want. Scope finds what you missed. |
 | "Just a quick fix" | Quick Probe takes 30 seconds. Just do it. |
+| "This is a continuation of the current task" | Check: did the intent shift? Debug→fix, explore→implement, etc. If yes, re-route. |
 
 **Not a red flag:** "This isn't a dev or product task" — if the user is having an open-ended discussion, asking a general question, or talking about non-software topics, it's correct to respond normally without routing.
 
