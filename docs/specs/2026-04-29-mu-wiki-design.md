@@ -86,7 +86,7 @@ graph TD
 ### Structure Subagent (Phase 1)
 
 - **Responsibility:** Analyze project file tree + README → produce wiki structure JSON
-- **Interface:** Input: file tree string, README content, optional CLAUDE.md. Output: JSON conforming to structure schema (written to `docs/wiki/_structure.json` as intermediate artifact)
+- **Interface:** Input: file tree string, README content, optional CLAUDE.md. Output: JSON conforming to structure schema (returned in subagent result, NOT persisted to disk — the structure is transient, used only to coordinate Phase 2 dispatch; `_index.md` captures the final page list for future updates)
 - **Dependencies:** Read tool (README, CLAUDE.md), Bash tool (git ls-files)
 - **Subagent type:** Explore (optimized for codebase analysis)
 
@@ -122,6 +122,7 @@ graph TD
 - **Interface:** Input: page spec (title, description, relevant_files list, project path). Output: writes `docs/wiki/<page-id>.md`
 - **Dependencies:** Read tool (source files), Write tool (output page)
 - **Subagent type:** general-purpose
+- **Template:** Page format requirements are inlined in the SKILL.md prompt (not a separate template file) — keeps the page subagent self-contained without requiring `@` references
 
 **Page generation prompt requirements:**
 1. Read ALL files in relevant_files list using Read tool
@@ -231,7 +232,7 @@ sequenceDiagram
 | Single page subagent fails | Check subagent result for error | Mark page `status: failed` in _index.md, other pages unaffected, prompt retry |
 | Git not available | `git rev-parse` fails | Skip update flow, suggest generate instead |
 | _index.md corrupted/unparseable | Regex parse fails on expected fields | Prompt user to regenerate: "index 异常，建议 `/mu-wiki generate` 重建" |
-| Project >200k LOC | `wc -l` check in size gate | Refuse, ask user to specify subsystem |
+| Project >200k LOC | `wc -l` check in size gate | Limit to top-level modules only (no deep dive), inform user they can later deep-dive specific subsystems |
 | Diff too large (>50 files or >60% pages) | Count check after matching | Warn, suggest full regenerate over incremental |
 | relevant_files no longer exist | File existence check during match | Degrade to full regenerate |
 | Wiki exists when generate called | Check `_index.md` existence | Prompt: "覆盖重建还是增量 update？" |
@@ -249,6 +250,7 @@ mu-wiki is a pure skill file (SKILL.md + templates) with no executable code. Tes
 | Boundary test | Run generate on existing wiki, verify prompt | UC-E3 |
 | Boundary test | Run update with stale baseline, verify warning | UC-E1 |
 | Pipeline non-blocking | Skip wiki suggestions in mu-scope and mu-arch, verify normal flow | UC-R2 |
+| Negative path test | Run mu-scope on low-risk task, verify NO wiki suggestion appears | UC-6 |
 
 ## Failure Mode Analysis (Inversion Test)
 
@@ -269,8 +271,9 @@ mu-wiki is a pure skill file (SKILL.md + templates) with no executable code. Tes
 
 | File | Change | Lines |
 |------|--------|-------|
-| `skills/mu-wiki/SKILL.md` | NEW — full skill definition | ~300 |
+| `skills/mu-wiki/SKILL.md` | NEW — full skill definition (includes inline page generation prompt) | ~300 |
 | `knowledge/templates/wiki-index.md` | NEW — _index.md template | ~30 |
+| ~~`knowledge/templates/wiki-page.md`~~ | NOT NEEDED — page format inlined in SKILL.md prompt | — |
 | `skills/mu-scope/SKILL.md` | ADD wiki suggestion after Quick Probe risk output | ~3 |
 | `skills/mu-arch/SKILL.md` | ADD `docs/wiki/` to step 3 search list; ADD update suggestion in pre-terminal | ~5 |
 | `rules/bootstrap.md` | ADD mu-wiki to On-demand list | 1 |
