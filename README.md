@@ -60,6 +60,7 @@ scope → arch → plan → code → review
 
 - **mu-biz** — Business analysis: validate premise (quick mode) or full analysis (competitive, BMC, VPC, personas, MVP scope). Invoke with `/mu-biz`.
 - **mu-prd** — Product requirements: user flows, wireframes, per-feature specs, tiering rules. Invoke with `/mu-prd`.
+- **mu-wiki** — Architecture wiki: generates and maintains project-level architecture documentation with Mermaid diagrams and source citations. Invoke with `/mu-wiki generate` or `/mu-wiki update`.
 
 These are NOT auto-routed. The user explicitly invokes them when needed.
 
@@ -99,6 +100,7 @@ devmuse/
 | Orthogonal | **mu-retro** | Periodic retrospective with git metrics and memory capture |
 | On-demand | **mu-biz** | Business analysis — premise validation (quick) or full analysis (market, BMC, personas, MVP scope) |
 | On-demand | **mu-prd** | Product requirements — user flows, wireframes, feature specs, tiering rules |
+| On-demand | **mu-wiki** | Architecture wiki — generates and maintains project-level architecture documentation |
 | Router | **mu-route** | Confidence-based router — silently invokes for clear intent, proposes for ambiguous; bypassed by `/mu-<skill>` |
 | Meta | **mu-write-skill** | Create/edit skills using TDD methodology |
 
