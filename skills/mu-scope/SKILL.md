@@ -127,6 +127,7 @@ Quick Probe Results:
 - Risk: [low/medium/high]
 
 Recommendation: [quick scope (2-3 use cases) / full enumeration]
+- Wiki: [if risk >= medium AND docs/wiki/_index.md does not exist] "项目暂无架构 wiki，建议 `/mu-wiki generate`"
 ```
 
 ## Phase 2: Depth Decision
