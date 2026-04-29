@@ -60,7 +60,7 @@ You MUST create a task for each of these items and complete them in order:
 0. **Phase 0: Stance Detection** — see §Phase 0 above; establishes entry stance before any other work. Branch routing below assumes stance is already picked and confirmed.
 1. **Read scope artifact** — read the Use Case Set, understand all use cases, conflicts, and constraints
 2. **Explore project context** — check files, docs, recent commits
-3. **Find architecture doc** — look for existing architecture/design docs in the project (README, docs/, ARCHITECTURE.md, DESIGN.md, or similar). If found, read it. If not found or unclear, ask the user.
+3. **Find architecture doc** — look for existing architecture/design docs in the project (README, docs/, ARCHITECTURE.md, DESIGN.md, docs/wiki/_index.md, or similar). If found, read it. If not found or unclear, ask the user.
 4. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
 5. **Ask clarifying questions** — one at a time, **technical direction only** (not "what to build" — that's in the scope)
 6. **Propose 2-3 approaches** — with trade-offs, your recommendation, impact on existing architecture, and **UC coverage per approach**
@@ -215,6 +215,10 @@ Wait for the user's response. If they request changes, make them and re-run the 
 **Sign-off gate (before terminal):**
 
 Before invoking mu-plan, consult `@../../knowledge/principles/sign-off-gate.md`. If stakeholder-scope indicates team-touching (per that principle's detection heuristics), run the gate protocol and collect sign-off. Otherwise proceed directly. Sign-off gate is skipped when stance was `skip`.
+
+**Wiki update check (before terminal):**
+
+If `docs/wiki/_index.md` exists AND the design introduces new components, changes module boundaries, or alters data flow, suggest: "设计涉及架构变更，建议 `/mu-wiki update` 更新架构 wiki。跳过？(yes/skip)". Non-blocking — if user skips, proceed normally.
 
 **Implementation:**
 
