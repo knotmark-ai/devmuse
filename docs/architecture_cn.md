@@ -84,6 +84,7 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 |------|------|------|
 | mu-biz | 商业分析 — 前提验证（quick）或完整分析（市场、BMC、画像、MVP 范围） | — |
 | mu-prd | 产品需求 — 用户流程、线框图、特性规格、分级规则 | — |
+| mu-wiki | 架构 Wiki — 生成和维护项目级架构文档 | — |
 
 **特性层** — 核心管线 `scope → arch → plan → code → review`：
 

@@ -104,6 +104,7 @@ Organized in four categories:
 |------|------|------|
 | mu-biz | Business analysis — premise validation (quick) or full analysis (market, BMC, VPC, personas, MVP scope) | — |
 | mu-prd | Product requirements — user flows, wireframes, feature specs, tiering rules | — |
+| mu-wiki | Architecture wiki — generates and maintains project-level architecture documentation | — |
 
 **Router:**
 
