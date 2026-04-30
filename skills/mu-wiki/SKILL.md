@@ -74,8 +74,8 @@ digraph mu_wiki {
     "Prompt: overwrite\nor update?" -> "Size gate\n(LOC check)" [label="overwrite"];
     "Prompt: overwrite\nor update?" -> "Read _index.md\n(baseline commit)" [label="update"];
 
-    "Size gate\n(LOC check)" -> "Collect signals\n(file tree, README)" [label="<200k"];
-    "Size gate\n(LOC check)" -> "Limit to top-level\nmodules only" [label=">=50k"];
+    "Size gate\n(LOC check)" -> "Collect signals\n(file tree, README)" [label="<50k LOC"];
+    "Size gate\n(LOC check)" -> "Limit to top-level\nmodules only" [label="50k-200k LOC"];
     "Limit to top-level\nmodules only" -> "Collect signals\n(file tree, README)";
     "Collect signals\n(file tree, README)" -> "Dispatch Structure\nsubagent (Explore)";
     "Dispatch Structure\nsubagent (Explore)" -> "Present structure\nto user";

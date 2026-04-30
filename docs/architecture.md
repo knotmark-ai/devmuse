@@ -132,7 +132,7 @@ Organized in four categories:
 | Category | Purpose | Referenced by |
 |---|---|---|
 | languages/ | Language-specific review criteria | mu-reviewer (review-code) |
-| templates/ | Artifact templates | mu-scope, mu-explore |
+| templates/ | Artifact templates | mu-scope, mu-explore, mu-arch, mu-wiki |
 | principles/ | Thinking rubrics for decision points | mu-arch, mu-scope, mu-biz, mu-prd (stance-detection.md consumed at Phase 0 of each creative skill) |
 | reviews/ | Review checklists for specific concerns | mu-reviewer (review-security, review-design) |
 
@@ -145,7 +145,9 @@ knowledge/
 │   └── java.md         # Null handling, concurrency, resource management
 ├── templates/
 │   ├── scope.md        # Use Case Set template for mu-scope
-│   └── explore.md      # Mental-model artifact template for mu-explore
+│   ├── explore.md      # Mental-model artifact template for mu-explore
+│   ├── architecture.md # Architecture spec template for mu-arch
+│   └── wiki-index.md   # Wiki index template for mu-wiki
 ├── principles/         # Thinking rubrics loaded at decision points
 │   ├── architecture-assessment.md # C4 model guide + diagram type selection
 │   ├── chestertons-fence.md # Understand before changing/removing code

@@ -95,7 +95,7 @@ Create tasks for each and complete in order:
 | "refactor", "clean up", "rename", "restructure" | reshape | **Design-tech** (or Explore if unfamiliar) |
 | "fix", "broken", "error", "bug", "test failing", "crash" | fix | **Reproduce** |
 | "implement", "write this", "build this", "code it up" | implement | **Implement** (if design exists; else Design-tech) |
-**On-demand only (not auto-routed):** "validate idea", "business model", "product requirements", "user flows", "competitive analysis" → respond with a pointer to `/mu-biz` or `/mu-prd`. "retro", "look back", "how did X go" → respond with a pointer to `/mu-retro`.
+**On-demand only (not auto-routed):** "validate idea", "business model", "product requirements", "user flows", "competitive analysis" → respond with a pointer to `/mu-biz` or `/mu-prd`. "retro", "look back", "how did X go" → respond with a pointer to `/mu-retro`. "wiki", "architecture docs", "generate documentation", "project documentation" → respond with a pointer to `/mu-wiki`.
 
 When multiple verbs fire, Axis-Intent prefers the **primary action** — fix > reshape > create-feature > implement > understand (most-specific wins).
 
@@ -114,7 +114,7 @@ Rows evaluated top-to-bottom; first match wins.
 | R6.5 | none | Axis-Plugin matched | — | — | **Delegate to plugin** (invoke matched skill via Skill tool) | — |
 | R7 | none (no verb match) | — | — | — | **Explore** (safe default) | — |
 
-**On-demand skills (mu-biz, mu-prd, mu-retro) are not auto-routed.** mu-route responds with a pointer to the appropriate slash command instead of invoking the skill.
+**On-demand skills (mu-biz, mu-prd, mu-retro, mu-wiki) are not auto-routed.** mu-route responds with a pointer to the appropriate slash command instead of invoking the skill.
 
 **Hint semantics**: when the target is mu-arch, mu-route MAY pass a `stance=auto` hint indicating Phase 0 should run its own detection without further pre-confirmation.
 
