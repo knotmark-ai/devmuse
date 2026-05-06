@@ -76,18 +76,11 @@ Skills and agents reference knowledge via `@` relative paths within the plugin:
 
 **Principle:** Rules consume tokens via hook injection. Only put content that must be unconditionally always-on. Anything loadable on-demand via skills should stay in skills.
 
-### skills/ (10)
+### skills/ (12)
 
-Organized in three tiers:
+Organized in four categories:
 
-**Product-level tier** (runs once per product):
-
-| Name | Role | Dispatches Agent |
-|------|------|------|
-| mu-biz | Business analysis — premise validation (quick) or full analysis (market, BMC, VPC, personas, MVP scope) | — |
-| mu-prd | Product requirements — user flows, wireframes, feature specs, tiering rules | — |
-
-**Feature-level tier** — core pipeline `scope → arch → plan → code → review`:
+**Pipeline** — core dev workflow `scope → arch → plan → code → review` (auto-routed):
 
 | Name | Role | Dispatches Agent |
 |------|------|------|
@@ -97,12 +90,27 @@ Organized in three tiers:
 | mu-code | Plan → implementation (subagent or inline, TDD, worktree) | mu-coder, mu-reviewer (review-code + review-compliance) |
 | mu-review | Review + verify + integrate | mu-reviewer (review-code + review-coverage + review-security) |
 
-**Orthogonal tier** (pipeline-external):
+**Orthogonal** (auto-routed, pipeline-external):
 
 | Name | Role | Dispatches Agent |
 |------|------|------|
+| mu-explore | Systematic code-comprehension — produces living mental-model artifact for unfamiliar code | — |
 | mu-debug | Systematic root cause analysis | — |
 | mu-retro | Periodic retrospective with git metrics and memory capture | — |
+
+**On-demand** (direct `/slash` invocation only, NOT auto-routed):
+
+| Name | Role | Dispatches Agent |
+|------|------|------|
+| mu-biz | Business analysis — premise validation (quick) or full analysis (market, BMC, VPC, personas, MVP scope) | — |
+| mu-prd | Product requirements — user flows, wireframes, feature specs, tiering rules | — |
+| mu-wiki | Architecture wiki — generates and maintains project-level architecture documentation | — |
+
+**Router:**
+
+| Name | Role | Dispatches Agent |
+|------|------|------|
+| mu-route | Confidence-based router — silently invokes for clear intent, proposes for ambiguous; bypassed by /mu-<skill> slash hints | — |
 
 **Meta:**
 
@@ -124,8 +132,8 @@ Organized in three tiers:
 | Category | Purpose | Referenced by |
 |---|---|---|
 | languages/ | Language-specific review criteria | mu-reviewer (review-code) |
-| templates/ | Artifact templates | mu-scope |
-| principles/ | Thinking rubrics for decision points | mu-arch, mu-scope, mu-biz |
+| templates/ | Artifact templates | mu-scope, mu-explore, mu-arch, mu-wiki |
+| principles/ | Thinking rubrics for decision points | mu-arch, mu-scope, mu-biz, mu-prd (stance-detection.md consumed at Phase 0 of each creative skill) |
 | reviews/ | Review checklists for specific concerns | mu-reviewer (review-security, review-design) |
 
 ```
@@ -136,7 +144,10 @@ knowledge/
 │   ├── go.md           # Error handling, concurrency, interface design
 │   └── java.md         # Null handling, concurrency, resource management
 ├── templates/
-│   └── scope.md        # Use Case Set template for mu-scope
+│   ├── scope.md        # Use Case Set template for mu-scope
+│   ├── explore.md      # Mental-model artifact template for mu-explore
+│   ├── architecture.md # Architecture spec template for mu-arch
+│   └── wiki-index.md   # Wiki index template for mu-wiki
 ├── principles/         # Thinking rubrics loaded at decision points
 │   ├── architecture-assessment.md # C4 model guide + diagram type selection
 │   ├── chestertons-fence.md # Understand before changing/removing code
@@ -144,7 +155,9 @@ knowledge/
 │   ├── inversion.md    # Inversion reflex for approach comparison
 │   ├── premise-check.md # Premise validation forcing questions
 │   ├── skill-cso.md    # Claude Search Optimization for skill descriptions
-│   └── skill-testing.md # Per-type test strategies + pressure scenarios
+│   ├── skill-testing.md # Per-type test strategies + pressure scenarios
+│   ├── stance-detection.md # Stance detection for mu-biz/mu-prd/mu-arch Phase 0
+│   └── sign-off-gate.md # Sign-off protocol when stakeholder-scope = team-touching
 └── reviews/            # Review checklists for specific concerns
     ├── security-checklist.md  # 5-phase security audit
     └── design-audit-rubric.md # Architecture audit rubric

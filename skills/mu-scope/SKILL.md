@@ -93,9 +93,27 @@ If any found, skip the premise check. If none found, run a lightweight premise c
 | Test coverage | Find existing tests for affected code | Safety net status |
 | Historical signals | git log for recent changes and bug fixes | Stability of affected area |
 | Interface risk | Check if change affects public API/contracts | Breaking change potential |
+| Guard semantics | If modifying a condition/filter/guard, enumerate ALL scenarios it currently blocks | Regression gap from condition replacement |
 | Architecture context | Read architecture doc (README, ARCHITECTURE.md, docs/); map change onto components | Which layers/boundaries are affected |
 
 **Architecture context** (see @../../knowledge/principles/architecture-assessment.md Phase 1): Read the project's architecture doc if one exists. Identify which components/layers the proposed work touches, whether it crosses architectural boundaries, and whether new components are needed. This is a coarse 2-minute assessment, not a detailed diagram — that comes in mu-arch.
+
+**Guard Semantic Analysis** (when the change modifies/replaces an existing condition, filter, or guard):
+
+A single condition often carries **multiple implicit responsibilities**. Replacing it to fix one scenario can silently drop protection for others. Before proposing a replacement:
+
+1. **Enumerate the block set** — list every scenario the current condition prevents (not just the one motivating the change)
+2. **Compute the regression gap** — diff what the old condition blocks vs. what the new condition blocks; the difference is your risk surface
+3. **Require explicit disposition** — for each item in the gap, the user must confirm "intentionally allowed" or "must still be blocked"
+
+```
+Guard Analysis: <condition being replaced>
+Old condition blocks: [scenario A, scenario B, scenario C]
+New condition blocks: [scenario A]
+Regression gap:       [scenario B, scenario C]
+  → scenario B: [intentionally allowed / must still block]
+  → scenario C: [intentionally allowed / must still block]
+```
 
 **Output to user:**
 
@@ -104,10 +122,12 @@ Quick Probe Results:
 - Files: [list]
 - Fan-out: [N callers / M dependents]
 - Test coverage: [summary]
+- Guard analysis: [if applicable — gap items requiring disposition]
 - Architecture impact: [components affected, boundaries crossed, new components needed]
 - Risk: [low/medium/high]
 
 Recommendation: [quick scope (2-3 use cases) / full enumeration]
+- Wiki: [if risk >= medium AND docs/wiki/_index.md does not exist] "项目暂无架构 wiki，建议 `/mu-wiki generate`"
 ```
 
 ## Phase 2: Depth Decision
@@ -127,7 +147,13 @@ Work through scenarios with the user, one category at a time.
 - Focus on understanding: purpose, constraints, success criteria
 - If the request covers multiple independent subsystems, flag immediately — decompose into sub-projects before detailing
 
-**Order:** Happy paths first (establish the core), then edge cases (expand boundaries), then error cases (handle failures).
+**Order:** Happy paths first (establish the core), then edge cases (expand boundaries), then error cases (handle failures), then **reverse cases** (what must NOT happen).
+
+**Reverse use cases:** For every new behavior introduced, ask: "What existing behavior must remain unchanged?" Frame these as negative assertions:
+```
+- UC-R1: When <scenario that worked before>, Then <must still behave the same way>
+```
+This catches regressions that positive use cases miss — especially when replacing conditions/guards.
 
 **Present each category, get user confirmation before moving to the next.**
 
@@ -154,6 +180,7 @@ After all use cases are enumerated, cross-check every pair for contradictions.
 - Two use cases that trigger under overlapping conditions with different outcomes
 - Use cases that assume contradictory preconditions
 - Undefined behavior in gaps between use cases
+- **Regression gaps** — scenarios blocked by old code but unblocked by the proposed change (cross-reference Guard Analysis if present)
 
 **Format:**
 ```
@@ -175,6 +202,7 @@ Wait for confirmation.
 
 ## Key Principles
 
+- **Every condition is a wall — look at both sides before removing it** — When replacing a guard/filter, enumerate what it blocks, not just what it enables
 - **Exhaustive over efficient** — Better to enumerate one extra use case than miss a real scenario
 - **Conflicts are valuable** — Finding a conflict now saves a rewrite later
 - **YAGNI applies to scope too** — Don't add use cases for scenarios the user explicitly puts out of scope
