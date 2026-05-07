@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "summary": {
+      "type": "string",
+      "description": "One-paragraph overview of the review findings"
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "important", "minor"]
+          },
+          "file": {
+            "type": "string",
+            "description": "Affected file path"
+          },
+          "description": {
+            "type": "string",
+            "description": "What the issue is"
+          },
+          "suggestion": {
+            "type": "string",
+            "description": "How to fix it"
+          }
+        },
+        "required": ["severity", "description"]
+      }
+    },
+    "assessment": {
+      "type": "string",
+      "enum": ["block", "needs-work", "ready-to-proceed"],
+      "description": "Overall verdict"
+    },
+    "confidence": {
+      "type": "string",
+      "enum": ["high", "medium", "low"],
+      "description": "Self-assessed review confidence"
+    }
+  },
+  "required": ["summary", "issues", "assessment", "confidence"]
+}

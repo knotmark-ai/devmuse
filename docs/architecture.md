@@ -135,6 +135,7 @@ Organized in four categories:
 | templates/ | Artifact templates | mu-scope, mu-explore, mu-arch, mu-wiki |
 | principles/ | Thinking rubrics for decision points | mu-arch, mu-scope, mu-biz, mu-prd (stance-detection.md consumed at Phase 0 of each creative skill) |
 | reviews/ | Review checklists for specific concerns | mu-reviewer (review-security, review-design) |
+| schemas/ | Structured output schemas for external tool invocation | mu-review (codex cross-review) |
 
 ```
 knowledge/
@@ -158,6 +159,8 @@ knowledge/
 │   ├── skill-testing.md # Per-type test strategies + pressure scenarios
 │   ├── stance-detection.md # Stance detection for mu-biz/mu-prd/mu-arch Phase 0
 │   └── sign-off-gate.md # Sign-off protocol when stakeholder-scope = team-touching
+├── schemas/            # Structured output schemas for external tools
+│   └── codex-review-output.json  # Codex CLI cross-review output schema
 └── reviews/            # Review checklists for specific concerns
     ├── security-checklist.md  # 5-phase security audit
     └── design-audit-rubric.md # Architecture audit rubric
