@@ -3,6 +3,8 @@
 > **Date:** 2026-05-07
 > **Scope reference:** docs/scope/2026-05-07-codex-cross-review.md
 > **Stance:** create
+>
+> **Implementation deviation:** This spec originally designed around `codex exec` with piped diffs. During real-world testing, `codex exec` proved unreliable with large inputs (hangs, connection drops). The implementation switched to `codex review --base` which reads the repo directly via sandbox. See `skills/mu-review/SKILL.md` for the current implementation.
 
 ## Requirements Reference
 - Scope: docs/scope/2026-05-07-codex-cross-review.md

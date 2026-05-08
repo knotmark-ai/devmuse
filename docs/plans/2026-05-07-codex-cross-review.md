@@ -1,6 +1,8 @@
 # Codex Cross-Review Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use devmuse:mu-code to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+>
+> **Implementation deviation:** Invocation changed from `codex exec` (piped diff) to `codex review --base` (native repo access). See `skills/mu-review/SKILL.md` for current approach.
 
 **Goal:** Add an optional Codex CLI cross-review step to mu-review, providing a second opinion from a different model family.
 
