@@ -183,28 +183,27 @@ Evaluate these high-risk signals. If ANY one fires, suggest Codex cross-review t
 
 ### Codex Invocation
 
-Construct and run the codex exec command:
+Use `codex review` native command — it reads the repo directly via sandbox,
+handles large diffs internally, and produces structured output. Never pipe
+`git diff` via stdin; large diffs exceed token limits and cause hangs.
+
+**Preferred: `codex review --base`** (reviews changes against a base ref):
 
 ```bash
-SCHEMA_PATH="$(git rev-parse --show-toplevel)/knowledge/schemas/codex-review-output.json"
-OUTPUT_PATH="/tmp/codex-review-${HEAD_SHA}.json"
+codex review --base "${BASE_SHA}" 2>&1
+```
 
-git diff "${BASE_SHA}".."${HEAD_SHA}" | codex exec \
-  -s read-only \
-  --output-schema "$SCHEMA_PATH" \
-  -o "$OUTPUT_PATH" \
-  - <<'PROMPT'
-You are a code reviewer. Review the diff provided via stdin.
+**Alternative: `codex review --commit`** (reviews a single commit):
 
-Context:
-- What was implemented: ${WHAT_WAS_IMPLEMENTED}
-- Requirements: ${PLAN_OR_REQUIREMENTS}
+```bash
+codex review --commit "${HEAD_SHA}" 2>&1
+```
 
-Focus on: correctness, security, behavioral regressions, missing tests.
-Skip: style-only feedback, formatting.
+**With custom instructions** (pass via stdin with `-`):
 
-Respond according to the output schema.
-PROMPT
+```bash
+echo "Focus on: correctness, security, behavioral regressions. Context: ${WHAT_WAS_IMPLEMENTED}" \
+  | codex review --base "${BASE_SHA}" - 2>&1
 ```
 
 **Placeholder values** (same as mu-reviewer dispatch):
@@ -212,12 +211,18 @@ PROMPT
 - `${WHAT_WAS_IMPLEMENTED}` — description of what was built
 - `${PLAN_OR_REQUIREMENTS}` — what it should do
 
+**Why not `codex exec` with piped diff:**
+- Large diffs (300+ lines) exceed stdin token limits and cause hangs
+- `codex review` has native repo access via read-only sandbox — it reads files directly
+- `codex review` handles file batching and context windowing internally
+- `--output-schema` + `-o` flags with large inputs are unreliable
+
 ### Error Handling
 
-After `codex exec` completes, evaluate the result:
+After `codex review` completes, evaluate the result:
 
 ```
-IF exit code = 0 AND output file exists AND JSON is valid:
+IF exit code = 0 AND output contains review findings:
   → Parse output, proceed to Result Presentation
 
 IF exit code ≠ 0 AND stderr contains "auth" / "unauthorized" / "API key":
@@ -226,11 +231,6 @@ IF exit code ≠ 0 AND stderr contains "auth" / "unauthorized" / "API key":
 
 IF exit code ≠ 0 (other error) OR timeout:
   → Report: "Codex review failed: <stderr snippet>"
-  → Fall back to Claude-only review (proceed to Step 2)
-
-IF output file missing OR JSON parse fails OR required fields missing:
-  → Best-effort: extract any parseable fields
-  → Surface raw output to user
   → Fall back to Claude-only review (proceed to Step 2)
 ```
 
