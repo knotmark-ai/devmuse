@@ -46,9 +46,9 @@ digraph when_flowchart {
 
 ## Visualizing for Your Human Partner
 
-Use `render-graphs.js` in the mu-write-skill directory to render a skill's flowcharts to SVG:
+Use `render-graphs.cjs` in the mu-write-skill directory to render a skill's flowcharts to SVG:
 
 ```bash
-./render-graphs.js ../some-skill           # Each diagram separately
-./render-graphs.js ../some-skill --combine # All diagrams in one SVG
+./render-graphs.cjs ../some-skill           # Each diagram separately
+./render-graphs.cjs ../some-skill --combine # All diagrams in one SVG
 ```

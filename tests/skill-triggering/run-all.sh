@@ -8,12 +8,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROMPTS_DIR="$SCRIPT_DIR/prompts"
 
 SKILLS=(
-    "systematic-debugging"
-    "test-driven-development"
-    "writing-plans"
-    "dispatching-parallel-agents"
-    "executing-plans"
-    "requesting-code-review"
+    "mu-debug"
+    "mu-code"
+    "mu-plan"
+    "mu-review"
+)
+
+# Additional prompt variants that should also trigger mu-code
+EXTRA_PROMPTS=(
+    "mu-code:mu-code-execute"
+    "mu-code:mu-code-subagent"
 )
 
 echo "=== Running Skill Triggering Tests ==="
@@ -39,6 +43,32 @@ for skill in "${SKILLS[@]}"; do
     else
         FAILED=$((FAILED + 1))
         RESULTS+=("❌ $skill")
+    fi
+
+    echo ""
+    echo "---"
+    echo ""
+done
+
+# Run extra prompt variants (different prompts that should trigger the same skill)
+for entry in "${EXTRA_PROMPTS[@]}"; do
+    skill="${entry%%:*}"
+    prompt_name="${entry##*:}"
+    prompt_file="$PROMPTS_DIR/${prompt_name}.txt"
+
+    if [ ! -f "$prompt_file" ]; then
+        echo "⚠️  SKIP: No prompt file for $prompt_name"
+        continue
+    fi
+
+    echo "Testing: $prompt_name (expects $skill)"
+
+    if "$SCRIPT_DIR/run-test.sh" "$skill" "$prompt_file" 3 2>&1 | tee /tmp/skill-test-$prompt_name.log; then
+        PASSED=$((PASSED + 1))
+        RESULTS+=("✅ $prompt_name → $skill")
+    else
+        FAILED=$((FAILED + 1))
+        RESULTS+=("❌ $prompt_name → $skill")
     fi
 
     echo ""
