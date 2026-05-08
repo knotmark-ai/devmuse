@@ -20,12 +20,37 @@ if [ -z "$COMMAND" ]; then
     exit 0
 fi
 
-# Safe patterns: allow without asking
-case "$COMMAND" in
-    "rm -rf node_modules"*|"rm -rf dist"*|"rm -rf .next"*|"rm -rf build"*|"rm -rf __pycache__"*)
-        exit 0
-        ;;
-esac
+# Safe rm targets: only allow if ALL targets in the command are safe and
+# no command chaining (&&, ||, ;) is present.
+SAFE_RM_TARGETS="node_modules dist .next build __pycache__"
+
+if echo "$COMMAND" | grep -qE '^rm -rf '; then
+    # Reject any command chaining that could smuggle in dangerous commands
+    if echo "$COMMAND" | grep -qE '&&|\|\||;|`|\$\('; then
+        :  # fall through to dangerous-pattern check below
+    else
+        # Extract all targets after "rm -rf"
+        RM_TARGETS=$(echo "$COMMAND" | sed 's/^rm -rf //')
+        ALL_SAFE=true
+        for target in $RM_TARGETS; do
+            TARGET_BASE=$(basename "$target")
+            MATCHED=false
+            for safe in $SAFE_RM_TARGETS; do
+                if [ "$TARGET_BASE" = "$safe" ]; then
+                    MATCHED=true
+                    break
+                fi
+            done
+            if [ "$MATCHED" = false ]; then
+                ALL_SAFE=false
+                break
+            fi
+        done
+        if [ "$ALL_SAFE" = true ]; then
+            exit 0
+        fi
+    fi
+fi
 
 # Dangerous patterns: ask before proceeding
 DANGEROUS=""

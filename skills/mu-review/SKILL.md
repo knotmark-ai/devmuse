@@ -17,12 +17,14 @@ digraph review_process {
     node [shape=box];
 
     dispatch [label="Step 1:\nDispatch Review"];
+    codex [label="Step 1.5:\nCodex Cross-Review\n(conditional)"];
     feedback [label="Step 2:\nHandle Feedback"];
     coverage [label="Step 3:\nCoverage Check\n+ Handle Gaps"];
     verify [label="Step 4:\nVerification"];
     finish [label="Step 5:\nFinish/Integrate"];
 
-    dispatch -> feedback;
+    dispatch -> codex;
+    codex -> feedback;
     feedback -> coverage;
     coverage -> verify;
     verify -> finish;
@@ -142,6 +144,152 @@ You: [Fix progress indicators]
 **Ad-Hoc Development:**
 - Review before merge
 - Review when stuck
+
+## Step 1.5: Codex Cross-Review (Conditional)
+
+Optional cross-review using OpenAI Codex CLI for a second opinion from a different model family. This step is entirely invisible when Codex is not installed.
+
+### Codex Availability Detection
+
+**Run once per session, cache result:**
+
+```bash
+command -v codex >/dev/null 2>&1
+```
+
+- **Found:** Codex capability available — proceed to trigger evaluation
+- **Not found:** Skip this entire step silently. Do not mention Codex, do not suggest installation, do not reference this step in any output. The capability does not exist.
+
+### Trigger Paths
+
+**Path A — User Explicit Request:**
+If the user explicitly asks for Codex review (e.g., "let codex review this", "get codex's opinion"), proceed directly to Codex Invocation.
+
+**Path B — System Suggestion (after Step 1 completes):**
+Evaluate these high-risk signals. If ANY one fires, suggest Codex cross-review to the user:
+
+| Signal | Detection |
+|--------|-----------|
+| Security-sensitive | `review-security` mode was dispatched in Step 1 |
+| Large diff | `git diff --stat ${BASE_SHA}..${HEAD_SHA}` total lines > 300 |
+| Cross-module | Extract top-level module dirs from diff file paths, dedup, count ≥ 2 |
+| Low confidence | Claude reviewer output contains "Low confidence" or ≥ 3 PENDING items |
+
+**Suggestion wording:**
+> "This change has [signal description]. A Codex cross-review could provide a second opinion. Run it? (y/n)"
+
+- **User confirms:** proceed to Codex Invocation
+- **User declines (UC-9):** continue to Step 2. Do not suggest Codex again in this session.
+
+### Codex Invocation
+
+Use `codex review` native command — it reads the repo directly via sandbox,
+handles large diffs internally, and produces structured output. Never pipe
+`git diff` via stdin; large diffs exceed token limits and cause hangs.
+
+**Preferred: `codex review --base`** (reviews changes against a base ref):
+
+```bash
+codex review --base "${BASE_SHA}" 2>&1
+```
+
+**Alternative: `codex review --commit`** (reviews a single commit):
+
+```bash
+codex review --commit "${HEAD_SHA}" 2>&1
+```
+
+**With custom instructions** (pass via stdin with `-`):
+
+```bash
+echo "Focus on: correctness, security, behavioral regressions. Context: ${WHAT_WAS_IMPLEMENTED}" \
+  | codex review --base "${BASE_SHA}" - 2>&1
+```
+
+**Placeholder values** (same as mu-reviewer dispatch):
+- `${BASE_SHA}` / `${HEAD_SHA}` — git range for the changes
+- `${WHAT_WAS_IMPLEMENTED}` — description of what was built
+- `${PLAN_OR_REQUIREMENTS}` — what it should do
+
+**Why not `codex exec` with piped diff:**
+- Large diffs (300+ lines) exceed stdin token limits and cause hangs
+- `codex review` has native repo access via read-only sandbox — it reads files directly
+- `codex review` handles file batching and context windowing internally
+- `--output-schema` + `-o` flags with large inputs are unreliable
+
+### Error Handling
+
+After `codex review` completes, evaluate the result:
+
+```
+IF exit code = 0 AND output contains review findings:
+  → Parse output, proceed to Result Presentation
+
+IF exit code ≠ 0 AND stderr contains "auth" / "unauthorized" / "API key":
+  → Report: "Codex auth failed. Run 'codex login' or set OPENAI_API_KEY env var."
+  → Fall back to Claude-only review (proceed to Step 2)
+
+IF exit code ≠ 0 (other error) OR timeout:
+  → Report: "Codex review failed: <stderr snippet>"
+  → Fall back to Claude-only review (proceed to Step 2)
+```
+
+**Fallback principle:** All failures fall back silently to Claude-only review. Codex failure never blocks the review pipeline (UC-R2).
+
+### Result Presentation
+
+**Codex-primary mode** (Path A, user explicitly requested):
+
+Present the codex report directly:
+
+```
+## Codex Cross-Review Results
+
+**Assessment:** <assessment> | **Confidence:** <confidence>
+
+### Issues (<N> critical, <N> important, <N> minor)
+
+**Critical:**
+1. [<file>] <description> — <suggestion>
+
+**Important:**
+1. [<file>] <description> — <suggestion>
+
+**Minor:**
+1. [<file>] <description> — <suggestion>
+```
+
+Enter Step 2 using the "External Reviewers" handling path.
+
+**Dual report mode** (both Claude and Codex reviews completed):
+
+Present side-by-side comparison:
+
+```
+## Review Results: Claude vs Codex
+
+| Dimension | Claude (mu-reviewer) | Codex |
+|-----------|---------------------|-------|
+| Assessment | <assessment> | <assessment> |
+| Critical issues | <count> | <count> |
+| Important issues | <count> | <count> |
+
+### Claude-only findings:
+- [<severity>] <description>
+
+### Codex-only findings:
+- [<severity>] <description>
+
+### Shared findings:
+- [<severity>] <description>
+```
+
+**Dedup logic:** Match issues by exact file path + description text. Matching items go to "Shared", unique items stay with their source.
+
+**Contradictory assessments (UC-7):** If assessments differ, add:
+> "⚠️ Contradictory assessments. Claude says '<X>', Codex says '<Y>'. Please decide how to proceed."
+
+Enter Step 2 with the combined findings. User decides which findings to act on.
 
 ## Step 2: Handle Feedback
 

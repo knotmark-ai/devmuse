@@ -20,7 +20,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="${DEVMUSE_ROOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 START_SCRIPT="$REPO_ROOT/skills/mu-arch/scripts/start-server.sh"
 STOP_SCRIPT="$REPO_ROOT/skills/mu-arch/scripts/stop-server.sh"
-SERVER_JS="$REPO_ROOT/skills/mu-arch/scripts/server.js"
+SERVER_JS="$REPO_ROOT/skills/mu-arch/scripts/server.cjs"
 
 TEST_DIR="${TMPDIR:-/tmp}/brainstorm-win-test-$$"
 
