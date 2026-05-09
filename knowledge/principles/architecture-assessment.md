@@ -1,6 +1,6 @@
 # Architecture Assessment
 
-**When to use:** Referenced by mu-scope (Quick Probe) and mu-arch (approach proposal) for selecting the right diagram type and level of detail. Also referenced by mu-reviewer review-design mode.
+**When to use:** Referenced by mu-scope (Quick Probe), mu-arch (C4 positioning + design diagrams), mu-wiki (project-level architecture documentation), and mu-reviewer (review-design mode).
 
 ## Diagram Type by Project Type
 
@@ -84,6 +84,42 @@ graph LR
 ```
 
 **When to include:** When the change introduces or modifies a data processing path.
+
+### Sequence Diagram
+"How do participants interact in a specific scenario?"
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant API as API Server
+    participant Auth as Auth Provider
+    participant DB as Database
+
+    Browser->>API: POST /login (credentials + X-Timezone)
+    API->>Auth: Validate credentials
+    Auth-->>API: Token
+    API->>DB: Update user timezone
+    API-->>Browser: 200 OK + session
+```
+
+**When to include:** When the design involves multi-party interactions, external system callbacks, or request chains where data availability at each hop matters. Draw one diagram **per scenario** — not a single combined diagram. Per-scenario diagrams expose data availability gaps (e.g., a browser redirect loses custom headers).
+
+### State Machine Diagram
+"What states can this entity be in, and how does it transition?"
+
+```mermaid
+stateDiagram-v2
+    [*] --> Draft
+    Draft --> Pending: submit()
+    Pending --> Approved: approve()
+    Pending --> Rejected: reject()
+    Rejected --> Draft: revise()
+    Approved --> Published: publish()
+    Published --> Archived: archive()
+    Archived --> [*]
+```
+
+**When to include:** When the design involves entities with lifecycle states (orders, subscriptions, approval workflows, account status). The diagram forces you to enumerate all valid transitions and spot missing ones (e.g., can a Published item go back to Draft?).
 
 ## Change Overlay Notation
 

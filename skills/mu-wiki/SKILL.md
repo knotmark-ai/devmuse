@@ -386,3 +386,4 @@ For reference, the complete schema returned by the Structure subagent:
 - **Produces:** `docs/wiki/` directory containing `_index.md` + `<page-id>.md` files.
 - **Terminal state:** commit. mu-wiki is terminal — it does not invoke any downstream skill.
 - **Template:** `@../../knowledge/templates/wiki-index.md`
+- **Shared knowledge:** `@../../knowledge/principles/architecture-assessment.md` (C4 model reference, diagram types, Mermaid examples)
