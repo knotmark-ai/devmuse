@@ -75,7 +75,7 @@ Create tasks for each and complete in order:
 2. **Gather cheap signals** (all in <5s):
    - Axis-Intent: parse user message verbs against lexicon (table below)
    - Axis-Familiarity: `git log --author="$USER" --since="30 days ago" -- <area>` if target area inferable
-   - Axis-Missing-artifact: file-exists on `docs/biz/`, `docs/prd/`, `docs/specs/`
+   - Axis-Missing-artifact: file-exists on `docs/biz/`, `docs/prd/`, `docs/specs/`. **Inline conversation content (payload examples, pseudocode, verbal descriptions) never counts as "specs exist"** — only on-disk artifact files do.
    - Axis-Stakeholder: `test -f .github/CODEOWNERS || test -f CODEOWNERS` + git log multi-author check (feeds sign-off gate later; informational to user here)
    - **Axis-Plugin**: scan the available skills list (from system-reminder) for **non-DevMuse skills** (i.e. skills whose name does NOT start with `devmuse:`). Check if the user's message plausibly matches any such skill's description or triggers. Record matched skill name(s), if any.
 3. **Apply routing decision table** (below) top-to-bottom, first match wins → one opening move
@@ -110,6 +110,7 @@ Rows evaluated top-to-bottom; first match wins.
 | R3 | none | fix | — | — | **Reproduce** (via `mu-scope` 1 UC repro) | — |
 | R4 | none | reshape | — | unfamiliar | **Explore** (pre-change variant) → then Design-tech | — |
 | R5 | none | reshape / create-feature | no specs | familiar | **Design-tech** | stance=auto |
+| R5.5 | none | implement | no specs | — | **Design-tech** | stance=auto |
 | R6 | none | implement | specs exist | — | **Implement** | — |
 | R6.5 | none | Axis-Plugin matched | — | — | **Delegate to plugin** (invoke matched skill via Skill tool) | — |
 | R7 | none (no verb match) | — | — | — | **Explore** (safe default) | — |
