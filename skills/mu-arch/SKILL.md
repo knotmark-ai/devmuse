@@ -36,13 +36,13 @@ Before engaging the design process, detect the current state of any existing arc
    - **High confidence** → proceed silently, no confirmation dialog
    - **Ambiguous** → present recommendation and ask: "Detected: stance=`<stance>`, confidence=`ambiguous`. Reason: `<one-line>`. Override? (`create` / `update` / `extract` / `skip`)"
    - Slash-command hints (`/mu-arch <stance>`) are treated as **pre-confirmed** — no dialog, proceed directly.
-5. Record approved stance. Route to matching branch below.
+4. Record approved stance. Route to matching branch below.
 
 **Branch routing**:
 
 | Stance | Action |
 |--------|--------|
-| `create` | Run the full existing Process (checklist steps 1-11) unchanged. |
+| `create` | Run the full Process (checklist steps 1-13). |
 | `update` | Load existing design artifact → apply sub-type logic (`expand` fills stub sections; `gap-fill` appends a new section titled "Gap-fill: `<task>`"; `sync` diffs against current code and proposes paragraph updates) → merge via the existing section-approval loop. |
 | `extract` | If target code region is unfamiliar, optionally delegate to `mu-explore` first (pre-change variant) for a mental model. Then read source dirs section-by-section and populate the arch artifact from current code, with each section approved by the user. Commit prefix: `extract:`. |
 | `skip` | Append a pass-through entry to the existing artifact's History section (`| <date> | <sha> | skip | — | passthrough for <task> |`); commit only if header/History needed initialization; invoke `mu-plan` per existing Integration. |
@@ -63,12 +63,17 @@ You MUST create a task for each of these items and complete them in order:
 3. **Find architecture doc** — look for existing architecture/design docs in the project (README, docs/, ARCHITECTURE.md, DESIGN.md, docs/wiki/_index.md, or similar). If found, read it. If not found or unclear, ask the user.
 4. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
 5. **Ask clarifying questions** — one at a time, **technical direction only** (not "what to build" — that's in the scope)
-6. **Propose 2-3 approaches** — with trade-offs, your recommendation, impact on existing architecture, and **UC coverage per approach**
-7. **Present design** — in sections scaled to their complexity, get user approval after each section
-8. **Write design doc** — save to the project's docs directory (default: `docs/specs/YYYY-MM-DD-<topic>-design.md`), **include Requirements Reference field**, and commit
-9. **Spec review loop** — dispatch mu-reviewer subagent (review-design mode) with precisely crafted review context; fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
-10. **User reviews written spec** — ask user to review the spec file before proceeding
-11. **Transition to implementation** — invoke mu-plan skill to create implementation plan
+6. **Propose 2-3 approaches** — with trade-offs, your recommendation, impact on existing architecture, and **UC coverage per approach**. Apply inversion test per approach. **Record ADR** for the selected approach (see §Architecture Decision Records).
+7. **C4 positioning** — using the approved approach, identify which C4 levels are involved per @../../knowledge/principles/architecture-assessment.md. Produce an architecture diagram showing current state + proposed changes (➕/✏️/➖ overlay). This establishes the structural map before detailed design.
+8. **Functional design** — based on C4 components identified in step 7, design the details:
+   - **Within components:** data model (schema changes), state machine (if entity has lifecycle — see §Conditional Design Tools)
+   - **Between components:** interface contracts (API endpoints, message formats), sequence diagrams per scenario (if multi-party interaction — see §Conditional Design Tools)
+   - Present in sections scaled to complexity, get user approval after each section. **Record ADRs** for any decisions with meaningful trade-offs.
+9. **NFR scan** — scan @../../knowledge/principles/nfr-checklist.md trigger conditions against the current feature. Elaborate only on categories where triggers fire. Skip categories with no triggers — no need to list them as "N/A".
+10. **Write design doc** — save to the project's docs directory (default: `docs/specs/YYYY-MM-DD-<topic>-design.md`), **include Requirements Reference field**, and commit
+11. **Spec review loop** — dispatch mu-reviewer subagent (review-design mode) with precisely crafted review context; fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
+12. **User reviews written spec** — ask user to review the spec file before proceeding
+13. **Transition to implementation** — invoke mu-plan skill to create implementation plan
 
 ## Process Flow
 
@@ -83,8 +88,10 @@ digraph mu_design {
     "Visual questions ahead?" [shape=diamond];
     "Offer Visual Companion\n(own message, no other content)" [shape=box];
     "Ask clarifying questions" [shape=box];
-    "Propose 2-3 approaches\n(assess architecture impact)" [shape=box];
-    "Present design sections" [shape=box];
+    "Propose 2-3 approaches\n+ inversion test + ADR" [shape=box];
+    "C4 positioning\n(Container/Component map)" [shape=box];
+    "Functional design\n(API, data model,\nsequence diagrams,\nstate machines)" [shape=box];
+    "NFR scan\n(trigger-based)" [shape=box];
     "User approves design?" [shape=diamond];
     "Write design doc\n(to target project docs/)" [shape=box];
     "Spec review loop\n(dispatch mu-reviewer review-design)" [shape=box];
@@ -102,10 +109,12 @@ digraph mu_design {
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
     "Visual questions ahead?" -> "Ask clarifying questions" [label="no"];
     "Offer Visual Companion\n(own message, no other content)" -> "Ask clarifying questions";
-    "Ask clarifying questions" -> "Propose 2-3 approaches\n(assess architecture impact)";
-    "Propose 2-3 approaches\n(assess architecture impact)" -> "Present design sections";
-    "Present design sections" -> "User approves design?";
-    "User approves design?" -> "Present design sections" [label="no, revise"];
+    "Ask clarifying questions" -> "Propose 2-3 approaches\n+ inversion test + ADR";
+    "Propose 2-3 approaches\n+ inversion test + ADR" -> "C4 positioning\n(Container/Component map)";
+    "C4 positioning\n(Container/Component map)" -> "Functional design\n(API, data model,\nsequence diagrams,\nstate machines)";
+    "Functional design\n(API, data model,\nsequence diagrams,\nstate machines)" -> "NFR scan\n(trigger-based)";
+    "NFR scan\n(trigger-based)" -> "User approves design?";
+    "User approves design?" -> "Functional design\n(API, data model,\nsequence diagrams,\nstate machines)" [label="no, revise"];
     "User approves design?" -> "Write design doc\n(to target project docs/)" [label="yes"];
     "Write design doc\n(to target project docs/)" -> "Spec review loop\n(dispatch mu-reviewer review-design)";
     "Spec review loop\n(dispatch mu-reviewer review-design)" -> "Spec review passed?";
@@ -148,20 +157,24 @@ digraph mu_design {
 
 **Inversion test:** Before presenting approaches, apply the inversion reflex from @../../knowledge/principles/inversion.md. For each approach, document "what would make this approach fail?" alongside trade-offs. Present failure modes as a column in the comparison, not as a separate section.
 
-**Architecture diagram:** After the user approves the approach, produce an architecture diagram before presenting the detailed design. Follow the guidelines in @../../knowledge/principles/architecture-assessment.md Phase 2:
+**C4 positioning (structural map):** After the user approves the approach, produce a C4 architecture diagram before detailed design. This establishes the structural map — which containers and components are involved. Follow @../../knowledge/principles/architecture-assessment.md:
 
-- Choose the right diagram type for this project (C1/C2/C3/DFD — see the "Diagram Type by Project Type" table in the knowledge file)
+- Choose the right diagram type for this project (C1/C2/C3/DFD — see the "Diagram Type by Project Type" table)
 - Show the **current** relevant architecture, then overlay the **proposed changes** (mark additions ➕, modifications ✏️, removals ➖)
 - Use Mermaid format (renders on GitHub); fall back to ASCII if Mermaid isn't practical
 - **Skip if** the Quick Probe showed "1 component affected, no boundaries crossed, no new components" — a brief text description suffices for small changes
 
-**Presenting the design:**
+**Functional design (detail by C4 component):**
 
-- Once you believe you understand what you're building, present the design
+Based on the C4 map, design details at each component level:
+
+- **Within components:** data model (schema changes, field design), state machine (if applicable — see §Conditional Design Tools)
+- **Between components:** interface contracts (API endpoints, request/response formats, error codes), sequence diagrams per scenario (if applicable — see §Conditional Design Tools)
 - Scale each section to its complexity: a few sentences if straightforward, up to 200-300 words if nuanced
 - Ask after each section whether it looks right so far
-- Cover: architecture (diagram already presented above), components, data flow, error handling, testing
 - Be ready to go back and clarify if something doesn't make sense
+
+**NFR scan:** After functional design, scan @../../knowledge/principles/nfr-checklist.md. Walk through the trigger conditions for each NFR category. Elaborate only on categories where triggers fire (2-5 sentences each: the concern, how the design addresses it, trade-offs). Skip categories with no triggers.
 
 **Design for isolation and clarity:**
 
@@ -175,6 +188,59 @@ digraph mu_design {
 - Explore the current structure before proposing changes. Follow existing patterns.
 - Where existing code has problems that affect the work (e.g., a file that's grown too large, unclear boundaries, tangled responsibilities), include targeted improvements as part of the design - the way a good developer improves code they're working in.
 - Don't propose unrelated refactoring. Stay focused on what serves the current goal.
+
+## Conditional Design Tools
+
+These tools are used during functional design (step 8) when their trigger conditions are met. See @../../knowledge/principles/architecture-assessment.md for Mermaid syntax examples.
+
+### Sequence Diagrams (per scenario)
+
+**Trigger:** The design involves multi-party interactions (frontend ↔ backend ↔ external service), callbacks, webhooks, OAuth flows, or any request chain where data passes through multiple participants.
+
+**How to use:**
+1. For each scenario from the scope artifact, draw a separate sequence diagram showing all participants and the data exchanged at each hop
+2. At each hop, annotate what data is available (headers, cookies, body, session) and what data is required by the design
+3. If any scenario shows required data is unavailable at the execution point, the design has a gap — revise before proceeding
+
+**Why per-scenario, not one combined diagram:** Different scenarios may have different request origins (AJAX vs browser redirect vs webhook vs cron). A combined diagram hides these differences. Per-scenario diagrams expose data availability gaps — e.g., a browser redirect after OAuth loses custom headers that an AJAX call would carry.
+
+### State Machine Diagrams
+
+**Trigger:** The design involves entities with lifecycle states (order status, subscription state, approval workflow, account status, content publishing state).
+
+**How to use:**
+1. Enumerate all states the entity can be in
+2. Draw all valid transitions with their trigger actions
+3. Check for missing transitions (e.g., can a "shipped" order be "cancelled"?)
+4. Check for dead-end states (states with no outgoing transitions that shouldn't be terminal)
+5. Record the state machine in the design doc
+
+## Architecture Decision Records
+
+ADRs are a **cross-cutting concern** throughout the design process, not a single step. Whenever you make a decision with meaningful trade-offs (step 6 approach selection, step 8 functional design choices, step 9 NFR trade-offs), record an ADR.
+
+**Format in the design doc:**
+
+```markdown
+## Architecture Decision Records
+
+### ADR-1: <title>
+- **Context:** What situation or constraint led to this decision
+- **Decision:** What was decided
+- **Alternatives:** What was considered and rejected (brief)
+- **Consequences:** What follows from this decision (both positive and negative)
+```
+
+**What warrants an ADR:**
+- Choosing between 2+ viable approaches (step 6)
+- Selecting a specific technology, pattern, or integration point
+- Making a trade-off between NFR categories (e.g., performance vs simplicity)
+- Decisions that would surprise a future reader of the code ("why did they do it this way?")
+
+**What does NOT warrant an ADR:**
+- Following established project conventions
+- Obvious choices with no real alternatives
+- Implementation details that don't affect the architecture
 
 ## After the Design
 
@@ -260,4 +326,4 @@ If they agree to the companion, read the detailed guide before proceeding:
 - **Consumed by:** mu-plan (reads spec, breaks into tasks)
 - **Terminal state:** invoke mu-plan
 - **Template:** @../../knowledge/templates/architecture.md
-- **Principle references:** stance-detection.md, inversion.md, architecture-assessment.md, sign-off-gate.md
+- **Principle references:** stance-detection.md, inversion.md, architecture-assessment.md, nfr-checklist.md, sign-off-gate.md
