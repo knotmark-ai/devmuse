@@ -181,12 +181,12 @@ Evaluate these high-risk signals. If ANY one fires, suggest Codex cross-review t
 - **User confirms:** proceed to Codex Invocation
 - **User declines (UC-9):** continue to Step 2. Do not suggest Codex again in this session.
 
-### Diff Size Guard
+### Size-Based Invocation Routing
 
 `codex review --base` builds the full diff internally before sending to the
 model. Very large ranges (full-project reviews against the first commit,
 mass refactors) exceed Codex's processing limits and time out with exit 1.
-Guard before invoking:
+Route by diff size:
 
 ```bash
 DIFF_FILES=$(git diff --name-only "${BASE_SHA}..${HEAD_SHA}" | wc -l | tr -d ' ')
@@ -195,17 +195,70 @@ DIFF_LINES=$(git diff --shortstat "${BASE_SHA}..${HEAD_SHA}" \
 DIFF_LINES=${DIFF_LINES:-0}
 ```
 
-| Condition | Action |
-|-----------|--------|
-| `DIFF_FILES > 500` OR `DIFF_LINES > 10000` | Skip `codex review --base` (will time out). Ask user: skip Codex (Claude-only review), or run the per-commit fallback below |
-| Otherwise | Proceed to Codex Invocation |
+| Condition | Path | Invocation |
+|-----------|------|------------|
+| `DIFF_FILES ≤ 500` AND `DIFF_LINES ≤ 10000` | **A. Direct review** (fast, structured) | `codex review --base` (see Codex Invocation below) |
+| `DIFF_FILES > 500` OR `DIFF_LINES > 10000` | **B. Agentic exploration** (self-directed) | `codex exec` with read-only sandbox + output schema (see below) |
 
-**Report to user when guard fires:**
-> "Diff too large for Codex (`${DIFF_FILES}` files / `${DIFF_LINES}` lines, threshold 500 / 10000). Options: (1) skip Codex and use Claude-only review, (2) iterate per-commit (loses cross-commit context). Which?"
+**Why route by size:** `codex review --base` serializes the entire diff up
+front — fast for small changes, but fails on full-project reviews. `codex
+exec` runs as an agent that explores the repo itself, prioritizes
+high-signal files, and works for arbitrarily large ranges. Trading speed
+for scalability.
 
-**Per-commit fallback (opt-in):** iterate over each commit in the range
-instead of one massive `--base` invocation. Each commit's diff is small
-enough to fit; tradeoff is loss of cross-commit context.
+### Path B: Agentic Exploration (Large Diffs)
+
+Write a JSON Schema once per session and invoke `codex exec` to perform
+self-directed review. Agent picks which files to read; output is
+constrained to the schema for parseable results.
+
+```bash
+# 1. Output schema (write once, reuse)
+cat > /tmp/codex-review-schema.json <<'EOF'
+{
+  "type": "object",
+  "required": ["assessment", "confidence", "critical", "important", "minor"],
+  "properties": {
+    "assessment": { "type": "string", "enum": ["approved", "needs-changes", "needs-rework"] },
+    "confidence": { "type": "string", "enum": ["low", "medium", "high"] },
+    "critical":  { "type": "array", "items": { "type": "object", "required": ["file", "description", "suggestion"], "properties": { "file": {"type":"string"}, "description": {"type":"string"}, "suggestion": {"type":"string"} } } },
+    "important": { "type": "array", "items": { "$ref": "#/properties/critical/items" } },
+    "minor":     { "type": "array", "items": { "$ref": "#/properties/critical/items" } }
+  }
+}
+EOF
+
+# 2. Agentic review (cd into repo; read-only sandbox; non-interactive)
+codex exec \
+  --sandbox read-only \
+  --ask-for-approval never \
+  --skip-git-repo-check \
+  --output-schema /tmp/codex-review-schema.json \
+  --output-last-message /tmp/codex-review-output.json \
+  "$(cat <<EOF
+Review the changes between commits ${BASE_SHA} and ${HEAD_SHA} in this repository.
+
+Approach: explore the repo yourself rather than reading the diff line by line. Use \`git diff --name-only ${BASE_SHA}..${HEAD_SHA}\` to enumerate changed files, then prioritize high-signal areas (auth boundaries, public APIs, security-sensitive paths, error handling, persistence layers). Don't try to read every file — budget your attention.
+
+Focus on: correctness, security, behavioral regressions, breaking API changes, missing error handling. Skip stylistic nits.
+
+Context: ${WHAT_WAS_IMPLEMENTED}
+
+Output your findings as a JSON object matching the provided schema. Use "approved" / "needs-changes" / "needs-rework" for assessment.
+EOF
+)" 2>&1
+
+# 3. Parse structured result
+CODEX_RESULT=$(cat /tmp/codex-review-output.json)
+```
+
+**Parsing:** `/tmp/codex-review-output.json` contains the schema-conformant
+JSON. Map its `critical` / `important` / `minor` arrays into the existing
+Result Presentation format (next section).
+
+**Per-commit last resort:** if the agentic path also fails (exit ≠ 0, timeout,
+schema validation error), fall back to per-commit iteration as a final
+attempt before giving up on Codex entirely:
 
 ```bash
 for sha in $(git rev-list --reverse "${BASE_SHA}..${HEAD_SHA}"); do
@@ -214,12 +267,14 @@ for sha in $(git rev-list --reverse "${BASE_SHA}..${HEAD_SHA}"); do
 done
 ```
 
-### Codex Invocation
+Loses cross-commit context; findings fragment per commit. Only use when
+Paths A and B both fail.
+
+### Path A: Codex Invocation (Small Diffs)
 
 Use `codex review` native command — it reads the repo directly via sandbox
 and produces structured output. Never pipe `git diff` via stdin; large diffs
-exceed token limits and cause hangs. For oversized ranges, see the Diff Size
-Guard above.
+exceed token limits and cause hangs. For oversized ranges, use Path B above.
 
 **Preferred: `codex review --base`** (reviews changes against a base ref):
 
@@ -260,11 +315,12 @@ single commit (`--commit` accepts a stdin prompt) instead of a base range.
 
 ### Error Handling
 
-After `codex review` completes, evaluate the result:
+After codex completes (either path), evaluate the result:
 
 ```
 IF exit code = 0 AND output contains review findings:
-  → Parse output, proceed to Result Presentation
+  → Parse output (stdout for Path A; output-last-message file for Path B)
+  → Proceed to Result Presentation
 
 IF exit code ≠ 0 AND stderr contains "auth" / "unauthorized" / "API key":
   → Report: "Codex auth failed. Run 'codex login' or set OPENAI_API_KEY env var."
@@ -272,12 +328,12 @@ IF exit code ≠ 0 AND stderr contains "auth" / "unauthorized" / "API key":
 
 IF exit code ≠ 0 (other error) OR timeout:
   → Report: "Codex review failed: <stderr snippet>"
-  → If diff size guard was bypassed and failure looks size-related
-    (timeout, OOM, exit 1 with no findings), suggest per-commit fallback
-  → Otherwise fall back to Claude-only review (proceed to Step 2)
+  → If Path A failed and diff is borderline-size, retry once via Path B (agentic)
+  → If Path B failed (schema validation, agent stuck), try per-commit last resort
+  → If all paths exhausted, fall back to Claude-only review (proceed to Step 2)
 ```
 
-**Fallback principle:** All failures fall back silently to Claude-only review. Codex failure never blocks the review pipeline (UC-R2). The Diff Size Guard catches the most common large-diff failure mode before invocation.
+**Fallback principle:** All failures fall back silently to Claude-only review. Codex failure never blocks the review pipeline (UC-R2). Size-based routing pre-empts the most common large-diff failure mode by selecting the agentic path before invocation.
 
 ### Result Presentation
 
