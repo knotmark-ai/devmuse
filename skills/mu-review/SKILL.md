@@ -181,11 +181,45 @@ Evaluate these high-risk signals. If ANY one fires, suggest Codex cross-review t
 - **User confirms:** proceed to Codex Invocation
 - **User declines (UC-9):** continue to Step 2. Do not suggest Codex again in this session.
 
+### Diff Size Guard
+
+`codex review --base` builds the full diff internally before sending to the
+model. Very large ranges (full-project reviews against the first commit,
+mass refactors) exceed Codex's processing limits and time out with exit 1.
+Guard before invoking:
+
+```bash
+DIFF_FILES=$(git diff --name-only "${BASE_SHA}..${HEAD_SHA}" | wc -l | tr -d ' ')
+DIFF_LINES=$(git diff --shortstat "${BASE_SHA}..${HEAD_SHA}" \
+  | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+')
+DIFF_LINES=${DIFF_LINES:-0}
+```
+
+| Condition | Action |
+|-----------|--------|
+| `DIFF_FILES > 500` OR `DIFF_LINES > 10000` | Skip `codex review --base` (will time out). Ask user: skip Codex (Claude-only review), or run the per-commit fallback below |
+| Otherwise | Proceed to Codex Invocation |
+
+**Report to user when guard fires:**
+> "Diff too large for Codex (`${DIFF_FILES}` files / `${DIFF_LINES}` lines, threshold 500 / 10000). Options: (1) skip Codex and use Claude-only review, (2) iterate per-commit (loses cross-commit context). Which?"
+
+**Per-commit fallback (opt-in):** iterate over each commit in the range
+instead of one massive `--base` invocation. Each commit's diff is small
+enough to fit; tradeoff is loss of cross-commit context.
+
+```bash
+for sha in $(git rev-list --reverse "${BASE_SHA}..${HEAD_SHA}"); do
+  echo "=== Reviewing $sha ==="
+  codex review --commit "$sha" 2>&1
+done
+```
+
 ### Codex Invocation
 
-Use `codex review` native command — it reads the repo directly via sandbox,
-handles large diffs internally, and produces structured output. Never pipe
-`git diff` via stdin; large diffs exceed token limits and cause hangs.
+Use `codex review` native command — it reads the repo directly via sandbox
+and produces structured output. Never pipe `git diff` via stdin; large diffs
+exceed token limits and cause hangs. For oversized ranges, see the Diff Size
+Guard above.
 
 **Preferred: `codex review --base`** (reviews changes against a base ref):
 
@@ -199,12 +233,19 @@ codex review --base "${BASE_SHA}" 2>&1
 codex review --commit "${HEAD_SHA}" 2>&1
 ```
 
-**With custom instructions** (pass via stdin with `-`):
+**Custom instructions caveat:**
 
-```bash
-echo "Focus on: correctness, security, behavioral regressions. Context: ${WHAT_WAS_IMPLEMENTED}" \
-  | codex review --base "${BASE_SHA}" - 2>&1
+`codex review --base <BRANCH>` and a positional `[PROMPT]` argument are
+mutually exclusive. The CLI rejects the combination:
+
 ```
+error: the argument '--base <BRANCH>' cannot be used with '[PROMPT]'
+```
+
+Cross-review is a second-opinion pass, so the default Codex review prompt
+is sufficient — do not attempt to attach custom instructions to a `--base`
+invocation. If targeted-focus context is genuinely required, scope to a
+single commit (`--commit` accepts a stdin prompt) instead of a base range.
 
 **Placeholder values** (same as mu-reviewer dispatch):
 - `${BASE_SHA}` / `${HEAD_SHA}` — git range for the changes
@@ -231,10 +272,12 @@ IF exit code ≠ 0 AND stderr contains "auth" / "unauthorized" / "API key":
 
 IF exit code ≠ 0 (other error) OR timeout:
   → Report: "Codex review failed: <stderr snippet>"
-  → Fall back to Claude-only review (proceed to Step 2)
+  → If diff size guard was bypassed and failure looks size-related
+    (timeout, OOM, exit 1 with no findings), suggest per-commit fallback
+  → Otherwise fall back to Claude-only review (proceed to Step 2)
 ```
 
-**Fallback principle:** All failures fall back silently to Claude-only review. Codex failure never blocks the review pipeline (UC-R2).
+**Fallback principle:** All failures fall back silently to Claude-only review. Codex failure never blocks the review pipeline (UC-R2). The Diff Size Guard catches the most common large-diff failure mode before invocation.
 
 ### Result Presentation
 
