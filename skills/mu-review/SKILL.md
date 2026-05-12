@@ -181,11 +181,98 @@ Evaluate these high-risk signals. If ANY one fires, suggest Codex cross-review t
 - **User confirms:** proceed to Codex Invocation
 - **User declines (UC-9):** continue to Step 2. Do not suggest Codex again in this session.
 
-### Codex Invocation
+### Size-Based Invocation Routing
 
-Use `codex review` native command — it reads the repo directly via sandbox,
-handles large diffs internally, and produces structured output. Never pipe
-`git diff` via stdin; large diffs exceed token limits and cause hangs.
+`codex review --base` builds the full diff internally before sending to the
+model. Very large ranges (full-project reviews against the first commit,
+mass refactors) exceed Codex's processing limits and time out with exit 1.
+Route by diff size:
+
+```bash
+DIFF_FILES=$(git diff --name-only "${BASE_SHA}..${HEAD_SHA}" | wc -l | tr -d ' ')
+DIFF_LINES=$(git diff --shortstat "${BASE_SHA}..${HEAD_SHA}" \
+  | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+')
+DIFF_LINES=${DIFF_LINES:-0}
+```
+
+| Condition | Path | Invocation |
+|-----------|------|------------|
+| `DIFF_FILES ≤ 500` AND `DIFF_LINES ≤ 10000` | **A. Direct review** (fast, structured) | `codex review --base` (see Codex Invocation below) |
+| `DIFF_FILES > 500` OR `DIFF_LINES > 10000` | **B. Agentic exploration** (self-directed) | `codex exec` with read-only sandbox + output schema (see below) |
+
+**Why route by size:** `codex review --base` serializes the entire diff up
+front — fast for small changes, but fails on full-project reviews. `codex
+exec` runs as an agent that explores the repo itself, prioritizes
+high-signal files, and works for arbitrarily large ranges. Trading speed
+for scalability.
+
+### Path B: Agentic Exploration (Large Diffs)
+
+Write a JSON Schema once per session and invoke `codex exec` to perform
+self-directed review. Agent picks which files to read; output is
+constrained to the schema for parseable results.
+
+```bash
+# 1. Output schema (write once, reuse)
+cat > /tmp/codex-review-schema.json <<'EOF'
+{
+  "type": "object",
+  "required": ["assessment", "confidence", "critical", "important", "minor"],
+  "properties": {
+    "assessment": { "type": "string", "enum": ["approved", "needs-changes", "needs-rework"] },
+    "confidence": { "type": "string", "enum": ["low", "medium", "high"] },
+    "critical":  { "type": "array", "items": { "type": "object", "required": ["file", "description", "suggestion"], "properties": { "file": {"type":"string"}, "description": {"type":"string"}, "suggestion": {"type":"string"} } } },
+    "important": { "type": "array", "items": { "$ref": "#/properties/critical/items" } },
+    "minor":     { "type": "array", "items": { "$ref": "#/properties/critical/items" } }
+  }
+}
+EOF
+
+# 2. Agentic review (read-only sandbox; codex exec is non-interactive by default)
+codex exec \
+  --sandbox read-only \
+  --output-schema /tmp/codex-review-schema.json \
+  --output-last-message /tmp/codex-review-output.json \
+  "$(cat <<EOF
+Review the changes between commits ${BASE_SHA} and ${HEAD_SHA} in this repository.
+
+Approach: explore the repo yourself rather than reading the diff line by line. Use \`git diff --name-only ${BASE_SHA}..${HEAD_SHA}\` to enumerate changed files, then prioritize high-signal areas (auth boundaries, public APIs, security-sensitive paths, error handling, persistence layers). Don't try to read every file — budget your attention.
+
+Focus on: correctness, security, behavioral regressions, breaking API changes, missing error handling. Skip stylistic nits.
+
+Context: ${WHAT_WAS_IMPLEMENTED}
+
+Output your findings as a JSON object matching the provided schema. Use "approved" / "needs-changes" / "needs-rework" for assessment.
+EOF
+)" 2>&1
+
+# 3. Parse structured result
+CODEX_RESULT=$(cat /tmp/codex-review-output.json)
+```
+
+**Parsing:** `/tmp/codex-review-output.json` contains the schema-conformant
+JSON. Map its `critical` / `important` / `minor` arrays into the existing
+Result Presentation format (next section).
+
+**Per-commit last resort:** if the agentic path also fails (exit ≠ 0, timeout,
+schema validation error), fall back to per-commit iteration as a final
+attempt before giving up on Codex entirely:
+
+```bash
+for sha in $(git rev-list --reverse "${BASE_SHA}..${HEAD_SHA}"); do
+  echo "=== Reviewing $sha ==="
+  codex review --commit "$sha" 2>&1
+done
+```
+
+Loses cross-commit context; findings fragment per commit. Only use when
+Paths A and B both fail.
+
+### Path A: Codex Invocation (Small Diffs)
+
+Use `codex review` native command — it reads the repo directly via sandbox
+and produces structured output. Never pipe `git diff` via stdin; large diffs
+exceed token limits and cause hangs. For oversized ranges, use Path B above.
 
 **Preferred: `codex review --base`** (reviews changes against a base ref):
 
@@ -199,12 +286,19 @@ codex review --base "${BASE_SHA}" 2>&1
 codex review --commit "${HEAD_SHA}" 2>&1
 ```
 
-**With custom instructions** (pass via stdin with `-`):
+**Custom instructions caveat:**
 
-```bash
-echo "Focus on: correctness, security, behavioral regressions. Context: ${WHAT_WAS_IMPLEMENTED}" \
-  | codex review --base "${BASE_SHA}" - 2>&1
+`codex review --base <BRANCH>` and a positional `[PROMPT]` argument are
+mutually exclusive. The CLI rejects the combination:
+
 ```
+error: the argument '--base <BRANCH>' cannot be used with '[PROMPT]'
+```
+
+Cross-review is a second-opinion pass, so the default Codex review prompt
+is sufficient — do not attempt to attach custom instructions to a `--base`
+invocation. If targeted-focus context is genuinely required, scope to a
+single commit (`--commit` accepts a stdin prompt) instead of a base range.
 
 **Placeholder values** (same as mu-reviewer dispatch):
 - `${BASE_SHA}` / `${HEAD_SHA}` — git range for the changes
@@ -219,22 +313,49 @@ echo "Focus on: correctness, security, behavioral regressions. Context: ${WHAT_W
 
 ### Error Handling
 
-After `codex review` completes, evaluate the result:
+After codex completes (either path), evaluate the result. **Exit code 0 is
+not sufficient evidence of success** — codex exec returns 0 even after
+exhausting upstream retries (e.g., 5xx Service Unavailable). Always
+validate the output artifact:
 
 ```
-IF exit code = 0 AND output contains review findings:
-  → Parse output, proceed to Result Presentation
+Path A (codex review --base):
+  IF exit code = 0 AND stdout contains review findings → proceed to Result Presentation
 
-IF exit code ≠ 0 AND stderr contains "auth" / "unauthorized" / "API key":
-  → Report: "Codex auth failed. Run 'codex login' or set OPENAI_API_KEY env var."
-  → Fall back to Claude-only review (proceed to Step 2)
+Path B (codex exec):
+  IF /tmp/codex-review-output.json exists AND is valid JSON matching schema
+    → proceed to Result Presentation
+  ELSE
+    → treat as failure (see below) regardless of exit code
 
-IF exit code ≠ 0 (other error) OR timeout:
-  → Report: "Codex review failed: <stderr snippet>"
-  → Fall back to Claude-only review (proceed to Step 2)
+Common failure handling:
+  IF stderr/stdout contains "auth" / "unauthorized" / "API key":
+    → Report: "Codex auth failed. Run 'codex login' or set OPENAI_API_KEY env var."
+    → Fall back to Claude-only review (proceed to Step 2)
+
+  IF stderr/stdout contains "503" / "Service Unavailable" / "Reconnecting":
+    → Report: "Codex upstream unavailable (likely rate limit or provider outage)."
+    → Fall back to Claude-only review (proceed to Step 2)
+
+  IF other failure (timeout, schema validation, agent stuck, empty output):
+    → Report: "Codex review failed: <stderr snippet>"
+    → If Path A failed and diff is borderline-size, retry once via Path B
+    → If Path B failed, try per-commit last resort
+    → If all paths exhausted, fall back to Claude-only review
 ```
 
-**Fallback principle:** All failures fall back silently to Claude-only review. Codex failure never blocks the review pipeline (UC-R2).
+**Output validation (Path B):**
+
+```bash
+# Codex exec exits 0 on upstream failures — must validate artifact
+if [ ! -s /tmp/codex-review-output.json ] \
+   || ! jq -e . /tmp/codex-review-output.json >/dev/null 2>&1; then
+  echo "Codex exec produced no valid output — treating as failure"
+  # Trigger fallback path
+fi
+```
+
+**Fallback principle:** All failures fall back silently to Claude-only review. Codex failure never blocks the review pipeline (UC-R2). Size-based routing pre-empts the most common large-diff failure mode by selecting the agentic path before invocation.
 
 ### Result Presentation
 
