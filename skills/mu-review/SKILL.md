@@ -228,11 +228,9 @@ cat > /tmp/codex-review-schema.json <<'EOF'
 }
 EOF
 
-# 2. Agentic review (cd into repo; read-only sandbox; non-interactive)
+# 2. Agentic review (read-only sandbox; codex exec is non-interactive by default)
 codex exec \
   --sandbox read-only \
-  --ask-for-approval never \
-  --skip-git-repo-check \
   --output-schema /tmp/codex-review-schema.json \
   --output-last-message /tmp/codex-review-output.json \
   "$(cat <<EOF
@@ -315,22 +313,46 @@ single commit (`--commit` accepts a stdin prompt) instead of a base range.
 
 ### Error Handling
 
-After codex completes (either path), evaluate the result:
+After codex completes (either path), evaluate the result. **Exit code 0 is
+not sufficient evidence of success** — codex exec returns 0 even after
+exhausting upstream retries (e.g., 5xx Service Unavailable). Always
+validate the output artifact:
 
 ```
-IF exit code = 0 AND output contains review findings:
-  → Parse output (stdout for Path A; output-last-message file for Path B)
-  → Proceed to Result Presentation
+Path A (codex review --base):
+  IF exit code = 0 AND stdout contains review findings → proceed to Result Presentation
 
-IF exit code ≠ 0 AND stderr contains "auth" / "unauthorized" / "API key":
-  → Report: "Codex auth failed. Run 'codex login' or set OPENAI_API_KEY env var."
-  → Fall back to Claude-only review (proceed to Step 2)
+Path B (codex exec):
+  IF /tmp/codex-review-output.json exists AND is valid JSON matching schema
+    → proceed to Result Presentation
+  ELSE
+    → treat as failure (see below) regardless of exit code
 
-IF exit code ≠ 0 (other error) OR timeout:
-  → Report: "Codex review failed: <stderr snippet>"
-  → If Path A failed and diff is borderline-size, retry once via Path B (agentic)
-  → If Path B failed (schema validation, agent stuck), try per-commit last resort
-  → If all paths exhausted, fall back to Claude-only review (proceed to Step 2)
+Common failure handling:
+  IF stderr/stdout contains "auth" / "unauthorized" / "API key":
+    → Report: "Codex auth failed. Run 'codex login' or set OPENAI_API_KEY env var."
+    → Fall back to Claude-only review (proceed to Step 2)
+
+  IF stderr/stdout contains "503" / "Service Unavailable" / "Reconnecting":
+    → Report: "Codex upstream unavailable (likely rate limit or provider outage)."
+    → Fall back to Claude-only review (proceed to Step 2)
+
+  IF other failure (timeout, schema validation, agent stuck, empty output):
+    → Report: "Codex review failed: <stderr snippet>"
+    → If Path A failed and diff is borderline-size, retry once via Path B
+    → If Path B failed, try per-commit last resort
+    → If all paths exhausted, fall back to Claude-only review
+```
+
+**Output validation (Path B):**
+
+```bash
+# Codex exec exits 0 on upstream failures — must validate artifact
+if [ ! -s /tmp/codex-review-output.json ] \
+   || ! jq -e . /tmp/codex-review-output.json >/dev/null 2>&1; then
+  echo "Codex exec produced no valid output — treating as failure"
+  # Trigger fallback path
+fi
 ```
 
 **Fallback principle:** All failures fall back silently to Claude-only review. Codex failure never blocks the review pipeline (UC-R2). Size-based routing pre-empts the most common large-diff failure mode by selecting the agentic path before invocation.
