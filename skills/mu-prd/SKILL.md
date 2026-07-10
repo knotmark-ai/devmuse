@@ -1,6 +1,7 @@
 ---
 name: mu-prd
-description: "Use when defining product requirements — user flows, screens, per-feature specs, tiering rules. For technical architecture use mu-arch. For business strategy use mu-biz first."
+description: "Define product requirements — user flows, screens, per-feature specs, tiering rules."
+disable-model-invocation: true
 ---
 
 # Product Requirements

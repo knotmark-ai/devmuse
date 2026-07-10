@@ -1,6 +1,7 @@
 ---
 name: mu-wiki
-description: "Use when user wants to generate or maintain project-level architecture documentation. Two modes: generate (full wiki creation from codebase analysis) and update (incremental maintenance via git diff). On-demand only — never auto-routed by mu-route."
+description: "Generate or maintain the project architecture wiki. Modes: generate (full) or update (incremental via git diff)."
+disable-model-invocation: true
 ---
 
 # Wiki

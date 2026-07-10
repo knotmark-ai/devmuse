@@ -152,6 +152,23 @@ Key takeaways to keep in mind while writing:
 - Name by what you DO (active voice, verb-first)
 - Reference other skills by name (e.g., `devmuse:mu-code`), never with `@skills/...` (force-loads context)
 
+## Skill Quality Review
+
+**Critical for steering:** CSO gets the skill found; this lexicon makes it steer reliably and cheaply once loaded. Run its review checklist over every draft — new skills and edits alike — during GREEN and REFACTOR.
+
+For the full lexicon (invocation economics, leading words, completion criteria, failure modes, progressive disclosure) and the 8-step review checklist:
+
+**@../../knowledge/principles/skill-quality.md**
+
+Key tests to keep in mind while writing:
+
+- **Invocation match:** manual-only skill with a rich trigger description = wasted context load; set `disable-model-invocation: true` and shrink the description to one human-facing line
+- **No-op test:** does the line change behaviour versus the model's default? "Be thorough/careful/diligent" is paid noise — delete the sentence
+- **Negation test:** "don't/never" steering names the banned behaviour and makes it more available; state the positive target instead (keep prohibitions only as hard guardrails, paired with the positive)
+- **Completion criteria:** every step ends on a checkable, demanding bound — "every X accounted for", not "until you understand"
+- **Leading word:** collapse restated qualities into one pretrained concept (*tight*, *red*, *seam*, *tracer bullet*)
+- **Branch test:** inline what every run needs; disclose behind a pointer what only some branches reach — regardless of line count
+
 ## Flowchart Usage
 
 For full graphviz conventions (when to use, node shapes, label rules, rendering tool):
@@ -430,6 +447,7 @@ Deploying untested skills = deploying untested code. It's a violation of quality
 - [ ] Common mistakes section
 - [ ] No narrative storytelling
 - [ ] Supporting files only for tools or heavy reference
+- [ ] Run the 8-step skill-quality review checklist (invocation match, no-op, negation, duplication, completion criteria, leading words, branch test, sediment/sprawl)
 
 **Deployment:**
 - [ ] Commit skill to git and push to your fork (if configured)
