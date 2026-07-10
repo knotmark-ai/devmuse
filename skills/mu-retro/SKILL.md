@@ -1,6 +1,7 @@
 ---
 name: mu-retro
-description: "Use for weekly or periodic retrospective — gather git metrics, review patterns, capture learnings to Claude Code memory."
+description: "Weekly or periodic retrospective — gather git metrics, review patterns, capture learnings to Claude Code memory."
+disable-model-invocation: true
 ---
 
 # Retrospective
