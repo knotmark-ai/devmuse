@@ -25,6 +25,10 @@ DevMuse skills override default system prompt behavior, but **user instructions 
 
 If CLAUDE.md or AGENTS.md says "don't use TDD" and a skill says "always use TDD," follow the user's instructions. The user is in control.
 
+## Project Domain Language
+
+If the repo root has a `CONTEXT.md`, it is the project's shared vocabulary: use its terms in code names, artifacts, and replies, and respect its `_Avoid_` lists. Consult it before naming anything new.
+
 ## How to Access Skills
 
 Use the `Skill` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.

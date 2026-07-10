@@ -103,7 +103,8 @@ Create a task for each and complete in order:
 4. **Size/area gate**: run `git ls-files | xargs wc -l` or similar for LOC estimate. Apply thresholds.
 5. **Scan within depth limit** (see depth discipline below).
 6. **Build artifact** using template at `@../../knowledge/templates/explore.md`.
-7. **Record explicit unknowns** — every uncertainty goes in the Unknowns section. Do not fabricate coverage.
+7. **Harvest domain terms** — run each collected term through the qualification test in `@../../knowledge/principles/domain-glossary.md`; promote passers to the repo-root `CONTEXT.md` (create it if absent). The artifact's Domain Terms section keeps area-local terms only and links to `CONTEXT.md` for the rest.
+8. **Record explicit unknowns** — every uncertainty goes in the Unknowns section. Do not fabricate coverage.
 8. **Record git commit hash** (`git rev-parse HEAD`) in the artifact as baseline for future re-explores.
 9. **Run exit-criterion self-check**: can the artifact answer "what does changing X affect?" for the chosen target?
 10. **User approval loop** — show artifact, iterate until user confirms.

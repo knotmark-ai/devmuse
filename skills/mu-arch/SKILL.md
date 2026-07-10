@@ -68,6 +68,7 @@ You MUST create a task for each of these items and complete them in order:
 8. **Functional design** — based on C4 components identified in step 7, design the details:
    - **Within components:** data model (schema changes), state machine (if entity has lifecycle — see §Conditional Design Tools)
    - **Between components:** interface contracts (API endpoints, message formats), sequence diagrams per scenario (if multi-party interaction — see §Conditional Design Tools)
+   - **Name with the project's language:** consult repo-root `CONTEXT.md` before naming components or concepts; reuse its terms. Record newly coined names per §Domain Language.
    - Present in sections scaled to complexity, get user approval after each section. **Record ADRs** for any decisions with meaningful trade-offs.
 9. **NFR scan** — scan @../../knowledge/principles/nfr-checklist.md trigger conditions against the current feature. Elaborate only on categories where triggers fire. Skip categories with no triggers — no need to list them as "N/A".
 10. **Write design doc** — save to the project's docs directory (default: `docs/specs/YYYY-MM-DD-<topic>-design.md`), **include Requirements Reference field**, and commit
@@ -241,6 +242,10 @@ ADRs are a **cross-cutting concern** throughout the design process, not a single
 - Following established project conventions
 - Obvious choices with no real alternatives
 - Implementation details that don't affect the architecture
+
+## Domain Language
+
+Naming is a cross-cutting concern like ADRs. Before coining any component or concept name, read the repo-root `CONTEXT.md` (if present) and reuse its terms — including respecting `_Avoid_` lists. When the design coins a new name and the user approves it, add the entry (definition + `_Avoid_` synonyms) to `CONTEXT.md` in the same commit as the design doc, per the qualification test in `@../../knowledge/principles/domain-glossary.md`.
 
 ## After the Design
 

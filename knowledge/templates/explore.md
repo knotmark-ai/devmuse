@@ -45,11 +45,13 @@ Narrative of the 2-4 most important flows. Each flow: trigger → steps → outc
 
 ## Domain Terms
 
-Glossary of project-specific vocabulary. Every term the agent had to learn to understand this code.
+Area-local jargon only — terms used solely inside this component. Project-wide vocabulary lives in the repo-root `CONTEXT.md` (single source of truth); do not restate its definitions here.
 
-| Term | Meaning |
-|------|---------|
+| Term | Meaning (area-local) |
+|------|---------------------|
 | `<term>` | <definition> |
+
+Promoted to `CONTEXT.md` by this exploration: `<term>`, `<term>`
 
 ## Unknowns
 
