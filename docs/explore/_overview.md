@@ -93,23 +93,21 @@ Execution is not "program start" — it is Claude Code session start. Entry poin
 
 ## Domain Terms
 
-| Term | Meaning |
-|------|---------|
-| `skill` | A markdown file under `skills/<name>/SKILL.md` with YAML frontmatter (`name`, `description`). Loaded via the `Skill` tool; acts as a workflow checklist Claude must follow. |
-| `agent` | A markdown file under `agents/` declaring an independent sub-agent role with isolated context; invoked by skills via the Task tool. |
-| `rule` | Always-on content from `rules/`, injected via SessionStart hook (not auto-discovered by plugin system). |
-| `knowledge` | Passive reference content under `knowledge/`, included via `@`-path references inside skills/agents. |
-| `UC / Use Case` | A scoped requirement unit produced by `mu-scope`; each UC has an ID (e.g., `UC-3`) that propagates through arch → plan → code → tests. |
-| `UC-ID traceability` | Plan tasks, code comments, and tests all carry the UC-ID so coverage can be audited. |
-| `mu-reviewer modes` | Six review stances selectable per invocation: review-design, review-plan, review-code, review-compliance, review-coverage, review-security. |
-| `pipeline gate` | The pre-tool-use hook that refuses Edit/Write unless scope+design artifacts exist. Enforces the scope→arch→plan→code→review order. |
-| `fail-open` | Hooks exit 0 on any internal error so plugin bugs never block the user. |
-| `four categories` | Pipeline (scope→arch→plan→code→review, auto-routed) / Orthogonal (explore, debug, retro, auto-routed) / On-demand (mu-biz, mu-prd, slash-only) / Router (mu-route). |
-| `quick mode` (of mu-biz) | 4 forcing questions instead of full business-model-canvas analysis. |
-| `Quick Probe` | Rapid codebase impact scan inside `mu-scope` before formal UC enumeration. |
-| `dogfooding` | devmuse uses its own skills on itself — see `docs/scope/`, `docs/specs/`, `docs/plans/` populated with internal devmuse work. |
-| `CLAUDE_PLUGIN_ROOT` | Environment var Claude Code sets so hooks can locate the plugin; used by both hook scripts and the plugin-self-edit exemption. |
-| `Superpowers` | Upstream project by Jesse Vincent; devmuse is "based on" it. `gstack` (Garry Tan) contributed security/design-audit/premise/hook patterns. |
+Area-local jargon only — project-wide vocabulary lives in the repo-root `CONTEXT.md` (single source of truth); do not restate its definitions here.
+
+| Term | Meaning (area-local) |
+|------|---------------------|
+| `rule` (rules/) | Always-on content injected by the session-start hook (not plugin auto-discovery); only `bootstrap.md` exists, and the hook script names it explicitly — adding a rule file also means editing `hooks/session-start`. |
+| `knowledge` (knowledge/) | Passive reference markdown pulled via `@`-relative paths from skills/agents; never auto-loaded. |
+| `Axis-*` (mu-route) | The five cheap (<5s) routing signals — Intent, Familiarity, Missing-artifact, Stakeholder, Plugin — gathered before applying routing rows R1–R7. |
+| silent invoke / one-line check / full proposal | mu-route's three confidence-tiered behaviors (high / medium / low). |
+| variant (mu-explore) | The five exploration types — onboarding, takeover, dependency-eval, pre-change, pre-debug — each setting depth and file-count caps. |
+| watched source dirs | Per-skill directory list that stance detection's H3 staleness check and the sign-off gate's S2 multi-author check run against; a skill's own artifact dir is never in its watched set. |
+| subagent-driven / inline mode | mu-code's two execution modes: fresh mu-coder subagent per task vs. main-session implementation. |
+| fail-open | Local hook convention: any internal script error exits 0 so a plugin bug never blocks the user. |
+| `CLAUDE_PLUGIN_ROOT` | Claude Code env var hooks use to locate the plugin; grants the self-edit exemption in the pipeline gate. |
+
+Promoted to `CONTEXT.md` by the 2026-07-11 harvest: Opening move, Core pipeline, Orthogonal skill, On-demand skill, Creative skill, Stance, HARD-GATE, Pipeline gate, Sign-off gate, Team-touching, Use Case Set, Quick Probe, Living artifact, Anchor, Cross-review, Task transition, Guidance over control, Skill CSO
 
 ## Unknowns
 
@@ -126,8 +124,8 @@ Execution is not "program start" — it is Claude Code session start. Entry poin
 
 ## Doc vs Code Conflicts
 
-- **Skill count: README says "Skills (10)", `skills/` directory contains 11 subdirs** (adds `mu-explore`, which is itself running right now). README table is stale relative to the recent `mu-explore` addition. `docs/architecture.md` also still says "skills/ (10)". Implication: README + architecture.md both need a one-line update when `mu-explore` lands on main.
-- **Hook deny message: `pipeline-gate.sh` says "Run mu-design first"**, but no skill by that name exists — the equivalent skill is `mu-arch` (renamed per commit `108f3f6 refactor: three-tier skill architecture (mu-biz/mu-prd + rename mu-design→mu-arch)`). Implication: hook message is stale; user hitting the gate gets pointed to a non-existent skill.
+- **Skill count: README and `docs/architecture.md` say "Skills (12)", `skills/` directory contains 13 subdirs** (as of 2026-07-11; the recurring drift first recorded here as 10 vs 11). Implication: both docs need a one-line update whenever a skill lands; consider deriving the count instead of hardcoding it.
+- ~~Hook deny message: `pipeline-gate.sh` says "Run mu-design first"~~ — **resolved** by `304043d` (2026-04-16); message now says mu-arch.
 
 ## Depth & Coverage Notes
 
@@ -152,4 +150,5 @@ Execution is not "program start" — it is Claude Code session start. Entry poin
 
 | Date | Commit | Variant | Change summary |
 |------|--------|---------|----------------|
+| 2026-07-11 | `28bbae597ba3670175324ff161fd5c234c36450f` | harvest | Domain terms promoted to root CONTEXT.md; section reduced to area-local jargon. Refreshed Doc vs Code Conflicts (skill count now 12 vs 13; mu-design hook message resolved by `304043d`). |
 | 2026-04-16 | `bd0172d1be9dd40d4ea597820954937eddfda1e4` | onboarding | Initial creation |
