@@ -76,7 +76,7 @@ Skills and agents reference knowledge via `@` relative paths within the plugin:
 
 **Principle:** Rules consume tokens via hook injection. Only put content that must be unconditionally always-on. Anything loadable on-demand via skills should stay in skills.
 
-### skills/ (13)
+### skills/ (14)
 
 Organized in four categories:
 
@@ -105,6 +105,7 @@ Organized in four categories:
 | mu-prd | Product requirements — user flows, wireframes, feature specs, tiering rules | — |
 | mu-wiki | Architecture wiki — generates and maintains project-level architecture documentation | — |
 | mu-retro | Periodic retrospective with git metrics and memory capture | — |
+| mu-grill | Relentless plan/design interview — one question at a time until every rework-forcing fork is resolved | — |
 
 **Router:**
 

@@ -62,7 +62,7 @@ You MUST create a task for each of these items and complete them in order:
 2. **Explore project context** — check files, docs, recent commits
 3. **Find architecture doc** — look for existing architecture/design docs in the project (README, docs/, ARCHITECTURE.md, DESIGN.md, docs/wiki/_index.md, or similar). If found, read it. If not found or unclear, ask the user.
 4. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
-5. **Ask clarifying questions** — one at a time, **technical direction only** (not "what to build" — that's in the scope)
+5. **Grill for technical direction** — apply @../../knowledge/principles/grilling.md (one question per message with a recommendation, facts self-served, decisions to the user, converge every fork); **technical direction only** (not "what to build" — that's in the scope)
 6. **Propose 2-3 approaches** — with trade-offs, your recommendation, impact on existing architecture, and **UC coverage per approach**. Apply inversion test per approach. **Record ADR** for the selected approach (see §Architecture Decision Records).
 7. **C4 positioning** — using the approved approach, identify which C4 levels are involved per @../../knowledge/principles/architecture-assessment.md. Produce an architecture diagram showing current state + proposed changes (➕/✏️/➖ overlay). This establishes the structural map before detailed design.
 8. **Functional design** — based on C4 components identified in step 7, design the details:

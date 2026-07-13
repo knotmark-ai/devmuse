@@ -124,7 +124,7 @@ DevMuse organizes skills into four categories:
 
 **Orthogonal** (auto-routed via mu-route): mu-explore, mu-debug
 
-**On-demand** (direct `/slash` invocation only, NOT auto-routed): mu-biz, mu-prd, mu-wiki, mu-retro
+**On-demand** (direct `/slash` invocation only, NOT auto-routed): mu-biz, mu-prd, mu-wiki, mu-retro, mu-grill
 
 **Meta**: mu-route (router), mu-write-skill (skill authoring)
 
@@ -134,7 +134,7 @@ DevMuse organizes skills into four categories:
 
 **Direct slash invocation bypasses mu-route** — `/mu-arch`, `/mu-biz`, `/mu-explore`, etc. route directly to the named skill (power-user escape hatch, matches industry convention: Aider / Roo / Continue).
 
-**On-demand skills (mu-biz, mu-prd, mu-wiki, mu-retro)** are never auto-routed. Users invoke them explicitly with `/mu-biz`, `/mu-prd`, `/mu-wiki`, or `/mu-retro` when they need business analysis, product requirements, architecture wiki generation, or a retrospective.
+**On-demand skills (mu-biz, mu-prd, mu-wiki, mu-retro, mu-grill)** are never auto-routed. Users invoke them explicitly with `/mu-biz`, `/mu-prd`, `/mu-wiki`, `/mu-retro`, or `/mu-grill` when they need business analysis, product requirements, architecture wiki generation, a retrospective, or a standalone plan-grilling interview.
 
 See `skills/mu-route/SKILL.md` for the full routing decision table, trigger signals, and confidence-based proposal behavior.
 

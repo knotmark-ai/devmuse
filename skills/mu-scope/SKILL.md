@@ -141,11 +141,7 @@ Present the probe results and recommend a depth level. The user confirms or over
 
 Work through scenarios with the user, one category at a time.
 
-**Methodology (migrated from mu-arch):**
-- Ask one question at a time — do not overwhelm with multiple questions
-- Prefer multiple choice when possible
-- Focus on understanding: purpose, constraints, success criteria
-- If the request covers multiple independent subsystems, flag immediately — decompose into sub-projects before detailing
+**Methodology:** grill per @../../knowledge/principles/grilling.md — one question per message with options + recommendation, facts self-served, decisions to the user, converge every fork. Focus on purpose, constraints, success criteria. If the request covers multiple independent subsystems, flag immediately — decompose into sub-projects before detailing.
 
 **Order:** Happy paths first (establish the core), then edge cases (expand boundaries), then error cases (handle failures), then **reverse cases** (what must NOT happen).
 

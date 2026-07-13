@@ -192,7 +192,7 @@ Commit message prefix reflects the stance and (if update) sub-type:
 
 ## Key Principles
 
-- **One question at a time** — don't overwhelm
+- **Grill, don't interrogate** — apply @../../knowledge/principles/grilling.md: one question per message with a recommendation, facts self-served, decisions to the user
 - **Accept strong evidence quickly** — if user has data, don't interrogate further
 - **Respect user override** — if they say "just do it", flag and proceed
 - **Context-adaptive framing** — greenfield vs existing codebase changes the question tone

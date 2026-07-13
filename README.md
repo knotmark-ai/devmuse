@@ -86,7 +86,7 @@ devmuse/
 └── knowledge/    Domain knowledge (injected on demand)
 ```
 
-### Skills (13)
+### Skills (14)
 
 | Category | Skill | Role |
 |----------|-------|------|
@@ -101,6 +101,7 @@ devmuse/
 | On-demand | **mu-prd** | Product requirements — user flows, wireframes, feature specs, tiering rules |
 | On-demand | **mu-wiki** | Architecture wiki — generates and maintains project-level architecture documentation |
 | On-demand | **mu-retro** | Periodic retrospective with git metrics and memory capture |
+| On-demand | **mu-grill** | Relentless plan/design interview — resolves every rework-forcing fork before work begins |
 | Router | **mu-route** | Confidence-based router — silently invokes for clear intent, proposes for ambiguous; bypassed by `/mu-<skill>` |
 | Meta | **mu-write-skill** | Create/edit skills using TDD methodology |
 

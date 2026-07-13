@@ -107,7 +107,7 @@ If not found, ask the user to provide business context inline. Log "no biz artif
 
 ### 2. PRD Sections
 
-Produce sections one at a time, approving each before moving on.
+Produce sections one at a time, approving each before moving on. Drive each section's open points per @../../knowledge/principles/grilling.md — one question per message with a recommendation, facts self-served, converge every fork before the section is approved.
 
 #### Full mode (9 sections)
 
