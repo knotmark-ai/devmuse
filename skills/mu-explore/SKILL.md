@@ -29,7 +29,7 @@ Producing a chat-only summary feels fast and productive. It is the single most c
 - **Not codebase Q&A** — ephemeral questions like "where is JWT validated?" use Grep/Read directly. No artifact needed for one-shot lookups.
 - **Not debugging** — that's `mu-debug`. Explore may precede it for unfamiliar bug areas.
 
-## Use Case Variants
+## Variants
 
 Pick ONE before starting. Different variants have different depth and focus:
 
@@ -47,7 +47,7 @@ If unclear which variant fits, ask user in one sentence before proceeding.
 
 ```dot
 digraph mu_explore {
-    "Pick UC variant" [shape=box];
+    "Pick variant" [shape=box];
     "Target clear?" [shape=diamond];
     "Ask user for target\n(area or whole-repo)" [shape=box];
     "Check existing artifact" [shape=box];
@@ -67,7 +67,7 @@ digraph mu_explore {
     "Commit artifact" [shape=box];
     "Hand off to next skill" [shape=doublecircle];
 
-    "Pick UC variant" -> "Target clear?";
+    "Pick variant" -> "Target clear?";
     "Target clear?" -> "Ask user for target\n(area or whole-repo)" [label="no"];
     "Target clear?" -> "Check existing artifact" [label="yes"];
     "Ask user for target\n(area or whole-repo)" -> "Check existing artifact";
@@ -97,7 +97,7 @@ digraph mu_explore {
 
 Create a task for each and complete in order:
 
-1. **Pick UC variant** — onboarding / takeover / dependency-eval / pre-change / pre-debug. Ask user if ambiguous.
+1. **Pick variant** — onboarding / takeover / dependency-eval / pre-change / pre-debug. Ask user if ambiguous.
 2. **Confirm target** — whole repo (→ `_overview.md`) or a component (→ `<component>.md`). For monorepos, always ask.
 3. **Check for existing artifact** at the chosen path. If it exists, read it and validate against current code.
 4. **Size/area gate**: run `git ls-files | xargs wc -l` or similar for LOC estimate. Apply thresholds.
@@ -121,7 +121,7 @@ Living artifacts, no date in filename. Updates overwrite in place; a History sec
 
 ## Depth Discipline
 
-| UC variant | Depth rule |
+| Variant | Depth rule |
 |-----------|-----------|
 | onboarding / takeover / dep-eval | Component graph depth ≤ 2. Surface deferred branches so user can request deeper. |
 | pre-change | No depth limit; cap at **50 files** in call chain. Paginate/truncate beyond, surface the cut. |
@@ -148,7 +148,7 @@ When README/docs disagree with code (ER-4): record BOTH versions in the artifact
 - **Living artifact, not dated snapshot** — path has no date; History section appends entries with commit hash + date.
 - **Exit criterion is operational** — "can answer 'what does changing X affect?'" — test it before asking for approval.
 - **Depth limits are hard stops** — never produce a shallow overview while claiming full coverage.
-- **Ask once when ambiguous** — don't silently guess UC variant or target area.
+- **Ask once when ambiguous** — don't silently guess the variant or target area.
 - **Delegate mechanics to Explore agent** — for individual lookups, use Claude Code's built-in Explore agent; this skill defines the workflow.
 
 ## Anti-Rationalizations

@@ -86,6 +86,6 @@ _Avoid_: skill SEO, discoverability tuning
 
 ## Flagged Ambiguities
 
-- "UC" means both Use Case (mu-scope's UC-IDs) and use-case variant of an exploration (mu-explore's "Pick UC variant") — **open**; prefer "variant" for the mu-explore sense.
-- "gate" unqualified is ambiguous across HARD-GATE / pipeline gate / sign-off gate / size-area gate — **open**; always qualify.
+- "UC" vs exploration variants — **resolved 2026-07-13** (grill session): "UC" belongs exclusively to mu-scope's Use Case; mu-explore's five exploration types are called **variant** (renamed throughout mu-explore's SKILL.md; template and downstream skills already used "variant").
+- "gate" unqualified — **resolved 2026-07-13** (grill session): never use "gate" bare; always qualify (HARD-GATE / pipeline gate / sign-off gate / size-area gate). No renames needed — the four compound names are already mutually exclusive.
 - "mu-design" vs "mu-arch" — **resolved 2026-04-14**: renamed to mu-arch (`108f3f6`; hook straggler fixed in `304043d`). Dated plan snapshots under `docs/plans/` retain the old name as historical records.
