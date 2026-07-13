@@ -86,7 +86,7 @@ devmuse/
 └── knowledge/    Domain knowledge (injected on demand)
 ```
 
-### Skills (12)
+### Skills (13)
 
 | Category | Skill | Role |
 |----------|-------|------|
@@ -97,10 +97,10 @@ devmuse/
 | Pipeline | **mu-review** | Review + verify + integrate (feedback handling, verification gates, coverage check, merge/PR) |
 | Orthogonal | **mu-explore** | Code comprehension for unfamiliar code — produces a living mental-model artifact |
 | Orthogonal | **mu-debug** | Systematic root cause analysis |
-| Orthogonal | **mu-retro** | Periodic retrospective with git metrics and memory capture |
 | On-demand | **mu-biz** | Business analysis — premise validation (quick) or full analysis (market, BMC, personas, MVP scope) |
 | On-demand | **mu-prd** | Product requirements — user flows, wireframes, feature specs, tiering rules |
 | On-demand | **mu-wiki** | Architecture wiki — generates and maintains project-level architecture documentation |
+| On-demand | **mu-retro** | Periodic retrospective with git metrics and memory capture |
 | Router | **mu-route** | Confidence-based router — silently invokes for clear intent, proposes for ambiguous; bypassed by `/mu-<skill>` |
 | Meta | **mu-write-skill** | Create/edit skills using TDD methodology |
 

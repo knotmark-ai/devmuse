@@ -124,7 +124,7 @@ Promoted to `CONTEXT.md` by the 2026-07-11 harvest: Opening move, Core pipeline,
 
 ## Doc vs Code Conflicts
 
-- **Skill count: README and `docs/architecture.md` say "Skills (12)", `skills/` directory contains 13 subdirs** (as of 2026-07-11; the recurring drift first recorded here as 10 vs 11). Implication: both docs need a one-line update whenever a skill lands; consider deriving the count instead of hardcoding it.
+- ~~Skill count: README and `docs/architecture.md` say "Skills (12)", `skills/` contains 13~~ — **resolved 2026-07-13** (both updated; drift first recorded as 10 vs 11). The counts remain hardcoded, so re-check this on every skill addition.
 - ~~Hook deny message: `pipeline-gate.sh` says "Run mu-design first"~~ — **resolved** by `304043d` (2026-04-16); message now says mu-arch.
 
 ## Depth & Coverage Notes

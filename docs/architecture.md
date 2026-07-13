@@ -76,7 +76,7 @@ Skills and agents reference knowledge via `@` relative paths within the plugin:
 
 **Principle:** Rules consume tokens via hook injection. Only put content that must be unconditionally always-on. Anything loadable on-demand via skills should stay in skills.
 
-### skills/ (12)
+### skills/ (13)
 
 Organized in four categories:
 
@@ -96,7 +96,6 @@ Organized in four categories:
 |------|------|------|
 | mu-explore | Systematic code-comprehension — produces living mental-model artifact for unfamiliar code | — |
 | mu-debug | Systematic root cause analysis | — |
-| mu-retro | Periodic retrospective with git metrics and memory capture | — |
 
 **On-demand** (direct `/slash` invocation only, NOT auto-routed):
 
@@ -105,6 +104,7 @@ Organized in four categories:
 | mu-biz | Business analysis — premise validation (quick) or full analysis (market, BMC, VPC, personas, MVP scope) | — |
 | mu-prd | Product requirements — user flows, wireframes, feature specs, tiering rules | — |
 | mu-wiki | Architecture wiki — generates and maintains project-level architecture documentation | — |
+| mu-retro | Periodic retrospective with git metrics and memory capture | — |
 
 **Router:**
 
