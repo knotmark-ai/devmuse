@@ -9,133 +9,44 @@ description: Use when creating new skills, editing existing skills, or verifying
 
 **Writing skills IS Test-Driven Development applied to process documentation.**
 
-**Personal skills live in `~/.claude/skills`**
-
 You write test cases (pressure scenarios with subagents), watch them fail (baseline behavior), write the skill (documentation), watch tests pass (agents comply), and refactor (close loopholes).
 
 **Core principle:** If you didn't watch an agent fail without the skill, you don't know if the skill teaches the right thing.
 
-**REQUIRED BACKGROUND:** You MUST understand devmuse:mu-code before using this skill. That skill defines the fundamental RED-GREEN-REFACTOR cycle. This skill adapts TDD to documentation.
+**REQUIRED BACKGROUND:** You MUST understand devmuse:mu-code — it defines the RED-GREEN-REFACTOR cycle this skill adapts to documentation.
 
-**Official guidance:** For Anthropic's official skill authoring best practices, see anthropic-best-practices.md. This document provides additional patterns and guidelines that complement the TDD-focused approach in this skill.
+**Official guidance:** For Anthropic's official skill authoring best practices, see anthropic-best-practices.md.
 
 ## What is a Skill?
 
-A **skill** is a reference guide for proven techniques, patterns, or tools. Skills help future Claude instances find and apply effective approaches.
+A **skill** is a reference guide for proven techniques, patterns, or tools — reusable across projects, not a narrative about how you solved a problem once.
 
-**Skills are:** Reusable techniques, patterns, tools, reference guides
+**Create when:** the technique wasn't intuitively obvious to you, you'd reference it again, and it applies beyond one project.
 
-**Skills are NOT:** Narratives about how you solved a problem once
+**Don't create for:** one-off solutions, standard practices well-documented elsewhere, project-specific conventions (put those in CLAUDE.md), or mechanical constraints (if regex/validation can enforce it, automate it — save documentation for judgment calls).
 
-## TDD Mapping for Skills
+Skill type determines test strategy (see Testing below): **technique** (concrete steps), **pattern** (way of thinking), **reference** (API docs, syntax guides).
 
-| TDD Concept | Skill Creation |
-|-------------|----------------|
-| **Test case** | Pressure scenario with subagent |
-| **Production code** | Skill document (SKILL.md) |
-| **Test fails (RED)** | Agent violates rule without skill (baseline) |
-| **Test passes (GREEN)** | Agent complies with skill present |
-| **Refactor** | Close loopholes while maintaining compliance |
-| **Write test first** | Run baseline scenario BEFORE writing skill |
-| **Watch it fail** | Document exact rationalizations agent uses |
-| **Minimal code** | Write skill addressing those specific violations |
-| **Watch it pass** | Verify agent now complies |
-| **Refactor cycle** | Find new rationalizations → plug → re-verify |
+## Structure
 
-The entire skill creation process follows RED-GREEN-REFACTOR.
+DevMuse skills live under `skills/<name>/` in this repo; personal (non-plugin) skills go in `~/.claude/skills`. Each skill is one folder: `SKILL.md` plus supporting files only for reusable tools (scripts, templates) or reference disclosed per the branch test (see Skill Quality Review).
 
-## When to Create a Skill
+**Frontmatter (YAML), max 1024 characters:**
+- Fields: `name`, `description`, and optionally `disable-model-invocation: true` (user-invoked skills — see the invocation-match test in Skill Quality Review)
+- `name`: letters, numbers, hyphens only; verb-first, active voice
+- `description`: third person, triggering conditions ONLY — see CSO below
 
-**Create when:**
-- Technique wasn't intuitively obvious to you
-- You'd reference this again across projects
-- Pattern applies broadly (not project-specific)
-- Others would benefit
-
-**Don't create for:**
-- One-off solutions
-- Standard practices well-documented elsewhere
-- Project-specific conventions (put in CLAUDE.md)
-- Mechanical constraints (if it's enforceable with regex/validation, automate it—save documentation for judgment calls)
-
-## Skill Types
-
-### Technique
-Concrete method with steps to follow (condition-based-waiting, root-cause-tracing)
-
-### Pattern
-Way of thinking about problems (flatten-with-flags, test-invariants)
-
-### Reference
-API docs, syntax guides, tool documentation (office docs)
-
-## Directory Structure
-
-
-```
-skills/
-  skill-name/
-    SKILL.md              # Main reference (required)
-    supporting-file.*     # Only if needed
-```
-
-**Flat namespace** - all skills in one searchable namespace
-
-**Separate files for:**
-1. **Heavy reference** (100+ lines) - API docs, comprehensive syntax
-2. **Reusable tools** - Scripts, utilities, templates
-
-**Keep inline:**
-- Principles and concepts
-- Code patterns (< 50 lines)
-- Everything else
-
-## SKILL.md Structure
-
-**Frontmatter (YAML):**
-- Only two fields supported: `name` and `description`
-- Max 1024 characters total
-- `name`: Use letters, numbers, and hyphens only (no parentheses, special chars)
-- `description`: Third-person, describes ONLY when to use (NOT what it does)
-  - Start with "Use when..." to focus on triggering conditions
-  - Include specific symptoms, situations, and contexts
-  - **NEVER summarize the skill's process or workflow** (see CSO section for why)
-  - Keep under 500 characters if possible
+**Body sections** (adapt to skill type; techniques/patterns lead with a before/after Core Pattern):
 
 ```markdown
----
-name: mu-write-skill
-description: Use when [specific triggering conditions and symptoms]
----
-
 # Skill Name
-
-## Overview
-What is this? Core principle in 1-2 sentences.
-
-## When to Use
-[Small inline flowchart IF decision non-obvious]
-
-Bullet list with SYMPTOMS and use cases
-When NOT to use
-
-## Core Pattern (for techniques/patterns)
-Before/after code comparison
-
-## Quick Reference
-Table or bullets for scanning common operations
-
-## Implementation
-Inline code for simple patterns
-Link to file for heavy reference or reusable tools
-
-## Common Mistakes
-What goes wrong + fixes
-
-## Real-World Impact (optional)
-Concrete results
+## Overview        — what is this? Core principle in 1-2 sentences
+## When to Use     — symptoms and use cases; when NOT to use
+## Core Pattern    — before/after comparison (techniques/patterns)
+## Quick Reference — table for scanning common operations
+## Implementation  — inline code, or pointer to a disclosed file
+## Common Mistakes — what goes wrong + fixes
 ```
-
 
 ## Claude Search Optimization (CSO)
 
@@ -175,57 +86,11 @@ For full graphviz conventions (when to use, node shapes, label rules, rendering 
 
 **@../../knowledge/principles/graphviz-conventions.md**
 
-Summary: use flowcharts ONLY for non-obvious decisions, process loops with early-stop risk, or "A vs B" choices. For reference material use tables; for linear instructions use numbered lists.
+Summary: use flowcharts ONLY for non-obvious decisions, process loops with early-stop risk, or "A vs B" choices. For reference material use tables; for linear instructions use numbered lists. Flowchart labels carry semantic meaning ("Check existing artifact", not "step3"), and code stays out of flowcharts — put it in fenced blocks where it can be copied.
 
 ## Code Examples
 
-**One excellent example beats many mediocre ones**
-
-Choose most relevant language:
-- Testing techniques → TypeScript/JavaScript
-- System debugging → Shell/Python
-- Data processing → Python
-
-**Good example:**
-- Complete and runnable
-- Well-commented explaining WHY
-- From real scenario
-- Shows pattern clearly
-- Ready to adapt (not generic template)
-
-**Don't:**
-- Implement in 5+ languages
-- Create fill-in-the-blank templates
-- Write contrived examples
-
-You're good at porting - one great example is enough.
-
-## File Organization
-
-### Self-Contained Skill
-```
-defense-in-depth/
-  SKILL.md    # Everything inline
-```
-When: All content fits, no heavy reference needed
-
-### Skill with Reusable Tool
-```
-condition-based-waiting/
-  SKILL.md    # Overview + patterns
-  example.ts  # Working helpers to adapt
-```
-When: Tool is reusable code, not just narrative
-
-### Skill with Heavy Reference
-```
-pptx/
-  SKILL.md       # Overview + workflows
-  pptxgenjs.md   # 600 lines API reference
-  ooxml.md       # 500 lines XML structure
-  scripts/       # Executable tools
-```
-When: Reference material too large for inline
+**One excellent example beats many mediocre ones.** Write it complete and runnable, commented to explain WHY, drawn from a real scenario, in the single most relevant language for the domain — the reader ports it to other languages as needed.
 
 ## The Iron Law (Same as TDD)
 
@@ -246,11 +111,17 @@ Edit skill without testing? Same violation.
 - Don't "adapt" while running tests
 - Delete means delete
 
-**REQUIRED BACKGROUND:** The devmuse:mu-code skill explains why this matters. Same principles apply to documentation.
+## RED-GREEN-REFACTOR
+
+| Phase | You do | Done when |
+|-------|--------|-----------|
+| **RED** | Run pressure scenarios with a subagent WITHOUT the skill; record its choices and rationalizations verbatim | Every planned scenario has a documented baseline failure |
+| **GREEN** | Write the minimal skill addressing those specific failures — nothing for hypothetical cases; run the same scenarios WITH the skill | Every baseline scenario now complies |
+| **REFACTOR** | Close each new loophole testing exposes (discipline skills: apply bulletproofing.md); re-test | A full re-run yields zero new rationalizations |
 
 ## Testing All Skill Types
 
-Different skill types need different test approaches. For detailed test strategies per skill type and pressure-scenario techniques:
+For test strategies per skill type and pressure-scenario techniques (pressure types, plugging holes, meta-testing):
 
 **@../../knowledge/principles/skill-testing.md**
 
@@ -276,146 +147,13 @@ Summary of skill types and their test focus:
 
 **All of these mean: Test before deploying. No exceptions.**
 
-## Bulletproofing Skills Against Rationalization
+## Bulletproofing Discipline Skills
 
-Skills that enforce discipline (like TDD) need to resist rationalization. Agents are smart and will find loopholes when under pressure.
-
-**Psychology note:** Understanding WHY persuasion techniques work helps you apply them systematically. See persuasion-principles.md for research foundation (Cialdini, 2021; Meincke et al., 2025) on authority, commitment, scarcity, social proof, and unity principles.
-
-### Close Every Loophole Explicitly
-
-Don't just state the rule - forbid specific workarounds:
-
-<Bad>
-```markdown
-Write code before test? Delete it.
-```
-</Bad>
-
-<Good>
-```markdown
-Write code before test? Delete it. Start over.
-
-**No exceptions:**
-- Don't keep it as "reference"
-- Don't "adapt" it while writing tests
-- Don't look at it
-- Delete means delete
-```
-</Good>
-
-### Address "Spirit vs Letter" Arguments
-
-Add foundational principle early:
-
-```markdown
-**Violating the letter of the rules is violating the spirit of the rules.**
-```
-
-This cuts off entire class of "I'm following the spirit" rationalizations.
-
-### Build Rationalization Table
-
-Capture rationalizations from baseline testing (see Testing section below). Every excuse agents make goes in the table:
-
-```markdown
-| Excuse | Reality |
-|--------|---------|
-| "Too simple to test" | Simple code breaks. Test takes 30 seconds. |
-| "I'll test after" | Tests passing immediately prove nothing. |
-| "Tests after achieve same goals" | Tests-after = "what does this do?" Tests-first = "what should this do?" |
-```
-
-### Create Red Flags List
-
-Make it easy for agents to self-check when rationalizing:
-
-```markdown
-## Red Flags - STOP and Start Over
-
-- Code before test
-- "I already manually tested it"
-- "Tests after achieve the same purpose"
-- "It's about spirit not ritual"
-- "This is different because..."
-
-**All of these mean: Delete code. Start over with TDD.**
-```
-
-### Update CSO for Violation Symptoms
-
-Add to description: symptoms of when you're ABOUT to violate the rule:
-
-```yaml
-description: use when implementing any feature or bugfix, before writing implementation code
-```
-
-## RED-GREEN-REFACTOR for Skills
-
-Follow the TDD cycle:
-
-### RED: Write Failing Test (Baseline)
-
-Run pressure scenario with subagent WITHOUT the skill. Document exact behavior:
-- What choices did they make?
-- What rationalizations did they use (verbatim)?
-- Which pressures triggered violations?
-
-This is "watch the test fail" - you must see what agents naturally do before writing the skill.
-
-### GREEN: Write Minimal Skill
-
-Write skill that addresses those specific rationalizations. Don't add extra content for hypothetical cases.
-
-Run same scenarios WITH skill. Agent should now comply.
-
-### REFACTOR: Close Loopholes
-
-Agent found new rationalization? Add explicit counter. Re-test until bulletproof.
-
-**Testing methodology:**
-- How to write pressure scenarios
-- Pressure types (time, sunk cost, authority, exhaustion)
-- Plugging holes systematically
-- Meta-testing techniques
-
-## Anti-Patterns
-
-### ❌ Narrative Example
-"In session 2025-10-03, we found empty projectDir caused..."
-**Why bad:** Too specific, not reusable
-
-### ❌ Multi-Language Dilution
-example-js.js, example-py.py, example-go.go
-**Why bad:** Mediocre quality, maintenance burden
-
-### ❌ Code in Flowcharts
-```dot
-step1 [label="import fs"];
-step2 [label="read file"];
-```
-**Why bad:** Can't copy-paste, hard to read
-
-### ❌ Generic Labels
-helper1, helper2, step3, pattern4
-**Why bad:** Labels should have semantic meaning
-
-## STOP: Before Moving to Next Skill
-
-**After writing ANY skill, you MUST STOP and complete the deployment process.**
-
-**Do NOT:**
-- Create multiple skills in batch without testing each
-- Move to next skill before current one is verified
-- Skip testing because "batching is more efficient"
-
-**The deployment checklist below is MANDATORY for EACH skill.**
-
-Deploying untested skills = deploying untested code. It's a violation of quality standards.
+Discipline skills must resist rationalization under pressure. Before the REFACTOR phase of any discipline skill, read bulletproofing.md — closing loopholes explicitly, spirit-vs-letter, rationalization tables, red-flags lists, violation-symptom descriptions, and the persuasion research behind them.
 
 ## Skill Creation Checklist (TDD Adapted)
 
-**IMPORTANT: Use TodoWrite to create todos for EACH checklist item below.**
+Create a task for EACH checklist item. Complete the full checklist for each skill before starting the next — deploying untested skills is deploying untested code.
 
 **RED Phase - Write Failing Test:**
 - [ ] Create pressure scenarios (3+ combined pressures for discipline skills)
@@ -424,7 +162,7 @@ Deploying untested skills = deploying untested code. It's a violation of quality
 
 **GREEN Phase - Write Minimal Skill:**
 - [ ] Name uses only letters, numbers, hyphens (no parentheses/special chars)
-- [ ] YAML frontmatter with only name and description (max 1024 chars)
+- [ ] YAML frontmatter: `name`, `description`, optional `disable-model-invocation` (max 1024 chars)
 - [ ] Description starts with "Use when..." and includes specific triggers/symptoms
 - [ ] Description written in third person
 - [ ] Keywords throughout for search (errors, symptoms, tools)
@@ -436,41 +174,18 @@ Deploying untested skills = deploying untested code. It's a violation of quality
 
 **REFACTOR Phase - Close Loopholes:**
 - [ ] Identify NEW rationalizations from testing
-- [ ] Add explicit counters (if discipline skill)
+- [ ] Add explicit counters per bulletproofing.md (if discipline skill)
 - [ ] Build rationalization table from all test iterations
 - [ ] Create red flags list
-- [ ] Re-test until bulletproof
+- [ ] Re-test until a full re-run yields zero new rationalizations
 
 **Quality Checks:**
 - [ ] Small flowchart only if decision non-obvious
 - [ ] Quick reference table
 - [ ] Common mistakes section
 - [ ] No narrative storytelling
-- [ ] Supporting files only for tools or heavy reference
+- [ ] Supporting files only for tools or disclosed reference
 - [ ] Run the 8-step skill-quality review checklist (invocation match, no-op, negation, duplication, completion criteria, leading words, branch test, sediment/sprawl)
 
 **Deployment:**
-- [ ] Commit skill to git and push to your fork (if configured)
-- [ ] Consider contributing back via PR (if broadly useful)
-
-## Discovery Workflow
-
-How future Claude finds your skill:
-
-1. **Encounters problem** ("tests are flaky")
-3. **Finds SKILL** (description matches)
-4. **Scans overview** (is this relevant?)
-5. **Reads patterns** (quick reference table)
-6. **Loads example** (only when implementing)
-
-**Optimize for this flow** - put searchable terms early and often.
-
-## The Bottom Line
-
-**Creating skills IS TDD for process documentation.**
-
-Same Iron Law: No skill without failing test first.
-Same cycle: RED (baseline) → GREEN (write skill) → REFACTOR (close loopholes).
-Same benefits: Better quality, fewer surprises, bulletproof results.
-
-If you follow TDD for code, follow it for skills. It's the same discipline applied to documentation.
+- [ ] Commit the skill (DevMuse skills: follow this repo's PR conventions)
