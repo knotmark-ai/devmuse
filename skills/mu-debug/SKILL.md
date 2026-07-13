@@ -84,11 +84,16 @@ You MUST complete each phase before proceeding to the next.
    - Read stack traces completely
    - Note line numbers, file paths, error codes
 
-2. **Reproduce Consistently**
-   - Can you trigger it reliably?
-   - What are the exact steps?
-   - Does it happen every time?
-   - If not reproducible → gather more data, don't guess
+2. **Build the Red Loop — the core of this phase**
+
+   A *red loop* is one command that reproduces the **user's exact symptom**: a failing test, a curl script, a CLI run diffed against a known-good snapshot, a headless-browser script, a replayed captured trace, a throwaway harness, a fuzz loop, a bisection run, or a differential run (old vs new) — prefer them in roughly that order. Build it from the symptom, not from your theory: a repro shaped by a hypothesis can only confirm that hypothesis's neighborhood.
+
+   Make the loop **tight**: red-capable (asserts the symptom itself, not "didn't crash"), deterministic (same verdict every run), fast (seconds), agent-runnable (no human required per run).
+
+   - Intermittent bug? Raise the reproduction rate until it's debuggable — loop the trigger 100×, parallelise, add stress, narrow timing windows. A 50% flake is debuggable; 1% is not.
+   - Genuinely cannot build one? Stop and say so: list what you tried, then ask the user for a reproducing environment, a captured artifact (HAR, log dump, core dump), or permission to add temporary instrumentation.
+
+   **Gate:** Phase 1 is not complete until you can paste one command you have already run, with its red output. Reading code to build a theory before that command exists is the exact failure this phase prevents.
 
 3. **Check Recent Changes**
    - What changed that could cause this?
@@ -182,6 +187,7 @@ You MUST complete each phase before proceeding to the next.
    - Make the SMALLEST possible change to test hypothesis
    - One variable at a time
    - Don't fix multiple things at once
+   - Run the Phase 1 red loop after each probe — the loop is the verdict, red or green
 
 3. **Verify Before Continuing**
    - Did it work? Yes → Phase 4
@@ -198,11 +204,10 @@ You MUST complete each phase before proceeding to the next.
 
 **Fix the root cause, not the symptom:**
 
-1. **Create Failing Test Case**
-   - Simplest possible reproduction
-   - Automated test if possible
-   - One-off test script if no framework
-   - MUST have before fixing
+1. **Promote the Red Loop into a Failing Test**
+   - Minimise first: shrink the Phase 1 repro to the smallest scenario that still goes red, cutting one element at a time until every remaining element is load-bearing
+   - Automated test if possible; one-off test script if no framework
+   - MUST exist before fixing
    - Use the `devmuse:mu-code` skill (TDD Discipline section) for writing proper failing tests
 
 2. **Implement Single Fix**
@@ -251,6 +256,8 @@ If you catch yourself thinking:
 - "Pattern says X but I'll adapt it differently"
 - "Here are the main problems: [lists fixes without investigation]"
 - Proposing solutions before tracing data flow
+- Reading code to build a theory before a red-capable command exists
+- Building the repro around your hypothesis instead of the user's symptom
 - **"One more fix attempt" (when already tried 2+)**
 - **Each fix reveals new problem in different place**
 
@@ -280,13 +287,15 @@ If you catch yourself thinking:
 | "Multiple fixes at once saves time" | Can't isolate what worked. Causes new bugs. |
 | "Reference too long, I'll adapt the pattern" | Partial understanding guarantees bugs. Read it completely. |
 | "I see the problem, let me fix it" | Seeing symptoms ≠ understanding root cause. |
+| "I can see the bug right there in the code" | Seeing it ≠ proving it. The red loop proves cause and verifies the fix. |
+| "I'll build the repro once I have a hypothesis" | A hypothesis-shaped repro confirms the neighborhood, not the bug. Symptom first, theory second. |
 | "One more fix attempt" (after 2+ failures) | 3+ failures = architectural problem. Question pattern, don't fix again. |
 
 ## Quick Reference
 
 | Phase | Key Activities | Success Criteria |
 |-------|---------------|------------------|
-| **1. Root Cause** | Read errors, reproduce, check changes, gather evidence | Understand WHAT and WHY |
+| **1. Root Cause** | Read errors, build the red loop, check changes, gather evidence | Red loop runs and goes red on the symptom |
 | **2. Pattern** | Find working examples, compare | Identify differences |
 | **3. Hypothesis** | Form theory, test minimally | Confirmed or new hypothesis |
 | **4. Implementation** | Create test, fix, verify | Bug resolved, tests pass |
