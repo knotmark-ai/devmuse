@@ -53,14 +53,15 @@ scope → arch → plan → code → review
 ### 正交技能（自动路由）
 
 - **mu-explore** — 系统化代码理解，产出活文档形式的心智模型。
-- **mu-debug** — 系统化根因分析（4 阶段流程，含架构升级路径）。
-- **mu-retro** — 定期回顾，收集 git 指标并将发现写入记忆。
+- **mu-debug** — 系统化根因分析（先建红色回路，4 阶段流程，含架构升级路径）。
 
 ### 按需技能（仅通过 `/slash` 直接调用）
 
 - **mu-biz** — 商业分析：验证前提（quick 模式）或完整分析（竞品、BMC、VPC、用户画像、MVP 范围）。使用 `/mu-biz` 调用。
 - **mu-prd** — 产品需求：用户流程、线框图、特性规格、分级规则。使用 `/mu-prd` 调用。
 - **mu-wiki** — 架构 Wiki：生成和维护项目级架构文档，包含 Mermaid 图和源码引用。使用 `/mu-wiki generate` 或 `/mu-wiki update` 调用。
+- **mu-retro** — 定期回顾：git 指标、审查模式分析、发现写入记忆。使用 `/mu-retro` 调用。
+- **mu-grill** — 对方案/设计的穷追式访谈，收敛每一个"猜错即返工"的分叉后才开工。使用 `/mu-grill` 调用。
 
 这些技能**不会被自动路由**，需要用户显式调用。
 
@@ -86,7 +87,7 @@ devmuse/
 └── knowledge/    领域知识（按需注入）
 ```
 
-### 技能（12 个）
+### 技能
 
 | 类别 | 技能 | 角色 |
 |------|------|------|
@@ -97,21 +98,22 @@ devmuse/
 | 管线 | **mu-review** | 审查 + 验证 + 集成（反馈处理、验证门禁、覆盖度检查、合并/PR） |
 | 正交 | **mu-explore** | 不熟悉代码的系统化理解 — 产出活文档形式的心智模型 |
 | 正交 | **mu-debug** | 系统化根因分析 |
-| 正交 | **mu-retro** | 定期回顾，收集 git 指标并写入记忆 |
 | 按需 | **mu-biz** | 商业分析 — 前提验证（quick）或完整分析（市场、BMC、画像、MVP 范围） |
 | 按需 | **mu-prd** | 产品需求 — 用户流程、线框图、特性规格、分级规则 |
 | 按需 | **mu-wiki** | 架构 Wiki — 生成和维护项目级架构文档 |
+| 按需 | **mu-retro** | 定期回顾，收集 git 指标并写入记忆 |
+| 按需 | **mu-grill** | 对方案/设计的穷追式访谈 — 开工前收敛每一个"猜错即返工"的分叉 |
 | 路由 | **mu-route** | 置信度路由器 — 明确意图静默调用，模糊意图提案确认；`/mu-<skill>` 斜杠调用可绕过 |
 | 元 | **mu-write-skill** | 使用 TDD 方法论创建/编辑技能 |
 
-### 代理（2 个）
+### 代理
 
 | 代理 | 角色 |
 |------|------|
 | **mu-reviewer** | 六模式审查者：设计文档（review-design）、实施计划（review-plan）、代码质量（review-code）、规格符合性（review-compliance）、需求覆盖（review-coverage）、安全审计（review-security） |
 | **mu-coder** | 实现专家：根据任务规格构建功能 |
 
-### 规则（1 个）
+### 规则
 
 | 规则 | 角色 |
 |------|------|
@@ -130,7 +132,7 @@ devmuse/
 |------|------|
 | **languages/** | 语言特定审查标准（Java、Go、Python、TypeScript） |
 | **templates/** | 产物模板（scope 用例集模板） |
-| **principles/** | 思维模式（10 个文件）：反转思维、前提检查、Chesterton's Fence、git 安全协议、stance 检测、sign-off 门禁、架构评估、graphviz 规范、skill CSO、skill 测试 |
+| **principles/** | 决策点加载的思维模式 — 反转思维、前提检查、stance 检测、sign-off 门禁、grilling 访谈、领域词汇表、skill 质量等（当前完整清单见目录） |
 | **reviews/** | 审查清单：安全审计（5 阶段 OWASP）、设计审计量表（架构评分） |
 
 ## 理念

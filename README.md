@@ -53,14 +53,15 @@ scope → arch → plan → code → review
 ### Orthogonal skills (auto-routed)
 
 - **mu-explore** — Systematic code comprehension for unfamiliar code. Produces a living mental-model artifact.
-- **mu-debug** — Systematic root cause analysis (4-phase process with architecture escalation).
-- **mu-retro** — Periodic retrospective gathering git metrics and capturing learnings to memory.
+- **mu-debug** — Systematic root cause analysis (red loop first, 4-phase process with architecture escalation).
 
 ### On-demand skills (direct `/slash` invocation only)
 
 - **mu-biz** — Business analysis: validate premise (quick mode) or full analysis (competitive, BMC, VPC, personas, MVP scope). Invoke with `/mu-biz`.
 - **mu-prd** — Product requirements: user flows, wireframes, per-feature specs, tiering rules. Invoke with `/mu-prd`.
 - **mu-wiki** — Architecture wiki: generates and maintains project-level architecture documentation with Mermaid diagrams and source citations. Invoke with `/mu-wiki generate` or `/mu-wiki update`.
+- **mu-retro** — Periodic retrospective: git metrics, review patterns, learnings captured to memory. Invoke with `/mu-retro`.
+- **mu-grill** — Relentless plan/design interview until every rework-forcing fork is resolved. Invoke with `/mu-grill`.
 
 These are NOT auto-routed. The user explicitly invokes them when needed.
 
@@ -86,7 +87,7 @@ devmuse/
 └── knowledge/    Domain knowledge (injected on demand)
 ```
 
-### Skills (14)
+### Skills
 
 | Category | Skill | Role |
 |----------|-------|------|
@@ -105,14 +106,14 @@ devmuse/
 | Router | **mu-route** | Confidence-based router — silently invokes for clear intent, proposes for ambiguous; bypassed by `/mu-<skill>` |
 | Meta | **mu-write-skill** | Create/edit skills using TDD methodology |
 
-### Agents (2)
+### Agents
 
 | Agent | Role |
 |-------|------|
 | **mu-reviewer** | Six-mode reviewer: design doc (review-design), implementation plans (review-plan), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage), security (review-security) |
 | **mu-coder** | Implementation specialist: builds features from task specs |
 
-### Rules (1)
+### Rules
 
 | Rule | Role |
 |------|------|
@@ -131,7 +132,7 @@ devmuse/
 |----------|---------|
 | **languages/** | Language-specific review criteria (Java, Go, Python, TypeScript) |
 | **templates/** | Artifact templates (scope Use Case Set) |
-| **principles/** | Thinking rubrics (10 files): inversion, premise check, Chesterton's Fence, git safety, stance detection, sign-off gate, architecture assessment, graphviz conventions, skill CSO, skill testing |
+| **principles/** | Thinking rubrics loaded at decision points — inversion, premise check, stance detection, sign-off gate, grilling, domain glossary, skill quality, and more (see the directory for the current set) |
 | **reviews/** | Review checklists: security audit (5-phase OWASP), design audit rubric (architecture scoring) |
 
 ## Philosophy

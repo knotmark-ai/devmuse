@@ -68,7 +68,7 @@ Skills and agents reference knowledge via `@` relative paths within the plugin:
 
 ## Content
 
-### rules/ (1 file)
+### rules/
 
 | Name | Role |
 |------|------|
@@ -76,54 +76,24 @@ Skills and agents reference knowledge via `@` relative paths within the plugin:
 
 **Principle:** Rules consume tokens via hook injection. Only put content that must be unconditionally always-on. Anything loadable on-demand via skills should stay in skills.
 
-### skills/ (14)
+### skills/
 
-Organized in four categories:
+The **canonical skill inventory** (categories and roles) lives in the [README's Skills table](../README.md#skills) — this file does not repeat it. Recorded here is only what's architectural: which skills dispatch agents.
 
-**Pipeline** — core dev workflow `scope → arch → plan → code → review` (auto-routed):
+| Skill | Dispatches |
+|-------|-----------|
+| mu-arch | mu-reviewer (review-design) |
+| mu-plan | mu-reviewer (review-plan) |
+| mu-code | mu-coder; mu-reviewer (review-code + review-compliance) |
+| mu-review | mu-reviewer (review-code + review-coverage + review-security) |
 
-| Name | Role | Dispatches Agent |
-|------|------|------|
-| mu-scope | Use cases + conflict detection + impact analysis | — |
-| mu-arch | Scope → technical architecture spec via collaborative dialogue | mu-reviewer (review-design) |
-| mu-plan | Architecture → implementation plan | — |
-| mu-code | Plan → implementation (subagent or inline, TDD, worktree) | mu-coder, mu-reviewer (review-code + review-compliance) |
-| mu-review | Review + verify + integrate | mu-reviewer (review-code + review-coverage + review-security) |
+All other skills dispatch no agents.
 
-**Orthogonal** (auto-routed, pipeline-external):
-
-| Name | Role | Dispatches Agent |
-|------|------|------|
-| mu-explore | Systematic code-comprehension — produces living mental-model artifact for unfamiliar code | — |
-| mu-debug | Systematic root cause analysis | — |
-
-**On-demand** (direct `/slash` invocation only, NOT auto-routed):
-
-| Name | Role | Dispatches Agent |
-|------|------|------|
-| mu-biz | Business analysis — premise validation (quick) or full analysis (market, BMC, VPC, personas, MVP scope) | — |
-| mu-prd | Product requirements — user flows, wireframes, feature specs, tiering rules | — |
-| mu-wiki | Architecture wiki — generates and maintains project-level architecture documentation | — |
-| mu-retro | Periodic retrospective with git metrics and memory capture | — |
-| mu-grill | Relentless plan/design interview — one question at a time until every rework-forcing fork is resolved | — |
-
-**Router:**
-
-| Name | Role | Dispatches Agent |
-|------|------|------|
-| mu-route | Confidence-based router — silently invokes for clear intent, proposes for ambiguous; bypassed by /mu-<skill> slash hints | — |
-
-**Meta:**
-
-| Name | Role | Dispatches Agent |
-|------|------|------|
-| mu-write-skill | Create/edit skills using TDD methodology | — |
-
-### agents/ (2)
+### agents/
 
 | Name | Role | Dispatched by |
 |------|------|---------|
-| mu-reviewer | Six-mode reviewer: design doc (review-design), implementation plans (review-plan), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage), security (review-security) | mu-scope, mu-arch, mu-plan, mu-code, mu-review |
+| mu-reviewer | Six-mode reviewer: design doc (review-design), implementation plans (review-plan), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage), security (review-security) | mu-arch, mu-plan, mu-code, mu-review |
 | mu-coder | Implementation specialist | mu-code |
 
 **Design decision:** 2 generic agents + knowledge injection, not N language-specific agents. Review logic is 80% universal; change once, effective globally. Adding a new language only requires a knowledge file.
@@ -138,34 +108,7 @@ Organized in four categories:
 | reviews/ | Review checklists for specific concerns | mu-reviewer (review-security, review-design) |
 | schemas/ | Structured output schemas for external tool invocation | mu-review (codex cross-review) |
 
-```
-knowledge/
-├── languages/
-│   ├── typescript.md   # Type safety, async patterns, common pitfalls
-│   ├── python.md       # Type hints, pythonic patterns, security
-│   ├── go.md           # Error handling, concurrency, interface design
-│   └── java.md         # Null handling, concurrency, resource management
-├── templates/
-│   ├── scope.md        # Use Case Set template for mu-scope
-│   ├── explore.md      # Mental-model artifact template for mu-explore
-│   ├── architecture.md # Architecture spec template for mu-arch
-│   └── wiki-index.md   # Wiki index template for mu-wiki
-├── principles/         # Thinking rubrics loaded at decision points
-│   ├── architecture-assessment.md # C4 model guide + diagram type selection
-│   ├── chestertons-fence.md # Understand before changing/removing code
-│   ├── graphviz-conventions.md # When/how to use digraphs in skills
-│   ├── inversion.md    # Inversion reflex for approach comparison
-│   ├── premise-check.md # Premise validation forcing questions
-│   ├── skill-cso.md    # Claude Search Optimization for skill descriptions
-│   ├── skill-testing.md # Per-type test strategies + pressure scenarios
-│   ├── stance-detection.md # Stance detection for mu-biz/mu-prd/mu-arch Phase 0
-│   └── sign-off-gate.md # Sign-off protocol when stakeholder-scope = team-touching
-├── schemas/            # Structured output schemas for external tools
-│   └── codex-review-output.json  # Codex CLI cross-review output schema
-└── reviews/            # Review checklists for specific concerns
-    ├── security-checklist.md  # 5-phase security audit
-    └── design-audit-rubric.md # Architecture audit rubric
-```
+Each file opens with a **"When to use"** header naming its consuming skills — the directory itself is the current inventory (file-level lists are not repeated here; they drift).
 
 > **Future expansion:** A `knowledge/frameworks/` subdirectory (e.g., spring-boot.md, react.md, flutter.md) can be added when framework-specific review criteria are needed. Not currently populated.
 
@@ -209,7 +152,6 @@ rules ──constrain──→ all layers
 
 ```json
 {
-  "version": "0.2.0",
   "agents": [
     "./agents/mu-reviewer.md",
     "./agents/mu-coder.md"
@@ -217,5 +159,7 @@ rules ──constrain──→ all layers
   "skills": ["./skills/"]
 }
 ```
+
+(Version field omitted here — see `.claude-plugin/plugin.json` for the current release.)
 
 `hooks/hooks.json` is auto-loaded by convention (Claude Code v2.1+), not declared in plugin.json.
