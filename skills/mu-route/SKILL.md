@@ -94,10 +94,11 @@ Create tasks for each and complete in order:
 | "add feature", "build feature" | create-feature | **Design-tech** (or Explore if unfamiliar) |
 | "refactor", "clean up", "rename", "restructure" | reshape | **Design-tech** (or Explore if unfamiliar) |
 | "fix", "broken", "error", "bug", "test failing", "crash" | fix | **Reproduce** |
+| "review", "检查", "look at this diff / PR", "审一下" | review | **Review** (mu-review) |
 | "implement", "write this", "build this", "code it up" | implement | **Implement** (if design exists; else Design-tech) |
 **On-demand only (not auto-routed):** "validate idea", "business model", "product requirements", "user flows", "competitive analysis" → respond with a pointer to `/mu-biz` or `/mu-prd`. "retro", "look back", "how did X go" → respond with a pointer to `/mu-retro`. "wiki", "architecture docs", "generate documentation", "project documentation" → respond with a pointer to `/mu-wiki`. "grill me", "stress-test this plan", "挑战这个方案" → respond with a pointer to `/mu-grill`.
 
-When multiple verbs fire, Axis-Intent prefers the **primary action** — fix > reshape > create-feature > implement > understand (most-specific wins).
+When multiple verbs fire, Axis-Intent prefers the **primary action** — fix > review > reshape > create-feature > implement > understand (most-specific wins).
 
 ## Routing Decision Table
 
@@ -108,6 +109,7 @@ Rows evaluated top-to-bottom; first match wins.
 | R1 | `/mu-<skill>` | — | — | — | **bypass** direct invocation | — (user owns intent) |
 | R2 | none | understand | — | — | **Explore** | — |
 | R3 | none | fix | — | — | **Reproduce** (via `mu-scope` 1 UC repro) | — |
+| R3.5 | none | review | — | — | **Review** (mu-review) | — |
 | R4 | none | reshape | — | unfamiliar | **Explore** (pre-change variant) → then Design-tech | — |
 | R5 | none | reshape / create-feature | no specs | familiar | **Design-tech** | stance=auto |
 | R5.5 | none | implement | no specs | — | **Design-tech** | stance=auto |
