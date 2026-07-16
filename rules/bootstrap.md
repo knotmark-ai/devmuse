@@ -47,51 +47,24 @@ DevMuse handles two categories of work:
 
 **Not in scope:** general questions, open-ended discussion, brainstorming without a concrete goal, non-software topics. For these, respond normally without invoking any skill.
 
-### Routing Flow
+### Routing
 
-```dot
-digraph skill_flow {
-    "User message received" [shape=doublecircle];
-    "Slash prefix (/mu-*)?" [shape=diamond];
-    "Direct skill invocation" [shape=doublecircle];
-    "In DevMuse domain?\n(dev or product work)" [shape=diamond];
-    "Respond normally\n(no skill)" [shape=doublecircle];
-    "Task transition?" [shape=diamond];
-    "Continue current skill\n(no re-route)" [shape=doublecircle];
-    "Invoke mu-route\n(classify + confidence)" [shape=box];
-    "mu-route invokes\ntarget skill" [shape=doublecircle];
+For any **unprefixed** user message within DevMuse's domain, invoke `mu-route`. It pattern-matches intent + repo state, assesses confidence, and either silently invokes the target skill or proposes for user confirmation. See `skills/mu-route/SKILL.md` for the decision table and trigger signals.
 
-    "User message received" -> "Slash prefix (/mu-*)?";
-    "Slash prefix (/mu-*)?" -> "Direct skill invocation" [label="yes"];
-    "Slash prefix (/mu-*)?" -> "In DevMuse domain?\n(dev or product work)" [label="no"];
-    "In DevMuse domain?\n(dev or product work)" -> "Respond normally\n(no skill)" [label="no"];
-    "In DevMuse domain?\n(dev or product work)" -> "Task transition?" [label="yes"];
-    "Task transition?" -> "Invoke mu-route\n(classify + confidence)" [label="yes or no active skill"];
-    "Task transition?" -> "Continue current skill\n(no re-route)" [label="no, same task type"];
-    "Invoke mu-route\n(classify + confidence)" -> "mu-route invokes\ntarget skill";
-}
-```
+**Slash bypasses routing** — `/mu-arch`, `/mu-biz`, etc. invoke the named skill directly.
+
+**Four categories:**
+
+- **Core pipeline** (auto-routed): mu-scope → mu-arch → mu-plan → mu-code → mu-review
+- **Orthogonal** (auto-routed): mu-explore, mu-debug
+- **On-demand** (slash only, never auto-routed — mu-route answers matching intents with a pointer): mu-biz, mu-prd, mu-wiki, mu-retro, mu-grill
+- **Meta**: mu-route (router), mu-write-skill (skill authoring)
 
 ### Continuation vs Transition
 
-Not every message needs re-routing. During an active skill (e.g., mu-debug), follow-up questions of the **same type** are continuations — just respond. But when the user's intent **shifts category**, mu-route must re-fire.
+During an active skill, same-type follow-ups are continuations — just respond, no re-routing: "查下这个日志" mid-debug, clarifying questions, providing requested info. When the user's intent **shifts category** — debug→fix, explore→implement, anything→review, fix→redesign — re-invoke mu-route.
 
-**Continuations (skip mu-route):**
-- Same-type follow-ups: "查下这个日志", "再看下 authId=xxx" during active debugging
-- Clarifying questions about current work
-- Providing requested info back to the active skill
-
-**Transitions (re-invoke mu-route):**
-
-| From | Signal words | Likely target |
-|------|-------------|---------------|
-| debug/explore → fix | "修复", "fix", "改掉", "解决" | mu-code |
-| debug/explore → implement | "实现", "implement", "加上", "做这个" | mu-arch or mu-code |
-| any → review | "review", "检查", "提交" | mu-review |
-| any → new feature | "接下来做", "新增", "加个功能" | mu-arch |
-| fix → design | "重新设计", "重构", "这个架构不对" | mu-arch |
-
-**The test:** If you removed all prior conversation context, would this message route to a **different** skill than the one currently active? If yes → transition → re-route.
+**The test:** with all prior conversation context removed, would this message route to a **different** skill than the one currently active? Yes → transition → re-route.
 
 ## Red Flags
 
@@ -99,70 +72,17 @@ These thoughts mean STOP—you're rationalizing:
 
 | Thought | Reality |
 |---------|---------|
-| "I need more context first" | Skill check comes BEFORE clarifying questions. |
-| "Let me explore the codebase first" | Skills tell you HOW to explore. Check first. |
-| "I can check git/files quickly" | Files lack conversation context. Check for skills. |
-| "Let me gather information first" | Skills tell you HOW to gather information. |
-| "This doesn't need a formal skill" | If a skill exists, use it. |
-| "I remember this skill" | Skills evolve. Read current version. |
-| "The skill is overkill" | Simple things become complex. Use it. |
-| "I'll just do this one thing first" | Check BEFORE doing anything. |
-| "This feels productive" | Undisciplined action wastes time. Skills prevent this. |
-| "I know what that means" | Knowing the concept ≠ using the skill. Invoke it. |
-| "This is too simple to need scoping" | Simple tasks are where omissions hurt most. Scope can be 1 use case. |
-| "I already know what to build" | You know what YOU want. Scope finds what you missed. |
-| "Just a quick fix" | Quick Probe takes 30 seconds. Just do it. |
-| "This is a continuation of the current task" | Check: did the intent shift? Debug→fix, explore→implement, etc. If yes, re-route. |
+| "Let me gather context / explore the codebase / check files first" | Skill check comes BEFORE clarifying questions. Skills tell you HOW to explore and gather. |
+| "This doesn't need a formal skill" / "the skill is overkill" | If a skill exists, use it. Simple things become complex. |
+| "I remember this skill" | Skills evolve. Read the current version. |
+| "Just a quick fix" / "too simple to need scoping" | Simple tasks are where omissions hurt most. Scope can be 1 use case; Quick Probe takes 30 seconds. |
+| "This is a continuation of the current task" | Apply the transition test above. If the intent shifted, re-route. |
 
-**Not a red flag:** "This isn't a dev or product task" — if the user is having an open-ended discussion, asking a general question, or talking about non-software topics, it's correct to respond normally without routing.
-
-## Skill Priority & Pipeline Paths
-
-DevMuse organizes skills into four categories:
-
-**Core pipeline** (auto-routed via mu-route): mu-scope → mu-arch → mu-plan → mu-code → mu-review
-
-**Orthogonal** (auto-routed via mu-route): mu-explore, mu-debug
-
-**On-demand** (direct `/slash` invocation only, NOT auto-routed): mu-biz, mu-prd, mu-wiki, mu-retro, mu-grill
-
-**Meta**: mu-route (router), mu-write-skill (skill authoring)
-
-### Routing: how tasks get started
-
-**For any unprefixed user message that falls within DevMuse's domain**, invoke `mu-route`. It pattern-matches intent + repo state, assesses confidence, and either silently invokes the target skill or proposes for user confirmation.
-
-**Direct slash invocation bypasses mu-route** — `/mu-arch`, `/mu-biz`, `/mu-explore`, etc. route directly to the named skill (power-user escape hatch, matches industry convention: Aider / Roo / Continue).
-
-**On-demand skills (mu-biz, mu-prd, mu-wiki, mu-retro, mu-grill)** are never auto-routed. Users invoke them explicitly with `/mu-biz`, `/mu-prd`, `/mu-wiki`, `/mu-retro`, or `/mu-grill` when they need business analysis, product requirements, architecture wiki generation, a retrospective, or a standalone plan-grilling interview.
-
-See `skills/mu-route/SKILL.md` for the full routing decision table, trigger signals, and confidence-based proposal behavior.
-
-### Creative-skill stance
-
-`mu-biz`, `mu-prd`, and `mu-arch` each run a **Phase 0 stance detection** (`create` / `update` / `extract` / `skip`) on entry. The user confirms in one word or overrides via slash hint (e.g., `/mu-arch create`). See `knowledge/principles/stance-detection.md`.
-
-### Sign-off gate
-
-When stakeholder-scope indicates team-touching (CODEOWNERS present + multi-author git history, or user declaration), creative skills run a sign-off gate protocol at terminal. Non-blocking; user can always override with "skip sign-off". See `knowledge/principles/sign-off-gate.md`.
-
-### Examples
-
-| User message | Behavior |
-|-------------|----------|
-| "Fix this bug" | mu-route → **Reproduce** (silent) |
-| "Refactor the auth module" | mu-route → **Design-tech** (one-line check) |
-| "Is this worth building?" | mu-route → pointer to `/mu-biz` |
-| "我想聊聊这个项目的方向" | Not in domain → respond normally |
-| `/mu-biz full` | Direct invocation (bypass mu-route) |
+**Not a red flag:** "This isn't a dev or product task" — open-ended discussion, general questions, and non-software topics get a normal response, no routing.
 
 ## Skill Types
 
-**Rigid** (code with TDD, review with verification): Follow exactly. Don't adapt away discipline.
-
-**Flexible** (design, debug): Adapt principles to context.
-
-The skill itself tells you which.
+**Rigid** (code with TDD, review with verification): follow exactly — don't adapt away discipline. **Flexible** (design, debug): adapt principles to context. The skill itself tells you which.
 
 ## User Instructions
 
