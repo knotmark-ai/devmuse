@@ -67,7 +67,7 @@ These are NOT auto-routed. The user explicitly invokes them when needed.
 
 ### Routing
 
-mu-route classifies unprefixed user messages and routes to the appropriate skill. Confidence-based: clear intent gets silent routing, ambiguous intent gets a proposal for user confirmation. Non-dev/product messages are not routed.
+Routing lives in the always-on bootstrap rule: unprefixed messages are classified by intent and repo state — clear intent routes silently, ambiguous intent gets a proposal. Non-dev/product messages are not routed.
 
 ### Typical Paths
 
@@ -103,7 +103,6 @@ devmuse/
 | On-demand | **mu-wiki** | Architecture wiki — generates and maintains project-level architecture documentation |
 | On-demand | **mu-retro** | Periodic retrospective with git metrics and memory capture |
 | On-demand | **mu-grill** | Relentless plan/design interview — resolves every rework-forcing fork before work begins |
-| Router | **mu-route** | Confidence-based router — silently invokes for clear intent, proposes for ambiguous; bypassed by `/mu-<skill>` |
 | Meta | **mu-write-skill** | Create/edit skills using TDD methodology |
 
 ### Agents
