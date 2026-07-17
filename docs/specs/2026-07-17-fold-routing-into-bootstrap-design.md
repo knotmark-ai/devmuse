@@ -48,13 +48,13 @@ Replaces bootstrap's current ~12-line "Routing" subsection. Final text (~32 line
 - Header rule: unprefixed in-domain messages, at task start or transition, classify and route from this section; `/mu-*` bypasses.
 - **Signals block**: intent verbs; artifact existence (`docs/scope|specs|prd|biz/*.md`, on-disk only); recent-author familiarity (git log 30d) when reshape fires; installed non-DevMuse skill match. Never fabricate — on computation error, ask the user for the opening move (UC-E1).
 - **Intent → opening move table** (9 rows, first match wins; multi-verb priority fix > review > reshape > create-feature > implement > understand): understand→Explore; fix→Reproduce; review→Review; reshape+unfamiliar→Explore(pre-change)→Design-tech; reshape/create-feature+familiar+no-specs→Design-tech(stance=auto); implement+no-specs→Design-tech(stance=auto); implement+specs→Implement; plugin-match→propose delegation; no-match/pathological→Explore default / ask user (UC-E2).
-- **Confidence rule** (3 tiers): silent invoke / one-line check / full proposal with one-word overrides.
+- **Confidence rule** (3 tiers): silent invoke / one-line check / full proposal with one-word overrides. An unparseable reply to a proposal → ask the user to restate with one word from the override list (non-blocking; former ER-R2).
 
 Preserved semantics from mu-route not restated elsewhere: stance=auto hint to mu-arch; on-demand pointer behavior (already a separate bootstrap block, unchanged).
 
 Dropped (not folded): Axis-Stakeholder (owned by sign-off-gate.md, informational only in routing); proposal wording variants beyond the three tiers; mu-route's process-flow digraph and integration notes (self-referential).
 
-### Reference cleanup (15 files)
+### Reference cleanup (16 live reference sites: 15 to reword/regenerate + `skills/mu-route/` to delete; dated snapshots under `docs/{plans,proposals,scope,specs}` exempt as historical records)
 
 | File | Change |
 |------|--------|
@@ -65,7 +65,7 @@ Dropped (not folded): Axis-Stakeholder (owned by sign-off-gate.md, informational
 | `README.md`, `README_CN.md` | Skills table: delete Router row (13 skills); prose Routing paragraph reworded |
 | `skills/{mu-arch,mu-biz,mu-explore,mu-wiki}/SKILL.md` | 1-line Integration/prose mentions reworded |
 | `docs/explore/_overview.md` | Area-local `Axis-*` row reworded; History row appended |
-| `docs/wiki/` (4 pages) | Regenerated via `/mu-wiki update` after implementation lands — never hand-edited |
+| `docs/wiki/` (5 pages: `_index`, `workflow-and-routing`, `four-layer-architecture`, `on-demand-skills`, `docs-maintenance-contract`) | Regenerated via `/mu-wiki update` after implementation lands — never hand-edited |
 
 ### Data Model / State Machine / Sequence Diagrams
 
