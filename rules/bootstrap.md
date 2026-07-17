@@ -49,20 +49,52 @@ DevMuse handles two categories of work:
 
 ### Routing
 
-For any **unprefixed** user message within DevMuse's domain, invoke `mu-route`. It pattern-matches intent + repo state, assesses confidence, and either silently invokes the target skill or proposes for user confirmation. See `skills/mu-route/SKILL.md` for the decision table and trigger signals.
+For any **unprefixed** in-domain message — at task start or on a task
+transition — classify and route directly from this section. `/mu-*`
+bypasses routing.
 
-**Slash bypasses routing** — `/mu-arch`, `/mu-biz`, etc. invoke the named skill directly.
+**Signals** (cheap, never fabricate — on computation error, ask the user
+for the opening move): intent verbs (table below); artifact existence
+(`docs/scope|specs|prd|biz/*.md` on disk — inline conversation content
+never counts); recent-author familiarity (`git log --author --since="30
+days ago" -- <area>`) when reshape fires; plausible match against
+installed non-DevMuse skills.
+
+**Intent → opening move** (first match wins; multi-verb priority:
+fix > review > reshape > create-feature > implement > understand):
+
+| Signal | Opening move |
+|---|---|
+| understand / figure out / take over / evaluate / what does this do | **Explore** (mu-explore) |
+| fix / broken / error / bug / test failing / crash | **Reproduce** (mu-scope 1-UC repro) |
+| review / 检查 / look at this diff or PR / 审一下 | **Review** (mu-review) |
+| reshape (refactor / clean up / restructure) — unfamiliar area | **Explore** (pre-change) → Design-tech |
+| reshape or create-feature — familiar, no specs on disk | **Design-tech** (mu-arch, stance=auto) |
+| implement / build this — no specs on disk | **Design-tech** (mu-arch, stance=auto) |
+| implement / build this — specs exist | **Implement** (mu-code) |
+| plausibly matches an installed non-DevMuse skill | propose delegating to it |
+| no verb match / pathological repo state (empty, shallow) | **Explore** safe default / ask the user |
+
+**Confidence sets friction:** single unambiguous verb → invoke silently;
+two candidate moves, one dominant → one-line check ("→ **<Skill>**, ok?");
+vaguer → full proposal with one-word overrides (explore / design-tech /
+reproduce / review / implement). An unparseable reply to a proposal →
+ask the user to restate with one word from the override list (non-blocking).
 
 **Four categories:**
 
 - **Core pipeline** (auto-routed): mu-scope → mu-arch → mu-plan → mu-code → mu-review
 - **Orthogonal** (auto-routed): mu-explore, mu-debug
-- **On-demand** (slash only, never auto-routed — mu-route answers matching intents with a pointer): mu-biz, mu-prd, mu-wiki, mu-retro, mu-grill
-- **Meta**: mu-route (router), mu-write-skill (skill authoring)
+- **On-demand** (slash only, never auto-routed — matching intents get a
+  pointer, not an invocation: validate idea / business model → `/mu-biz`;
+  product requirements / user flows → `/mu-prd`; wiki / architecture docs
+  → `/mu-wiki`; retro / look back → `/mu-retro`; grill me / stress-test
+  this plan → `/mu-grill`): mu-biz, mu-prd, mu-wiki, mu-retro, mu-grill
+- **Meta**: mu-write-skill (skill authoring)
 
 ### Continuation vs Transition
 
-During an active skill, same-type follow-ups are continuations — just respond, no re-routing: "查下这个日志" mid-debug, clarifying questions, providing requested info. When the user's intent **shifts category** — debug→fix, explore→implement, anything→review, fix→redesign — re-invoke mu-route.
+During an active skill, same-type follow-ups are continuations — just respond, no re-routing: "查下这个日志" mid-debug, clarifying questions, providing requested info. When the user's intent **shifts category** — debug→fix, explore→implement, anything→review, fix→redesign — re-classify via the Routing section above.
 
 **The test:** with all prior conversation context removed, would this message route to a **different** skill than the one currently active? Yes → transition → re-route.
 
