@@ -53,12 +53,12 @@ For any **unprefixed** in-domain message — at task start or on a task
 transition — classify and route directly from this section. `/mu-*`
 bypasses routing.
 
-**Signals** (cheap, never fabricate — on computation error, ask the user
-for the opening move): intent verbs (table below); artifact existence
-(`docs/scope|specs|prd|biz/*.md` on disk — inline conversation content
-never counts); recent-author familiarity (`git log --author --since="30
-days ago" -- <area>`) when reshape fires; plausible match against
-installed non-DevMuse skills.
+**Signals are git/fs facts, not inference** — on a failed command, ask
+the user for the opening move: intent verbs (table below); artifact
+existence means a file on disk under `docs/scope|specs|prd|biz/*.md`,
+not text in the conversation; recent-author familiarity (`git log
+--author --since="30 days ago" -- <area>`) when reshape fires; plausible
+match against installed non-DevMuse skills.
 
 **Intent → opening move** (first match wins; multi-verb priority:
 fix > review > reshape > create-feature > implement > understand):
@@ -94,7 +94,7 @@ ask the user to restate with one word from the override list (non-blocking).
 
 ### Continuation vs Transition
 
-During an active skill, same-type follow-ups are continuations — just respond, no re-routing: "查下这个日志" mid-debug, clarifying questions, providing requested info. When the user's intent **shifts category** — debug→fix, explore→implement, anything→review, fix→redesign — re-classify via the Routing section above.
+During an active skill, same-type follow-ups are continuations — just respond, no re-routing: "查下这个日志" mid-debug, clarifying questions, providing requested info. When the user's intent **shifts category** — debug→fix, explore→implement, anything→review, fix→redesign — re-route using the Routing section above.
 
 **The test:** with all prior conversation context removed, would this message route to a **different** skill than the one currently active? Yes → transition → re-route.
 
