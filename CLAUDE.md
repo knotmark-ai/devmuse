@@ -6,7 +6,7 @@ Rules for keeping this repo's documentation in sync. The failure mode these prev
 
 - **Skill inventory** (names, categories, roles): the Skills table in `README.md`. Every other doc points there; none repeats it.
 - **Agent dispatch mapping**: `docs/architecture.md` (skills → agents). Nowhere else.
-- **Skill category lists for routing**: `rules/bootstrap.md` + `skills/mu-route/SKILL.md` (these two must agree).
+- **Routing** (intent tables, categories, confidence): `rules/bootstrap.md` — its only home.
 - **Domain language**: `CONTEXT.md` at repo root — use its terms, respect its `_Avoid_` lists.
 - **No hardcoded counts or file-level directory listings in docs** — they drift; say "see the directory" instead.
 
@@ -17,8 +17,7 @@ Touch ALL of these in the same commit:
 1. `README.md` — Skills table AND the Pipeline/Orthogonal/On-demand prose section (the list appears twice in that file)
 2. `README_CN.md` — mirror of both
 3. `rules/bootstrap.md` — category lists (both occurrences), if the category is involved
-4. `skills/mu-route/SKILL.md` — on-demand pointer row + on-demand list, if the skill is on-demand
-5. `docs/architecture.md` (+ `docs/architecture_cn.md`) — dispatch table, only if the skill dispatches agents
+4. `docs/architecture.md` (+ `docs/architecture_cn.md`) — dispatch table, only if the skill dispatches agents
 
 ## Chinese twins
 

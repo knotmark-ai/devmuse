@@ -5,7 +5,7 @@ Shared vocabulary for this repo. Humans and agents use these terms — in code, 
 ## Language
 
 **Opening move**
-The first skill `mu-route` selects for an unprefixed task — one of Explore (mu-explore), Design-tech (mu-arch), Reproduce (mu-scope 1-UC repro, then mu-debug), or Implement (mu-code).
+The first skill the routing rules (bootstrap) select for an unprefixed task — one of Explore (mu-explore), Design-tech (mu-arch), Reproduce (mu-scope 1-UC repro, then mu-debug), or Implement (mu-code).
 _Avoid_: entry skill, first step, initial route
 
 **Core pipeline**
@@ -17,7 +17,7 @@ An auto-routed skill that runs at any point outside the core pipeline's order (m
 _Avoid_: side skill, utility skill
 
 **On-demand skill**
-A skill that is never auto-routed and runs only via explicit slash invocation (mu-biz, mu-prd, mu-wiki, mu-retro); mu-route answers matching intents with a pointer, not an invocation.
+A skill that is never auto-routed and runs only via explicit slash invocation (mu-biz, mu-prd, mu-wiki, mu-retro); the routing rules answer matching intents with a pointer, not an invocation.
 _Avoid_: slash-only skill, manual skill
 
 **Creative skill**
@@ -65,7 +65,7 @@ The optional mu-review step that dispatches the OpenAI Codex CLI for a second op
 _Avoid_: second review, external review
 
 **Task transition**
-A user message whose intent shifts skill category mid-conversation (debug→fix, explore→implement), requiring mu-route to re-fire — versus a continuation, which stays inside the active skill.
+A user message whose intent shifts skill category mid-conversation (debug→fix, explore→implement), requiring re-classification by the routing rules — versus a continuation, which stays inside the active skill.
 _Avoid_: context switch
 
 **Guidance over control**
