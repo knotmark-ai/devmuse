@@ -27,7 +27,7 @@ Four-layer architecture (rules / skills / agents / knowledge) plus hooks and doc
   - Pipeline (auto-routed): `mu-scope` → `mu-arch` → `mu-plan` → `mu-code` → `mu-review`
   - Orthogonal (auto-routed): `mu-explore`, `mu-debug`, `mu-retro`
   - On-demand (slash-only): `mu-biz`, `mu-prd`
-  - Router: `mu-route`
+  - Routing: inlined in `rules/bootstrap.md` (standalone router skill retired 2026-07-17)
   - Meta: `mu-write-skill`
 - **`agents/`** — Two dispatchable sub-agents with isolated context.
   - `mu-reviewer.md` — Six modes: review-design, review-plan, review-code, review-compliance, review-coverage, review-security.
@@ -99,8 +99,8 @@ Area-local jargon only — project-wide vocabulary lives in the repo-root `CONTE
 |------|---------------------|
 | `rule` (rules/) | Always-on content injected by the session-start hook (not plugin auto-discovery); only `bootstrap.md` exists, and the hook script names it explicitly — adding a rule file also means editing `hooks/session-start`. |
 | `knowledge` (knowledge/) | Passive reference markdown pulled via `@`-relative paths from skills/agents; never auto-loaded. |
-| `Axis-*` (mu-route) | The five cheap (<5s) routing signals — Intent, Familiarity, Missing-artifact, Stakeholder, Plugin — gathered before applying routing rows R1–R7. |
-| silent invoke / one-line check / full proposal | mu-route's three confidence-tiered behaviors (high / medium / low). |
+| `Axis-*` (bootstrap routing) | The five cheap (<5s) routing signals — Intent, Familiarity, Missing-artifact, Stakeholder, Plugin — gathered before applying routing rows R1–R7. |
+| silent invoke / one-line check / full proposal | the routing rules' three confidence-tiered behaviors (high / medium / low). |
 | variant (mu-explore) | The five exploration types — onboarding, takeover, dependency-eval, pre-change, pre-debug — each setting depth and file-count caps. |
 | watched source dirs | Per-skill directory list that stance detection's H3 staleness check and the sign-off gate's S2 multi-author check run against; a skill's own artifact dir is never in its watched set. |
 | subagent-driven / inline mode | mu-code's two execution modes: fresh mu-coder subagent per task vs. main-session implementation. |
@@ -112,7 +112,7 @@ Promoted to `CONTEXT.md` by the 2026-07-11 harvest: Opening move, Core pipeline,
 ## Unknowns
 
 - **`tests/` harness mechanics** — Six scenario dirs exist but I didn't read any of their contents. It is unclear whether they are executable test suites, markdown scenario scripts, or manual checklists; no CI config is visible at the repo root (no `.github/workflows/`). How are regressions caught?
-- **`mu-route` skill** — Shipped. Confidence-based router: silently invokes for clear intent, proposes for ambiguous. On-demand skills (mu-biz, mu-prd, mu-retro) are not auto-routed.
+- **Routing** — resolved 2026-07-17: folded into rules/bootstrap.md; the standalone router skill was retired.
 - **Marketplace.json contents** — Read `plugin.json` but not `.claude-plugin/marketplace.json`; its schema and what it controls (discovery metadata vs. install recipe) is unverified.
 - **Skill-internal mechanics** — For brevity, only `rules/bootstrap.md` and the `mu-explore` / template files were read in full. `SKILL.md` bodies of `mu-scope`, `mu-arch`, `mu-plan`, `mu-code`, `mu-review`, `mu-debug`, `mu-biz`, `mu-prd`, `mu-retro`, `mu-write-skill`, `mu-reviewer`, `mu-coder` are inferred from README/architecture.md — have not directly verified their invocation shape or internal checklists.
 - **Knowledge file contents** — Category/filenames taken from architecture.md; none of the actual language/review/principles markdown was opened. Inversion, premise-check, etc. are known only by name.
@@ -150,5 +150,6 @@ Promoted to `CONTEXT.md` by the 2026-07-11 harvest: Opening move, Core pipeline,
 
 | Date | Commit | Variant | Change summary |
 |------|--------|---------|----------------|
+| 2026-07-17 | `ecd402b7f0833c395927141afc27e55055a858c2` | maintenance | Routing references updated after the router skill was folded into bootstrap. |
 | 2026-07-11 | `28bbae597ba3670175324ff161fd5c234c36450f` | harvest | Domain terms promoted to root CONTEXT.md; section reduced to area-local jargon. Refreshed Doc vs Code Conflicts (skill count now 12 vs 13; mu-design hook message resolved by `304043d`). |
 | 2026-04-16 | `bd0172d1be9dd40d4ea597820954937eddfda1e4` | onboarding | Initial creation |

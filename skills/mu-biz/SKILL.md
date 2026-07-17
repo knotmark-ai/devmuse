@@ -207,7 +207,7 @@ Before terminal (user-decides in Quick mode, invoke mu-prd in Full mode), consul
 
 ## Integration
 
-- **Invoked by:** user manually (`/mu-biz` or `/mu-biz quick` / `/mu-biz full`). On-demand only — never auto-routed by mu-route
+- **Invoked by:** user manually (`/mu-biz` or `/mu-biz quick` / `/mu-biz full`). On-demand only — never auto-routed (bootstrap points to the slash command instead)
 - **Reads:** @../../knowledge/principles/premise-check.md (always); @../../knowledge/principles/stance-detection.md (Phase 0); @../../knowledge/principles/sign-off-gate.md (terminal if team-touching); prior biz/premise artifacts if present
 - **Produces:** `docs/biz/YYYY-MM-DD-<name>[-quick].md`
 - **Terminal state:**

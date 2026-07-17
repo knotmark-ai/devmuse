@@ -383,7 +383,7 @@ For reference, the complete schema returned by the Structure subagent:
 
 ## Integration
 
-- **Invoked by:** user directly (`/mu-wiki generate` or `/mu-wiki update`); suggestion from mu-scope (risk >= medium, no wiki exists); suggestion from mu-arch (architecture change, wiki exists). On-demand only — never auto-routed by mu-route.
+- **Invoked by:** user directly (`/mu-wiki generate` or `/mu-wiki update`); suggestion from mu-scope (risk >= medium, no wiki exists); suggestion from mu-arch (architecture change, wiki exists). On-demand only — never auto-routed (bootstrap points to the slash command instead).
 - **Produces:** `docs/wiki/` directory containing `_index.md` + `<page-id>.md` files.
 - **Terminal state:** commit. mu-wiki is terminal — it does not invoke any downstream skill.
 - **Template:** `@../../knowledge/templates/wiki-index.md`
