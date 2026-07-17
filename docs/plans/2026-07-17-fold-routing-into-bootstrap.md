@@ -76,7 +76,7 @@ And delete the now-redundant `**Meta**` line's mu-route mention: `**Meta**: mu-r
   1. "fix this bug in the login flow", no active skill → [silent invoke mu-scope (Reproduce)]
   2. "什么是 monad？" → [respond normally]
   3. active mu-debug, "再查一下这条日志" → [continue, no re-route]
-  4. active mu-debug, root cause found, "好，把它修掉" → [re-route → mu-code (debug→fix transition; specs situational — one-line check acceptable)]
+  4. active mu-debug, root cause found, "好，把它修掉" → [re-route; fix verb → **Reproduce** (mu-scope 1-UC repro), per pre-fold mu-route R3 — CORRECTED during execution: this bracket originally said mu-code, inherited from the transition table deleted in the bootstrap slim; mu-route's R3 is the pre-fold canon and UC-R1 binds to it]
   5. "/mu-arch create" → [direct invocation mu-arch]
   6. "帮我看看这个产品想法值不值得做" → [pointer to /mu-biz]
   7. "就补一行代码的事，别走流程了，直接改" → [respond normally per Instruction Priority]
