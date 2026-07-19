@@ -57,13 +57,13 @@ _Avoid_: <synonym>, <synonym>
 
 `_Avoid_` 行是**防漂移杠杆**：它点名项目刻意不用的同义词，让 agent 停止在"issue tracker / backlog manager / issue host"之间摇摆，收敛到一个词。凡是存在合理同义词的术语都要写这一行。Sources: [knowledge/principles/domain-glossary.md:26-32]()
 
-DevMuse 自己的 `CONTEXT.md` 是活例：例如 **Creative skill**（mu-biz、mu-prd、mu-arch，产出承载判断的工件、在 Phase 0 运行 stance detection、出口面对 sign-off gate），`_Avoid_`: authoring skill、artifact skill；**Skill CSO**（把 `description` 纯写成触发条件，绝不写工作流摘要），`_Avoid_`: skill SEO、discoverability tuning。Sources: [CONTEXT.md:23-25](), [CONTEXT.md:75-77]()
+DevMuse 自己的 `CONTEXT.md` 是活例：例如 **On-demand skill**（永不自动路由、只经显式斜杠调用的技能：mu-biz、mu-prd、mu-wiki、mu-retro、mu-grill），`_Avoid_`: slash-only skill、manual skill；**Skill CSO**（把 `description` 纯写成触发条件，绝不写工作流摘要），`_Avoid_`: skill SEO、discoverability tuning。Sources: [CONTEXT.md:19-21](), [CONTEXT.md:75-77]()
 
 ### 文件结构
 
 模板规定三段结构：`## Language`（词条）、`## Relationships`（可选，仅记录结构性事实）、`## Flagged Ambiguities`（一词二义或二词一义，标注 open/resolved）。Sources: [knowledge/templates/context-md.md:5-22](), [knowledge/principles/domain-glossary.md:36-42]()
 
-DevMuse 的 Flagged Ambiguities 一节记录了三个已裁决案例：如"UC"专属于 mu-scope 的 Use Case，mu-explore 的五种探索类型统一改称 **variant**（2026-07-13 grill 会话裁决）；"gate"永不裸用，必须限定为 HARD-GATE / pipeline gate / sign-off gate / size-area gate 之一。Sources: [CONTEXT.md:87-91]()
+DevMuse 的 Flagged Ambiguities 一节当前记录了**三个已裁决案例**：(1)"UC" 专属于 mu-scope 的 Use Case，mu-explore 的五种探索类型统一改称 **variant**（2026-07-13 grill 会话裁决）；(2)"gate" 永不裸用，必须限定为 HARD-GATE / pipeline gate / sign-off gate / size-area gate 之一（2026-07-13 grill 会话裁决，四个复合名互斥、无需改名）；(3)"mu-design" vs "mu-arch"——2026-04-14 统一改名为 mu-arch（`108f3f6`；hook 残留在 `304043d` 修复），`docs/plans/` 下的带日期快照保留旧名作为历史记录。Sources: [CONTEXT.md:87-91]()
 
 ### 三个维护动作
 
@@ -248,4 +248,4 @@ Sources: [knowledge/principles/domain-glossary.md:3](), [knowledge/principles/st
 
 ---
 
-See also: [四层架构](four-layer-architecture.md) | [按需技能](on-demand-skills.md) | [文档维护契约](docs-maintenance-contract.md)
+See also: [四层架构](four-layer-architecture.md) · [按需技能](on-demand-skills.md) · [文档维护契约](docs-maintenance-contract.md)

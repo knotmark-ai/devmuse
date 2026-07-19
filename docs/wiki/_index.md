@@ -1,7 +1,7 @@
 # Wiki: DevMuse
 
-> **Generated:** 2026-07-13
-> **Baseline commit:** `3797d810af6600b5bbde09001b086be6cd18e720`
+> **Generated:** 2026-07-19
+> **Baseline commit:** `134d4fb724fac9c5335d0baa64b21c4baba086dc`
 > **Generator:** mu-wiki v1
 
 ## Pages
@@ -9,7 +9,7 @@
 | Page | Status | Relevant Files |
 |------|--------|---------------|
 | [DevMuse 四层架构](four-layer-architecture.md) | ✅ | docs/architecture.md, README.md, .claude-plugin/plugin.json, rules/bootstrap.md, hooks/hooks.json, hooks/session-start |
-| [工作流与 mu-route 路由系统](workflow-and-routing.md) | ✅ | skills/mu-route/SKILL.md, rules/bootstrap.md, docs/specs/2026-04-17-mu-route-system-design.md, docs/plans/2026-04-17-mu-route-system.md, README.md, CONTEXT.md |
+| [工作流与路由（bootstrap 内联路由器）](workflow-and-routing.md) | ✅ | rules/bootstrap.md, README.md, CONTEXT.md, docs/specs/2026-07-17-fold-routing-into-bootstrap-design.md, docs/plans/2026-07-17-fold-routing-into-bootstrap.md |
 | [核心管线：Scope → Arch → Plan → Code → Review](core-pipeline.md) | ✅ | skills/mu-scope/SKILL.md, skills/mu-arch/SKILL.md, skills/mu-plan/SKILL.md, skills/mu-code/SKILL.md, skills/mu-review/SKILL.md, README.md, CONTEXT.md |
 | [实现与审查：TDD、worktree 与两阶段评审](implementation-and-review.md) | ✅ | skills/mu-code/SKILL.md, skills/mu-review/SKILL.md, agents/mu-coder.md, agents/mu-reviewer.md, skills/mu-code/testing-anti-patterns.md, knowledge/schemas/codex-review-output.json |
 | [正交技能：mu-explore 与 mu-debug](explore-and-debug.md) | ✅ | skills/mu-explore/SKILL.md, skills/mu-debug/SKILL.md, knowledge/templates/explore.md, skills/mu-debug/root-cause-tracing.md, skills/mu-debug/defense-in-depth.md, skills/mu-debug/condition-based-waiting.md |
@@ -34,5 +34,6 @@
 
 | Date | Commit | Action | Pages affected |
 |------|--------|--------|---------------|
+| 2026-07-19 | `134d4fb` | update | 8 pages regenerated after the routing fold (mu-route retired → bootstrap): workflow-and-routing, four-layer-architecture, core-pipeline, explore-and-debug, on-demand-skills, domain-language-and-quality, hooks-and-gates, docs-maintenance-contract. workflow-and-routing relevant_files updated (mu-route removed). |
 | 2026-07-13 | `3797d81` | generate (full rebuild) | all — new 12-page structure; supersedes the 14-page 2026-04-30 layout |
 | 2026-04-30 | `5d16bba` | generate | all (initial) |
