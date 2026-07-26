@@ -21,6 +21,9 @@ Only business states enter the state model. Classify before modeling:
 | Computed | Derived from other fields at read time | is-overdue, time-remaining | Note the formula where used; never a stored state |
 | Page state | Affects only what the screen shows | loading, empty, network error | Wireframes section |
 | Sub-object state | A different object's lifecycle | payment status inside an order | Its own state model — one machine per object |
+| Mapping | A relation between objects resolved at read/query time | anonymous→identified identity merge | Its own mapping design — never a state field |
+
+The absence of an object is not a state: creation is the entry event, not a transition out of a phantom "not-exists" state.
 
 The most common modeling bug: several objects' lifecycles compressed into one state field. A group-buy has the group's machine AND each participant order's machine — model them separately, then note how they couple (which transitions in one trigger transitions in the other).
 
@@ -31,6 +34,13 @@ The most common modeling bug: several objects' lifecycles compressed into one st
 3. **Invariants** — rules true in every state ("one live booking per room-slot"). Each names what a violating attempt gets: rejected, queued, overridden.
 4. **Terminal states** — marked explicitly. Terminal means no exits: reviving a cancelled booking is a new booking, unless the model adds an explicit revival transition.
 5. **Guarantees** — user-visible promises that survive retries and races: "double-clicking 开团 never creates two groups", "the loser of a last-slot race is refunded and told so". Guarantees are product rules; *how* they are kept (idempotency keys, locks) is mu-arch's job.
+
+## Negative Space
+
+Classification rulings are output, not scratch work — a reader of the model cannot distinguish "considered and rejected" from "never considered" unless both are persisted:
+
+6. **Excluded candidates** — one table for the whole model: every candidate classified out (computed / attribute / page state / mapping / object-absence), its category, a one-line reason, and where it lives instead. This is the defense against the architecture layer materializing a computed value as a stored state (an `is_hot` flag flipped by a cron). If implementation later genuinely needs a stored state for one — say an async merge needs a pending step — extend this model; states are never added ad hoc in the implementation layer.
+7. **Non-transitions** — per machine, note the events easily misread as state changes (a value-layer correction, a derived credibility shift, an edit allowed within a state): what they actually touch, and that the state stays put.
 
 ## Self-Check
 
