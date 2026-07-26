@@ -1,0 +1,53 @@
+# Product-Level State Modeling
+
+**When to use:** Referenced by mu-prd (Product Object Model tool) when a product has business objects with lifecycles, and by mu-arch (State Machine Diagrams) when inheriting product-level state vocabulary. Distilled from a team PRD standard (the 对象—状态—迁移—不变量 loop) and the aflaj PRD retrospective.
+
+## The Lifecycle Sentence
+
+One sentence exhausts an object's behavior. For each business object, walk it until every blank is filled:
+
+> **Who**, under **what preconditions**, performs **what action** on **the object**; the object moves from **which state** to **which state**; and what does the user observe on **failure, duplicate submission, concurrent action, and timeout**.
+
+Any blank you cannot fill is a fork (grilling.md) — put it to the user with a recommendation. This sentence is the fork *detector*; grilling is the fork *converger*.
+
+## Business State or Not?
+
+Only business states enter the state model. Classify before modeling:
+
+| Type | Definition | Example | Home |
+|---|---|---|---|
+| **Business state** | Gates allowed actions; changes via business events | pending-approval, confirmed, cancelled | State model |
+| Attribute | Describes the object, never gates its lifecycle | room type, channel, priority | Feature spec fields |
+| Computed | Derived from other fields at read time | is-overdue, time-remaining | Note the formula where used; never a stored state |
+| Page state | Affects only what the screen shows | loading, empty, network error | Wireframes section |
+| Sub-object state | A different object's lifecycle | payment status inside an order | Its own state model — one machine per object |
+
+The most common modeling bug: several objects' lifecycles compressed into one state field. A group-buy has the group's machine AND each participant order's machine — model them separately, then note how they couple (which transitions in one trigger transitions in the other).
+
+## The Model (per object)
+
+1. **States** — a closed list, every state with a precise entry condition. An "etc." or "等" in a state list means the model isn't done.
+2. **Transitions** — table: current state × event (user action / clock / external callback) × actor → next state. Deadlines and windows carry explicit boundary semantics: inclusive or exclusive, measured by which clock.
+3. **Invariants** — rules true in every state ("one live booking per room-slot"). Each names what a violating attempt gets: rejected, queued, overridden.
+4. **Terminal states** — marked explicitly. Terminal means no exits: reviving a cancelled booking is a new booking, unless the model adds an explicit revival transition.
+5. **Guarantees** — user-visible promises that survive retries and races: "double-clicking 开团 never creates two groups", "the loser of a last-slot race is refunded and told so". Guarantees are product rules; *how* they are kept (idempotency keys, locks) is mu-arch's job.
+
+## Self-Check
+
+Run before the model is approved; ask any unanswered item as an A/B question with a recommendation:
+
+1. Any state with no way in — or no way out that isn't marked terminal?
+2. Any terminal state the product secretly expects to modify later?
+3. Any event that can fire in more than one state — is the outcome defined per state?
+4. Any transition without an actor (who or what clock moves it)?
+5. Any deadline or window without inclusive/exclusive semantics?
+
+## Steady State First
+
+Design the steady-state machine before designing onboarding: onboarding is the machine's t=0 traversal, not a separate flow. Symptom of getting it backwards: an "onboarding wizard" whose steps duplicate features that already exist elsewhere in the IA.
+
+## Layer Boundaries
+
+- **PRD (this model):** state vocabulary, legal transitions, invariants, guarantees — what the user can observe and rely on.
+- **mu-scope:** enumerates concrete use-case paths through these transitions — every transition earns at least one UC.
+- **mu-arch:** implements the machine — idempotency keys, transactions, compensation states, timers — inheriting state names verbatim from the PRD model.

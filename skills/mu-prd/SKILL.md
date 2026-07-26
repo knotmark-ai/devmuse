@@ -1,6 +1,6 @@
 ---
 name: mu-prd
-description: "Define product requirements — user flows, screens, per-feature specs, tiering rules."
+description: "Define product requirements — user flows, object lifecycles, screens, per-feature specs, tiering rules."
 disable-model-invocation: true
 ---
 
@@ -64,7 +64,9 @@ Phase 0 parses only the stance token; Depth Mode Selection parses only the depth
 |---|---|---|
 | Solo dev, small project, "lightweight PRD", `/mu-prd lightweight` | **Lightweight** | Core flows + key specs only |
 | Team project, investor-facing, formal product, `/mu-prd full` | **Full** | All 9 sections |
-| Unclear | Ask; default to lightweight |
+| Unclear | One probe: "Stakes — hobby / internal tool / public launch?" hobby → lightweight; internal → lightweight; launch → full |
+
+**Length scales with stakes:** hobby ≈ a page or two; internal ≈ a few pages; launch ≈ as long as its features require. Depth mode picks the section set; stakes calibrate how much each section carries.
 
 ## Process Flow
 
@@ -74,6 +76,8 @@ digraph mu_prd {
     "Biz artifact exists?" [shape=diamond];
     "Ask user for biz context inline\n(flag 'no biz artifact')" [shape=box];
     "Detect mode\n(lightweight or full)" [shape=diamond];
+    "Stateful business objects?\n(approval, orders, quotas, ...)" [shape=diamond];
+    "Build object model\n(companion .objects.md,\nafter IA section)" [shape=box];
     "Produce PRD sections\n(one at a time, user approves each)" [shape=box];
     "Visual Companion\n(for wireframes)" [shape=box];
     "Write PRD artifact\n(docs/prd/)" [shape=box];
@@ -84,7 +88,10 @@ digraph mu_prd {
     "Biz artifact exists?" -> "Detect mode\n(lightweight or full)" [label="yes"];
     "Biz artifact exists?" -> "Ask user for biz context inline\n(flag 'no biz artifact')" [label="no"];
     "Ask user for biz context inline\n(flag 'no biz artifact')" -> "Detect mode\n(lightweight or full)";
-    "Detect mode\n(lightweight or full)" -> "Produce PRD sections\n(one at a time, user approves each)";
+    "Detect mode\n(lightweight or full)" -> "Stateful business objects?\n(approval, orders, quotas, ...)";
+    "Stateful business objects?\n(approval, orders, quotas, ...)" -> "Build object model\n(companion .objects.md,\nafter IA section)" [label="yes"];
+    "Stateful business objects?\n(approval, orders, quotas, ...)" -> "Produce PRD sections\n(one at a time, user approves each)" [label="no"];
+    "Build object model\n(companion .objects.md,\nafter IA section)" -> "Produce PRD sections\n(one at a time, user approves each)";
     "Produce PRD sections\n(one at a time, user approves each)" -> "Visual Companion\n(for wireframes)" [label="when visual needed"];
     "Visual Companion\n(for wireframes)" -> "Produce PRD sections\n(one at a time, user approves each)";
     "Produce PRD sections\n(one at a time, user approves each)" -> "Write PRD artifact\n(docs/prd/)";
@@ -115,7 +122,7 @@ Produce sections one at a time, approving each before moving on. Drive each sect
 2. **Information architecture / feature map** — hierarchy of features, navigation structure
 3. **Core user flows** — journey maps or sequence diagrams for primary tasks
 4. **Key screen wireframes** — text/mermaid wireframes for critical screens. Use Visual Companion for mockups when visual questions arise.
-5. **Per-feature specs** — for each MVP feature: what it does, why, user-facing rules (edge cases in user terms, not code). **Scope boundary:** these are product-level rules (what the user sees and agrees to) — mu-scope later enumerates all concrete paths (happy / edge / error use cases) through those rules on a per-feature basis. Do not pre-enumerate UCs here.
+5. **Per-feature specs** — for each MVP feature: what it does, why, user-facing rules (edge cases in user terms, not code). **Scope boundary:** these are product-level rules (what the user sees and agrees to) — mu-scope later enumerates all concrete paths (happy / edge / error use cases) through those rules on a per-feature basis. Do not pre-enumerate UCs here. Guarantees that survive retries and races ("double-clicking never creates two orders", "a lapsed booking cannot be revived") are rules, not use cases — they live in the object model, and a feature touching a modeled object cites its states by name.
 6. **Tiering rules** — free vs paid behavioral boundaries (quotas, features, upgrade triggers)
 7. **Non-functional requirements** — performance targets, privacy/compliance needs, accessibility, localization
 8. **Success metrics → instrumentation** — which events to track for each flow; how funnel metrics are computed
@@ -128,15 +135,25 @@ Minimum viable PRD for solo/small projects:
 2. **Key per-feature specs** — MVP features, minimal detail
 3. **Open questions** — what to defer
 
-### 3. Visual Companion
+### 3. Product Object Model (conditional)
+
+**Trigger:** any MVP feature involves approval, booking, ordering/payment, subscription, publishing, multi-role handoff, quotas, or time-bounded validity — i.e., a business object whose allowed actions depend on where it is in a lifecycle. No trigger → skip silently, zero ceremony.
+
+When triggered, build the model per @../../knowledge/principles/state-modeling.md: classify candidate states (business state vs attribute / computed / page / sub-object), then per object produce the closed state list, transition table (state × event × actor → next state, with boundary semantics), invariants, terminal states, and retry/race guarantees. Drive every unfilled blank with the lifecycle sentence; run the self-check before the model is approved.
+
+- **Placement:** build it after the Information Architecture section (the feature map names the objects) and before Core User Flows — flows walk the machine, and feature specs cite its states by name.
+- **Artifact:** full mode → companion file `docs/prd/YYYY-MM-DD-<product>.objects.md`, linked from the PRD header and committed with it. Lightweight mode → one states+transitions table per object inside the PRD body.
+- **Vocabulary:** approved state names are domain language — add them to repo-root `CONTEXT.md` (definition + `_Avoid_` synonyms) in the same commit. Downstream skills use these names exactly.
+
+### 4. Visual Companion
 
 For screen/layout questions, offer the Visual Companion (same pattern as mu-arch). Accept → browser-based wireframing. Decline → mermaid/ASCII in the doc.
 
-### 4. Write artifact
+### 5. Write artifact
 
-Save to `docs/prd/YYYY-MM-DD-<product>.md`. Commit.
+Save to `docs/prd/YYYY-MM-DD-<product>.md` (plus the `.objects.md` companion when one exists). Commit together.
 
-### 5. Invoke mu-scope
+### 6. Invoke mu-scope
 
 Ask the user which MVP feature to start with. Then invoke mu-scope for that feature. Remaining features go through mu-scope iteratively, one at a time.
 
@@ -151,6 +168,7 @@ Ask the user which MVP feature to start with. Then invoke mu-scope for that feat
 > **Sub-type:** <expand | gap-fill | sync | —>
 > **Detected at:** YYYY-MM-DD (commit `<short-sha>`)
 > **Biz reference:** docs/biz/YYYY-MM-DD-<name>.md (or "inline" if none)
+> **Object model:** docs/prd/YYYY-MM-DD-<product>.objects.md (omit if the Product Object Model did not trigger)
 
 ## 1. Persona Deepening
 ...
@@ -213,7 +231,8 @@ Ask the user which MVP feature to start with. Then invoke mu-scope for that feat
 - **Concrete specs** — "rules" are user-observable behaviors, not API contracts
 - **Reference the biz artifact** — personas and MVP scope come from there; don't re-derive
 - **Defer technical choices** — tech stack, API schema, DB design belong in mu-arch, not here
-- **Defer use case enumeration** — per-feature UCs (happy/edge/error paths) are mu-scope's job, not mu-prd's. PRD states product rules; mu-scope enumerates concrete scenarios through them.
+- **Defer use case enumeration** — per-feature UCs (happy/edge/error paths) are mu-scope's job, not mu-prd's. PRD states product rules — including the object model's state guarantees — and mu-scope enumerates concrete scenarios through them.
+- **Single-home every rule** — state each rule in exactly one section and reference it elsewhere; two copies of a rule will diverge.
 - **Visual when helpful** — flows and wireframes benefit from diagrams; requirements/rules are text
 
 **Sign-off gate (before terminal):**
@@ -223,6 +242,6 @@ Before invoking mu-scope, consult `@../../knowledge/principles/sign-off-gate.md`
 ## Integration
 
 - **Invoked by:** user manually (`/mu-prd`); or auto-invoked by `mu-biz full` on completion (passing `stance=create` pre-confirmed per spec §2.5)
-- **Reads:** `docs/biz/*.md` (biz artifact if present); `@../../knowledge/principles/stance-detection.md` (Phase 0); `@../../knowledge/principles/sign-off-gate.md` (terminal if team-touching)
-- **Produces:** `docs/prd/YYYY-MM-DD-<product>.md`
+- **Reads:** `docs/biz/*.md` (biz artifact if present); `@../../knowledge/principles/stance-detection.md` (Phase 0); `@../../knowledge/principles/state-modeling.md` (Product Object Model, when triggered); `@../../knowledge/principles/sign-off-gate.md` (terminal if team-touching)
+- **Produces:** `docs/prd/YYYY-MM-DD-<product>.md`; `docs/prd/YYYY-MM-DD-<product>.objects.md` (when the Product Object Model triggers, full mode)
 - **Terminal state:** Invoke mu-scope for the first MVP feature. Further features iterate through mu-scope one at a time.
