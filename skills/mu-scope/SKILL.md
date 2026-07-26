@@ -15,14 +15,14 @@ Do NOT invoke mu-arch or any implementation skill until you have a complete Use 
 
 ## Anti-Pattern: "This Is Too Simple To Need Scoping"
 
-Every task goes through scoping. A bug fix, a config change, a one-liner — all of them. "Simple" tasks are where omissions cause the most wasted work. The scope can be a single use case (30 seconds), but you MUST produce it and get approval.
+Every task goes through scoping. A bug fix, a config change, a one-liner — all of them. "Simple" tasks are where omissions cause the most wasted work. The scope can be a single use case (30 seconds), but you MUST produce it and get approval. The micro exit (Phase 2) is not an exception: the probe still runs and the UC is still stated and approved — it sheds the artifact file and the downstream phases, never the scoping itself.
 
 ## Checklist
 
 You MUST create a task for each of these items and complete them in order:
 
 1. **Quick Probe** — scan codebase for impact (skip for new/empty projects)
-2. **Depth decision** — present probe results, confirm depth with user
+2. **Depth decision** — present probe results, confirm depth with user; probe-qualified micro changes may take the micro exit here (see Phase 2)
 3. **Use case elicitation** — enumerate happy paths → edge cases → error cases
 4. **Conflict detection** — cross-check all use cases, resolve with user
 5. **Write scope artifact** — save to `docs/scope/YYYY-MM-DD-<name>.md`, user confirms
@@ -53,7 +53,11 @@ digraph mu_scope {
     "New/empty project?" -> "Present probe results\n+ depth recommendation" [label="no"];
     "Skip probe" -> "Enumerate happy paths";
     "Present probe results\n+ depth recommendation" -> "User confirms depth";
-    "User confirms depth" -> "Enumerate happy paths";
+    "User confirms depth" -> "Probe-qualified micro\n+ fully specified?" ;
+    "Probe-qualified micro\n+ fully specified?" [shape=diamond];
+    "Micro exit: 1-UC inline,\nTDD in-session, run tests" [shape=doublecircle];
+    "Probe-qualified micro\n+ fully specified?" -> "Micro exit: 1-UC inline,\nTDD in-session, run tests" [label="offered + user picks micro"];
+    "Probe-qualified micro\n+ fully specified?" -> "Enumerate happy paths" [label="no / full"];
     "Enumerate happy paths" -> "User confirms/supplements";
     "User confirms/supplements" -> "Enumerate edge cases" [label="ok"];
     "User confirms/supplements" -> "Enumerate happy paths" [label="revise"];
@@ -69,7 +73,7 @@ digraph mu_scope {
 }
 ```
 
-**The terminal state is invoking mu-arch.** Do NOT invoke any other skill. The ONLY skill you invoke after mu-scope is mu-arch.
+**The terminal state is invoking mu-arch** — with one exception: the micro exit (Phase 2), which ends the pipeline after the verified in-session change. Everything else: do NOT invoke any other skill; the ONLY skill you invoke after mu-scope is mu-arch.
 
 ## Phase 1: Quick Probe
 
@@ -137,6 +141,12 @@ Present the probe results and recommend a depth level. The user confirms or over
 - **Low risk, small fan-out:** "This touches 1 file with no dependents. I'll list a couple of use cases to confirm, then proceed?"
 - **Medium/high risk:** "This touches shared-form, used by 12 pages. Recommend enumerating all affected scenarios. Agree?"
 
+**Micro exit (condition-gated by the probe, never by feel):** offer it only when the probe shows ALL of — single file, zero or one dependent, no public interface or contract change, no guard/condition/filter semantics change, low risk — AND the user's request itself fully specifies the change (nothing left to design; the message contains the exact edit). Offer: "Micro change — probe shows <evidence>. Skip the artifact and design phases: 1-UC inline scope, implement test-first here, run the affected tests. (micro / full)"
+
+On confirmation: state the single UC in conversation, get a nod, implement test-first in this session, run the affected tests, present the diff. No scope file, no mu-arch, no mu-plan. The probe and the UC approval still happen — micro sheds files and phases, not thinking.
+
+**Cancels the exit** (revert the partial edit, return here, run the full flow): hidden dependents surfacing, unrelated tests failing, the edit growing past the stated scope, or any design question appearing mid-change. **Never qualifies:** guard/condition/filter edits (one-line condition changes are exactly where Guard Semantic Analysis earns its keep), auth/security-adjacent code, schema or data migrations, dependency/lockfile changes.
+
 ## Phase 3: Use Case Elicitation
 
 Work through scenarios with the user, one category at a time.
@@ -153,7 +163,7 @@ Work through scenarios with the user, one category at a time.
 ```
 This catches regressions that positive use cases miss — especially when replacing conditions/guards.
 
-**Present each category, get user confirmation before moving to the next.**
+**Present each category, get user confirmation before moving to the next.** Quick scope (per the depth decision): collapse to one message — all categories together, one confirmation round.
 
 **Use case format:**
 ```
