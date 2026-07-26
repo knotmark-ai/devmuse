@@ -24,7 +24,7 @@ escape_for_json() {
 }
 
 bootstrap_escaped=$(escape_for_json "$bootstrap_content")
-session_context="<EXTREMELY_IMPORTANT>\n**Below is your bootstrap skill. For all other skills, use the Skill tool.**\n\n${bootstrap_escaped}\n</EXTREMELY_IMPORTANT>"
+session_context="<devmuse-bootstrap>\n**Below is your bootstrap skill. For all other skills, use the Skill tool.**\n\n${bootstrap_escaped}\n</devmuse-bootstrap>"
 
 # Output context injection as JSON for Claude Code.
 #
