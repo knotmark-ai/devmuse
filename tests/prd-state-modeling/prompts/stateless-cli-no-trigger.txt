@@ -1,0 +1,6 @@
+You are testing a Claude Code skill for OVER-triggering. Read skills/mu-prd/SKILL.md and follow it for the product brief below. No live user — assume stance=create, no biz artifact (context inline). The user asked for a lightweight PRD (`/mu-prd lightweight`). Do not write any files — produce everything inline.
+
+Product brief:
+一个开源 CLI 工具：mdbook2pdf。读取本地 Markdown 书籍目录（mdBook 结构），渲染为带目录、代码高亮和自定义主题的 PDF。单机运行，无账号、无服务端、无付费。用户是技术写作者和开源维护者。配置通过一个 TOML 文件。
+
+Produce what the skill instructs for lightweight mode (in Chinese, concise). Then an English self-report: (1) go through the skill's conditional steps — for each conditional tool or section the skill defines, state whether its trigger fired for this product and quote the trigger text you evaluated; (2) did you produce any state machine, object model, transition table, or companion file? If you were tempted, what tempted you (e.g., does a PDF render job count as a lifecycle?) and what in the skill text settled it; (3) count the total artifacts and sections you produced — is anything in your output ceremony that a stateless single-user CLI tool doesn't need?

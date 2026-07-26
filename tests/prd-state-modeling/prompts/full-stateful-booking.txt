@@ -1,0 +1,8 @@
+You are testing a Claude Code skill by simulating its execution. Read skills/mu-prd/SKILL.md (relative to the current directory) and any principle files it points to for this task. Follow the skill as if executing it for the product brief below. No live user — where the skill says to ask, make a reasonable assumption, note it briefly, continue. Assume: stance=create, depth mode=full, no biz artifact (context inline below). Skip the Visual Companion offer. Do not write any files — produce everything inline.
+
+Product brief:
+公司内部会议室预约系统。员工可预约会议室；「受控会议室」需管理员审批后才生效，「普通会议室」提交即确认。审批有截止时间（会议开始前30分钟），逾期未审批则预约失效。会议开始前后15分钟为签到窗口，开始后15分钟未签到判定 no-show 并释放会议室。组织者可在开始前取消；使用中可提前结束。同一会议室同一时段只能有一个有效预约。角色：员工、会议室管理员。
+
+Produce whatever the skill instructs for this product up to and including the per-feature specs section — follow the skill's process order exactly, producing every artifact/section it calls for along the way (in Chinese). Do NOT go beyond what the skill instructs — this is a fidelity test of the skill text.
+
+End with an English self-report: (1) did the skill direct you to build anything beyond the numbered PRD sections? If yes, what triggered it — quote the trigger text you matched against; (2) check your own output honestly against these lifecycle questions and say which are now answered and where: exact closed state set? pending-approval occupying the slot? behavior exactly AT the approval deadline and check-in window boundaries (inclusive/exclusive, which clock)? can no-show/cancelled/lapsed bookings be revived? who can act on which states (actor × state)? duplicate submission guarantee? (3) quote the specific instruction lines that drove each behavior that differs from what a PRD without them would contain.

@@ -210,6 +210,7 @@ These tools are used during functional design (step 8) when their trigger condit
 **Trigger:** The design involves entities with lifecycle states (order status, subscription state, approval workflow, account status, content publishing state).
 
 **How to use:**
+0. If a PRD object model exists (`docs/prd/*.objects.md`, or state tables in the PRD body), start from its states and transitions — inherit the names verbatim (they are CONTEXT.md vocabulary) and design only the technical realization: idempotency, transactions, compensation states, timers. Implementation-only states the product layer doesn't see (e.g., "refund-in-flight") extend the model; flag them back to the PRD rather than renaming product states.
 1. Enumerate all states the entity can be in
 2. Draw all valid transitions with their trigger actions
 3. Check for missing transitions (e.g., can a "shipped" order be "cancelled"?)

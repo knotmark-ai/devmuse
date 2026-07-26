@@ -1,0 +1,7 @@
+You are testing a Claude Code skill for generalization. Read skills/mu-prd/SKILL.md and the principle files it points to for stateful products. Note: the principle file's worked examples are group-buy and room-booking — this test uses a DIFFERENT domain to check the method generalizes beyond its examples. Do not write any files.
+
+You are executing mu-prd in Full mode for a SaaS 团队协作工具的会员订阅体系. You have just finished Information Architecture. The user describes the subscription feature vaguely (verbatim):
+
+「用户开通会员就按月扣费，到期自动续。不想用了就取消，取消了就用不了了。付款失败的话提醒他一下。团队版是按席位算钱的，加人就多收钱。」
+
+Do what the skill's process directs at this point. Produce (in Chinese, concise): (1) the object model draft you'd build — objects identified (watch for multiple machines), candidate state classification, draft states/transitions with the forks you detect, invariants, guarantees; (2) your first 3 grilling questions in dependency order with recommendations. Then an English self-report: (a) which lifecycle traps did you catch that the vague description hides (e.g., what happens between 付款失败 and 取消 — is there a grace period state? does "取消" end access immediately or at period end — two different transitions? is the seat count a separate object/machine from the subscription? proration on adding seats mid-cycle? renewal boundary instant semantics?); (b) for each catch, state whether it came from the principle text (quote it) or your own domain knowledge; (c) verdict: does the method generalize to a domain its examples never mention, or were you pattern-matching the examples?

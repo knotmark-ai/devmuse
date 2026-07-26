@@ -58,7 +58,7 @@ scope → arch → plan → code → review
 ### On-demand skills (direct `/slash` invocation only)
 
 - **mu-biz** — Business analysis: validate premise (quick mode) or full analysis (competitive, BMC, VPC, personas, MVP scope). Invoke with `/mu-biz`.
-- **mu-prd** — Product requirements: user flows, wireframes, per-feature specs, tiering rules. Invoke with `/mu-prd`.
+- **mu-prd** — Product requirements: user flows, object lifecycle models, wireframes, per-feature specs, tiering rules. Invoke with `/mu-prd`.
 - **mu-wiki** — Architecture wiki: generates and maintains project-level architecture documentation with Mermaid diagrams and source citations. Invoke with `/mu-wiki generate` or `/mu-wiki update`.
 - **mu-retro** — Periodic retrospective: git metrics, review patterns, learnings captured to memory. Invoke with `/mu-retro`.
 - **mu-grill** — Relentless plan/design interview until every rework-forcing fork is resolved. Invoke with `/mu-grill`.
@@ -99,7 +99,7 @@ devmuse/
 | Orthogonal | **mu-explore** | Code comprehension for unfamiliar code — produces a living mental-model artifact |
 | Orthogonal | **mu-debug** | Systematic root cause analysis |
 | On-demand | **mu-biz** | Business analysis — premise validation (quick) or full analysis (market, BMC, personas, MVP scope) |
-| On-demand | **mu-prd** | Product requirements — user flows, wireframes, feature specs, tiering rules |
+| On-demand | **mu-prd** | Product requirements — user flows, object lifecycle models, wireframes, feature specs, tiering rules |
 | On-demand | **mu-wiki** | Architecture wiki — generates and maintains project-level architecture documentation |
 | On-demand | **mu-retro** | Periodic retrospective with git metrics and memory capture |
 | On-demand | **mu-grill** | Relentless plan/design interview — resolves every rework-forcing fork before work begins |
