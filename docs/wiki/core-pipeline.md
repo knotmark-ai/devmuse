@@ -15,9 +15,9 @@
 
 核心管线（core pipeline）是 DevMuse 中有序、自动路由的技能链 mu-scope → mu-arch → mu-plan → mu-code → mu-review：每个阶段的产物是下一阶段的输入。这条链覆盖从需求界定到代码集成的完整开发生命周期——mu-scope 产出 Use Case Set，mu-arch 将其转化为设计 spec，mu-plan 拆解为实施计划，mu-code 逐任务执行实现，mu-review 完成最终审查与集成。Sources: [CONTEXT.md:11-13](), [README.md:37-51]()
 
-管线的两条设计主线贯穿始终：其一是 **产物链路**——技能间通过落盘的 artifact 文件（而非会话上下文）传递信息，UC-ID 从 Use Case Set 一路传播到设计、计划任务、代码与测试，成为 coverage 审查的审计对象；其二是 **HARD-GATE**——嵌入技能正文的结构性、不可协商的前置条件（如"没有已批准的 scope artifact 就不做设计"），在 Stance 检测之前评估，`skip` stance 与 sign-off 都无法绕过。Sources: [CONTEXT.md:31-33](), [CONTEXT.md:47-49](), [CONTEXT.md:81-84]()
+管线的两条设计主线贯穿始终：其一是 **产物链路**——技能间通过落盘的 artifact 文件（而非会话上下文）传递信息，UC-ID 从 Use Case Set 一路传播到设计、计划任务、代码与测试，成为 coverage 审查的审计对象；其二是 **HARD-GATE**——嵌入技能正文的结构性、不可协商的前置条件（如"没有已批准的 scope artifact 就不做设计"），在 Stance 检测之前评估，`skip` stance 与 sign-off 都无法绕过。此外，当上游存在 PRD 对象模型时，管线还继承其 **状态词汇**：mu-scope 把迁移表当作 UC 清单，mu-arch 原样继承状态名、只设计技术实现（见下文专节）。Sources: [CONTEXT.md:31-33](), [CONTEXT.md:47-49](), [CONTEXT.md:81-84](), [mu-scope/SKILL.md:148](), [mu-arch/SKILL.md:213]()
 
-管线由始终开启的 bootstrap 路由规则驱动：无前缀消息按意图与仓库状态分类——意图清晰则静默路由，意图模糊则给出提议；非开发/产品类消息不路由。路由逻辑不再是独立技能，已内化到 bootstrap 规则中。Sources: [README.md:68-70]()
+管线由始终开启的 bootstrap 路由规则驱动：无前缀消息按意图与仓库状态分类——意图清晰则静默路由，意图模糊则给出提议；非开发/产品类消息不路由。Sources: [README.md:68-70]()
 
 ## 产物链路总览
 
@@ -32,7 +32,7 @@ graph TD
     S -.->|"UC-ID 追溯（Anchor）"| R
 ```
 
-Sources: [mu-scope/SKILL.md:210-215](), [mu-arch/SKILL.md:328-334](), [mu-plan/SKILL.md:174-179](), [mu-code/SKILL.md:1039-1043](), [mu-review/SKILL.md:961-967]()
+Sources: [mu-scope/SKILL.md:211-217](), [mu-arch/SKILL.md:328-335](), [mu-plan/SKILL.md:174-179](), [mu-code/SKILL.md:1039-1043](), [mu-review/SKILL.md:961-967]()
 
 | 阶段 | 输入 | 输出产物 | 终止状态 |
 |------|------|----------|----------|
@@ -42,7 +42,7 @@ Sources: [mu-scope/SKILL.md:210-215](), [mu-arch/SKILL.md:328-334](), [mu-plan/S
 | mu-code | 实施计划 | worktree 中的代码提交 | 链接到 mu-review |
 | mu-review | 代码变更（BASE_SHA..HEAD_SHA） | 审查结论 + 集成动作（merge/PR/keep/discard） | 完成 |
 
-Sources: [mu-scope/SKILL.md:211-214](), [mu-arch/SKILL.md:330-332](), [mu-plan/SKILL.md:176-179](), [mu-code/SKILL.md:1041-1043](), [mu-review/SKILL.md:803-819]()
+Sources: [mu-scope/SKILL.md:211-216](), [mu-arch/SKILL.md:330-333](), [mu-plan/SKILL.md:176-179](), [mu-code/SKILL.md:1041-1043](), [mu-review/SKILL.md:803-819]()
 
 ## mu-scope：界定范围，产出 Use Case Set
 
@@ -58,9 +58,13 @@ mu-scope 是管线入口，通过枚举用例、检测冲突、评估对现有�
 | Conflict Detection | 两两交叉检查所有用例，发现矛盾条件、冲突前置、regression gap；所有冲突必须解决，最终 artifact 不允许 PENDING |
 | Output | 写入 `docs/scope/YYYY-MM-DD-<name>.md`，提交并等待用户确认 |
 
-Sources: [mu-scope/SKILL.md:22-29](), [mu-scope/SKILL.md:87-99](), [mu-scope/SKILL.md:146-152](), [mu-scope/SKILL.md:171-187](), [mu-scope/SKILL.md:189-197]()
+Sources: [mu-scope/SKILL.md:22-29](), [mu-scope/SKILL.md:87-99](), [mu-scope/SKILL.md:146](), [mu-scope/SKILL.md:150-154](), [mu-scope/SKILL.md:173-189](), [mu-scope/SKILL.md:191-199]()
 
-用例采用统一格式 `UC-<N>: [Given <precondition>] When <action> Then <expected result>`——这些 UC-ID 就是后续所有阶段的追溯锚点。当变更涉及替换现有条件/过滤器/守卫时，Quick Probe 还要求做 Guard Semantic Analysis：枚举旧条件阻止的全部场景，计算 regression gap，并要求用户对每个 gap 项明确处置（"有意放行"或"必须继续阻止"）。Sources: [mu-scope/SKILL.md:156-169](), [mu-scope/SKILL.md:101-116]()
+用例采用统一格式 `UC-<N>: [Given <precondition>] When <action> Then <expected result>`——这些 UC-ID 就是后续所有阶段的追溯锚点。当变更涉及替换现有条件/过滤器/守卫时，Quick Probe 还要求做 Guard Semantic Analysis：枚举旧条件阻止的全部场景，计算 regression gap，并要求用户对每个 gap 项明确处置（"有意放行"或"必须继续阻止"）。Sources: [mu-scope/SKILL.md:158-171](), [mu-scope/SKILL.md:101-116]()
+
+### Transition coverage：迁移表即 UC 清单
+
+用例引导阶段有一条针对 PRD 的补充规则：若存在 PRD 对象模型（`docs/prd/*.objects.md`，或 PRD 正文中的状态表），其 **迁移表（transition table）就是一份 UC 清单**——本特性触及的每一条迁移（包括时钟驱动的迁移）都至少对应一个用例，且用例必须使用模型中的状态名；围绕某条迁移的重试与竞态（retries and races）则作为 edge cases 处理。这条规则把 PRD 的对象生命周期直接转译为可审计的 UC 覆盖面，防止"状态机在 PRD 里画了、scope 里却漏了迁移"的缺口。Sources: [mu-scope/SKILL.md:148]()
 
 **终止状态是调用 mu-arch**——mu-scope 之后唯一可调用的技能就是 mu-arch。Sources: [mu-scope/SKILL.md:72]()
 
@@ -72,9 +76,11 @@ mu-arch 把已批准的需求转化为技术设计。它带有两条 HARD-GATE�
 
 设计流程从 Phase 0 的 Stance 检测开始（`create` / `update` / `extract` / `skip` 四种进入姿态），然后读取 scope artifact、探索项目上下文、就技术方向提问（scope 已回答"做什么"，因此不再追问目的和场景）、提出 2-3 个方案并附带**每个方案的 UC 覆盖情况**与反演测试、做 C4 定位与功能设计、按 NFR 触发条件扫描、写设计文档、跑 spec 审查循环，最后交用户审阅。Sources: [mu-arch/SKILL.md:24-50](), [mu-arch/SKILL.md:56-77](), [mu-arch/SKILL.md:141-145]()
 
-### Domain Language 横切关注点
+### State Machine Diagrams 的 step 0：原样继承 PRD 状态词汇
 
-命名在 mu-arch 中是与 ADR 并列的横切关注点：在给任何组件或概念起名之前，必须先读取仓库根部的 `CONTEXT.md`（若存在）并复用其术语，同时尊重 `_Avoid_` 列表。功能设计（步骤 8）中"用项目语言命名"这一子项也重申了同一约束。当设计新造了一个名字且用户批准后，要按 `knowledge/principles/domain-glossary.md` 的资格测试，把该条目（定义 + `_Avoid_` 同义词）在提交设计文档的同一 commit 中加入 `CONTEXT.md`。这保证了 Use Case Set、HARD-GATE、Anchor 等域语言术语在整条管线上保持一致，不被同义词稀释。Sources: [mu-arch/SKILL.md:246-248](), [mu-arch/SKILL.md:71](), [CONTEXT.md:1-3]()
+功能设计阶段的条件性工具 State Machine Diagrams 在"实体有生命周期状态"（订单状态、订阅状态、审批流、账户状态、内容发布状态）时触发。其使用步骤新增了 **step 0**：若存在 PRD 对象模型（`docs/prd/*.objects.md`，或 PRD 正文中的状态表），必须从它的状态与迁移出发——**状态名原样继承（verbatim）**，因为它们属于 `CONTEXT.md` 词汇；mu-arch 只设计技术实现层面的内容：幂等性（idempotency）、事务（transactions）、补偿状态（compensation states）、定时器（timers）。产品层看不到的纯实现状态（如 "refund-in-flight"）是对模型的**扩展**，应回流标记给 PRD，而不是重命名产品状态。之后才是常规的 1-5 步：枚举全部状态、画出全部合法迁移、检查缺失迁移（如 "shipped" 的订单能否 "cancelled"）、检查死端状态、把状态机记入设计文档。Sources: [mu-arch/SKILL.md:208-218]()
+
+这与 mu-arch 的 Domain Language 横切关注点一脉相承：在给任何组件或概念起名之前，必须先读取仓库根部的 `CONTEXT.md`（若存在）并复用其术语，尊重 `_Avoid_` 列表；设计新造名字且用户批准后，要在提交设计文档的同一 commit 中把条目加入 `CONTEXT.md`。Sources: [mu-arch/SKILL.md:247-249](), [mu-arch/SKILL.md:71](), [CONTEXT.md:1-3]()
 
 ### Requirements Reference：追溯性锚点
 
@@ -87,9 +93,34 @@ mu-arch 把已批准的需求转化为技术设计。它带有两条 HARD-GATE�
 - NFRs: NFR-1, NFR-2, ...
 ```
 
-这个字段是从设计回溯到 scope 的链接，mu-review 的 coverage 检查后续正是从这里提取 scope 文件路径。Sources: [mu-arch/SKILL.md:260-269](), [mu-review/SKILL.md:620-623]()
+这个字段是从设计回溯到 scope 的链接，mu-review 的 coverage 检查后续正是从这里提取 scope 文件路径。Sources: [mu-arch/SKILL.md:261-270](), [mu-review/SKILL.md:620-627]()
 
-写完 spec 后进入两道关卡：先是 spec 审查循环（派发 mu-reviewer 的 review-design 模式，发现问题就修复并重派，超过 3 轮上报人类），再是用户审阅关卡（用户批准后才继续）。**终止状态是调用 mu-plan。** Sources: [mu-arch/SKILL.md:271-284](), [mu-arch/SKILL.md:129]()
+写完 spec 后进入两道关卡：先是 spec 审查循环（派发 mu-reviewer 的 review-design 模式，发现问题就修复并重派，超过 3 轮上报人类），再是用户审阅关卡（用户批准后才继续）。**终止状态是调用 mu-plan。** Sources: [mu-arch/SKILL.md:272-285](), [mu-arch/SKILL.md:129]()
+
+## PRD 状态词汇继承：一条贯穿 scope 与 arch 的新链路
+
+当上游用 `/mu-prd` 产出过对象生命周期模型（PRD 属于 on-demand 技能，仅显式 slash 调用），核心管线的前两站会以两种互补方式消费同一份状态表——scope 消费它的**迁移**（每条迁移 ≥ 1 个 UC），arch 消费它的**状态名**（原样继承、只补技术实现）。两站共用同一套词汇，使 UC、设计文档、`CONTEXT.md` 三处的状态名保持一致，不被同义词稀释。Sources: [README.md:59-66](), [mu-scope/SKILL.md:148](), [mu-arch/SKILL.md:213]()
+
+```mermaid
+graph TD
+    PRD["PRD 对象模型<br/>docs/prd/*.objects.md 或正文状态表"] --> T["迁移表<br/>states + transitions"]
+    T -->|"当作 UC 清单：每条触及的迁移<br/>至少 1 个用例，用模型状态名"| SC["mu-scope<br/>Transition coverage"]
+    T -->|"step 0：状态名 verbatim 继承<br/>（CONTEXT.md 词汇）"| AR["mu-arch<br/>State Machine Diagrams"]
+    SC -->|"重试 / 竞态 → edge cases"| UC["Use Case Set"]
+    AR --> TR["只设计技术实现：<br/>idempotency / transactions /<br/>compensation states / timers"]
+    TR -->|"纯实现状态（如 refund-in-flight）<br/>= 扩展模型，回流标记给 PRD"| PRD
+```
+
+Sources: [mu-scope/SKILL.md:148](), [mu-arch/SKILL.md:208-218]()
+
+| 维度 | mu-scope（Transition coverage） | mu-arch（State Machine step 0） |
+|------|--------------------------------|--------------------------------|
+| 消费什么 | 迁移表的每条迁移（含时钟驱动） | 状态与迁移的名字（verbatim） |
+| 产出什么 | 每条触及的迁移 ≥ 1 个 UC；重试/竞态入 edge cases | 技术实现设计：idempotency、transactions、compensation states、timers |
+| 命名约束 | 用例使用模型的状态名 | 状态名视为 `CONTEXT.md` 词汇，禁止重命名 |
+| 对模型的反馈 | —（清单式消费） | 纯实现状态扩展模型，回流标记给 PRD |
+
+Sources: [mu-scope/SKILL.md:148](), [mu-arch/SKILL.md:213]()
 
 ## mu-plan：从设计 spec 到实施计划
 
@@ -97,7 +128,7 @@ mu-plan 的写作前提是假设执行者"对代码库零上下文、品味存�
 
 ### 任务粒度与追溯
 
-每个步骤是一个动作（2-5 分钟）："写失败测试"是一步，"运行确认失败"是一步，"写最小实现"是一步，"运行确认通过"是一步，"提交"是一步。每个任务头部标注 `Covers: UC-1, UC-3`——当 scope artifact 存在时这是必须项，它告诉 coder 要在测试中追溯哪些用例。Sources: [mu-plan/SKILL.md:65-72](), [mu-plan/SKILL.md:95-97](), [mu-plan/SKILL.md:143]()
+每个步骤是一个动作（2-5 分钟）："写失败测试"是一步，"运行确认失败"是一步，"写最小实现"是一步，"运行确认通过"是一步，"提交"是一步。每个任务头部标注 `Covers: UC-1, UC-3`——当 scope artifact 存在时这是必须项，它告诉 coder 要在测试中追溯哪些用例。Sources: [mu-plan/SKILL.md:65-72](), [mu-plan/SKILL.md:94-99](), [mu-plan/SKILL.md:143]()
 
 计划写完后进入计划审查循环：派发 mu-reviewer 的 review-plan 模式，提供 `PLAN_FILE_PATH` 与 `SPEC_FILE_PATH`。审查者会从文档构建 **Anchor 列表**（UC-ID、任务编号、文件路径），只输出绑定到这些 Anchor 的发现——防止幻觉出不存在的 UC、类名或文件路径。审查通过后进入执行交接，提供两种模式选择（子代理驱动/内联），**终止状态是调用 mu-code**。Sources: [mu-plan/SKILL.md:145-158](), [mu-plan/SKILL.md:160-172](), [CONTEXT.md:59-61]()
 
@@ -145,11 +176,11 @@ Sources: [mu-scope/SKILL.md:12-14](), [mu-arch/SKILL.md:14-22]()
 ## 典型路径
 
 - **现有项目加功能**：`mu-scope → mu-arch → mu-plan → mu-code → mu-review`
-- **绿地产品**：`/mu-biz` → `/mu-prd` → 再进入上述功能循环
+- **绿地产品**：`/mu-biz` → `/mu-prd` → 再进入上述功能循环（PRD 对象模型由此进入状态词汇继承链路）
 - **Bug 修复**：`mu-scope（1 个 UC）→ mu-debug → mu-code`
 
-Sources: [README.md:73-76]()
+Sources: [README.md:73-78]()
 
 ---
 
-See also: [实现与审查](implementation-and-review.md) · [代理系统](agent-system.md) · [钩子与门控](hooks-and-gates.md)
+See also: [实现与审查](implementation-and-review.md) · [按需技能](on-demand-skills.md) · [工作流与路由](workflow-and-routing.md)

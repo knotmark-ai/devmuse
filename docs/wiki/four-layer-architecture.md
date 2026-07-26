@@ -57,31 +57,31 @@ Sources: [docs/architecture.md:13-20]()
 
 Sources: [docs/architecture.md:34-44]()
 
-### plugin.json：skills 与 agents 的入口
+### 插件清单：skills 与 agents 的入口
 
-`.claude-plugin/plugin.json` 中，`skills` 以目录形式声明（`"./skills/"`），而 `agents` 逐文件列出（`./agents/mu-reviewer.md`、`./agents/mu-coder.md`）。`hooks/hooks.json` 则依靠 Claude Code v2.1+ 的约定式加载，不出现在 plugin.json 中。Sources: [.claude-plugin/plugin.json:12-16](), [docs/architecture.md:151-165]()
+`.claude-plugin/plugin.json`（当前版本 **1.3.0**）是插件的清单文件：`name: devmuse`，描述为 "Core workflow plugin for Claude Code: scope, design, plan, code, review, debug"。其中 `skills` 以目录形式声明（`"./skills/"`），而 `agents` 逐文件列出（`./agents/mu-reviewer.md`、`./agents/mu-coder.md`）。`hooks/hooks.json` 则依靠 Claude Code v2.1+ 的约定式加载，不出现在 plugin.json 中。Sources: [.claude-plugin/plugin.json:2-16](), [docs/architecture.md:151-165]()
 
 ### rules 层的注入路径
 
 `rules/` 不被插件系统原生支持，DevMuse 用一条 hook 链把它变成"每个会话都在场"的内容：
 
 1. `hooks/hooks.json` 声明 SessionStart hook，matcher 为 `startup|clear|compact`，同步执行 `hooks/session-start` 脚本。Sources: [hooks/hooks.json:3-14]()
-2. `session-start` 脚本读取 `rules/bootstrap.md`，做 JSON 转义后包装进 `<EXTREMELY_IMPORTANT>` 标记，经 `hookSpecificOutput.additionalContext` 输出，注入会话上下文。Sources: [hooks/session-start:11-33](), [docs/architecture.md:46-54]()
+2. `session-start` 脚本读取 `rules/bootstrap.md`，做 JSON 转义后包装进 `<devmuse-bootstrap>` 标签（并附一句导语："Below is your bootstrap skill. For all other skills, use the Skill tool."），经 `hookSpecificOutput.additionalContext` 输出，注入会话上下文。Sources: [hooks/session-start:10-33](), [docs/architecture.md:46-54]()
 
-由于全部 rules 内容都收敛到 `bootstrap.md` 这一个文件，注入路径也只需读取它一个文件——这同时意味着后文的路由逻辑（Routing 段）会随 bootstrap 一起被每个会话加载。Sources: [hooks/session-start:11]()
+由于全部 rules 内容都收敛到 `bootstrap.md` 这一个文件，注入路径也只需读取它一个文件——这同时意味着后文的路由逻辑（Routing 段）会随 bootstrap 一起被每个会话加载。实现上，脚本用 bash 参数替换做单遍 JSON 转义，并以 `printf` 取代 heredoc 输出（规避 bash 5.3+ 内容超过约 512 字节时 heredoc 变量展开挂起的 bug）。Sources: [hooks/session-start:11-33]()
 
 ```mermaid
 graph TD
     CC[Claude Code<br/>会话事件 startup/clear/compact] -->|匹配 SessionStart| HJ[hooks/hooks.json]
     HJ -->|执行同步脚本| SS[hooks/session-start]
     SS -->|cat 读取| BS[rules/bootstrap.md<br/>含 Routing 段]
-    SS -->|JSON 转义 + 包装 EXTREMELY_IMPORTANT| OUT[hookSpecificOutput.additionalContext]
+    SS -->|JSON 转义 + 包装 devmuse-bootstrap 标签| OUT[hookSpecificOutput.additionalContext]
     OUT -->|注入会话上下文| CC
 ```
 
 Sources: [hooks/hooks.json:3-14](), [hooks/session-start:7-33]()
 
-除 SessionStart 外，`hooks.json` 还注册了两个 PreToolUse hook：作用于 Edit/Write 的 `pipeline-gate.sh`（改码前强制 scope + design 产物存在，插件自编辑豁免，fail-open）和作用于 Bash 的 `destructive-guard.sh`（对 `rm -rf`、`git push -f` 等破坏性命令告警）。它们是 rules 层"约束所有层"语义在工具调用层面的执行者。Sources: [hooks/hooks.json:15-36](), [README.md:122-127]()
+除 SessionStart 外，`hooks.json` 还注册了两个 PreToolUse hook：作用于 Edit/Write 的 `pipeline-gate.sh`（改码前强制 scope + design 产物存在，插件自编辑豁免，fail-open）和作用于 Bash 的 `destructive-guard.sh`（对 `rm -rf`、`git push -f` 等破坏性命令告警）。它们是 rules 层"约束所有层"语义在工具调用层面的执行者。Sources: [hooks/hooks.json:15-36](), [README.md:121-127]()
 
 ### knowledge 层的引用路径
 
@@ -89,20 +89,20 @@ skills 和 agents 在自身 Markdown 中用 `@` 相对路径引用 knowledge 文
 
 ## 各层职责
 
-### rules/ — 全局决策指南（现含路由）
+### rules/ — 全局决策指南（含路由）
 
-`rules/` 当前仅含一个文件 `bootstrap.md`，承担技能发现与调用规则、指令优先级、决策流程。设计原则是：rules 经 hook 注入、持续消耗 token，因此只放"必须无条件常驻"的内容，可按需加载的一律留在 skills。Sources: [docs/architecture.md:71-77](), [README.md:118-120]()
+`rules/` 当前仅含一个文件 `bootstrap.md`，承担技能发现与调用规则、指令优先级、决策流程。设计原则是：rules 经 hook 注入、持续消耗 token，因此只放"必须无条件常驻"的内容，可按需加载的一律留在 skills。Sources: [docs/architecture.md:71-77](), [README.md:115-119]()
 
 bootstrap.md 的核心内容包括：
 
-- **指令优先级**：用户显式指令（CLAUDE.md/AGENTS.md/直接请求）> DevMuse skills > 默认系统提示——用户始终拥有最终控制权。Sources: [rules/bootstrap.md:18-26]()
-- **领域过滤（路由前置）**：DevMuse 只处理软件工程与产品/商业分析两类工作，域外消息正常回复、不路由。Sources: [rules/bootstrap.md:42-48]()
-- **路由（Routing 段）**：未加前缀的域内消息在此段被直接分类并路由，`/mu-*` 前缀绕过路由。路由信号是 git/fs 事实而非推断——意图动词、`docs/scope|specs|prd|biz/*.md` 下产物是否存在、近期作者熟悉度等。Sources: [rules/bootstrap.md:50-83]()
-- **意图 → 开局动作**：首个匹配胜出，多动词优先级为 fix > review > reshape > create-feature > implement > understand；置信度决定摩擦力——单一无歧义动词静默调用，两个候选给一行确认，更模糊则给完整提案。Sources: [rules/bootstrap.md:63-82]()
-- **四类技能划分**：Core pipeline（自动路由）、Orthogonal（自动路由）、On-demand（仅 slash 调用，匹配意图只给指针不调用）、Meta。Sources: [rules/bootstrap.md:84-93]()
+- **指令优先级**：用户显式指令（CLAUDE.md/AGENTS.md/直接请求）> DevMuse skills > 默认系统提示——用户始终拥有最终控制权。Sources: [rules/bootstrap.md:14-22]()
+- **领域过滤（路由前置）**：DevMuse 只处理软件工程与产品/商业分析两类工作，域外消息正常回复、不路由。Sources: [rules/bootstrap.md:40-44]()
+- **路由（Routing 段）**：未加前缀的域内消息在此段被直接分类并路由，`/mu-*` 前缀绕过路由。路由信号是 git/fs 事实而非推断——意图动词、`docs/scope|specs|prd|biz/*.md` 下产物是否存在、近期作者熟悉度等。Sources: [rules/bootstrap.md:46-72]()
+- **意图 → 开局动作**：首个匹配胜出，多动词优先级为 fix > review > reshape > create-feature > implement > understand；置信度决定摩擦力——单一无歧义动词静默调用，两个候选给一行确认，更模糊则给完整提案。Sources: [rules/bootstrap.md:59-78]()
+- **四类技能划分**：Core pipeline（自动路由）、Orthogonal（自动路由）、On-demand（仅 slash 调用，匹配意图只给指针不调用）、Meta。Sources: [rules/bootstrap.md:80-89]()
 - **子代理短路**：被派遣执行具体任务的 subagent 跳过 bootstrap，避免执行角色重新进入路由逻辑。Sources: [rules/bootstrap.md:6-8]()
 
-> **架构变更提示**：路由曾是独立的 `mu-route` 技能，现已被折叠进 `bootstrap.md` 的 Routing 段——因此"意图分类与派单"这件事如今发生在 **rules 层**（每会话常驻），而非某个按需加载的技能。这也是当前 skills 数量为 13 的原因之一。Sources: [rules/bootstrap.md:50-93]()
+> **架构变更提示**：路由曾是独立的 `mu-route` 技能，现已被折叠进 `bootstrap.md` 的 Routing 段——因此"意图分类与派单"这件事如今发生在 **rules 层**（每会话常驻），而非某个按需加载的技能。Sources: [rules/bootstrap.md:46-89](), [README.md:68-70]()
 
 ### skills/ — 用户触发的工作流
 
@@ -115,11 +115,11 @@ bootstrap.md 的核心内容包括：
 | mu-code | mu-coder；mu-reviewer (review-code + review-compliance) |
 | mu-review | mu-reviewer (review-code + review-coverage + review-security) |
 
-其余 skill 不派遣任何 agent。技能按用途分为四类：Core pipeline（mu-scope → mu-arch → mu-plan → mu-code → mu-review，自动路由）、Orthogonal（mu-explore、mu-debug，自动路由）、On-demand（mu-biz、mu-prd、mu-wiki、mu-retro、mu-grill，仅 slash 调用）、Meta（mu-write-skill）。Sources: [docs/architecture.md:79-90](), [README.md:92-107]()
+其余 skill 不派遣任何 agent。技能按用途分为四类：Core pipeline（mu-scope → mu-arch → mu-plan → mu-code → mu-review，自动路由）、Orthogonal（mu-explore、mu-debug，自动路由）、On-demand（mu-biz、mu-prd、mu-wiki、mu-retro、mu-grill，仅 slash 调用）、Meta（mu-write-skill）。Sources: [docs/architecture.md:79-90](), [README.md:92-106]()
 
 ### agents/ — 独立执行角色
 
-只有两个 agent：`mu-reviewer`（六模式评审员：review-design / review-plan / review-code / review-compliance / review-coverage / review-security）与 `mu-coder`（实现专家）。关键设计决策是 **"2 个通用 agent + knowledge 注入"而非 N 个语言特定 agent**：评审逻辑 80% 通用，改一处全局生效；支持新语言只需新增一个 knowledge 文件。Sources: [docs/architecture.md:92-99](), [README.md:109-114]()
+只有两个 agent：`mu-reviewer`（六模式评审员：review-design / review-plan / review-code / review-compliance / review-coverage / review-security）与 `mu-coder`（实现专家）。关键设计决策是 **"2 个通用 agent + knowledge 注入"而非 N 个语言特定 agent**：评审逻辑 80% 通用，改一处全局生效；支持新语言只需新增一个 knowledge 文件。Sources: [docs/architecture.md:92-99](), [README.md:110-113]()
 
 ### knowledge/ — 按需注入的领域知识
 
@@ -144,7 +144,7 @@ bootstrap.md 的核心内容包括：
 | **agents** | 受约束 | **✗ 禁止** | 嵌套派遣 | @引用 |
 | **knowledge** | — | — | — | — |
 
-Sources: [docs/architecture.md:119-126]()
+Sources: [docs/architecture.md:117-126]()
 
 ### 关键约束
 
@@ -175,4 +175,4 @@ Sources: [docs/architecture.md:136-147]()
 
 ---
 
-See also: [工作流与路由](workflow-and-routing.md) · [Agent 系统](agent-system.md) · [领域语言与质量](domain-language-and-quality.md)
+See also: [工作流与路由](workflow-and-routing.md) · [Hooks 与门禁](hooks-and-gates.md) · [核心流水线](core-pipeline.md)
