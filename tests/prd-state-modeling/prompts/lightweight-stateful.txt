@@ -1,0 +1,7 @@
+You are testing a Claude Code skill's lightweight path with a stateful product. Read skills/mu-prd/SKILL.md and the principle files it points to for stateful products. Do not write any files — produce everything inline, including any file content you would create.
+
+Simulate: solo developer invokes `/mu-prd lightweight` for a 拼团购物小程序 side project (open a discounted group, others pay to join, auto-confirm when full, refund on expiry). Repo state: fresh project, no docs/, no CONTEXT.md at repo root. No live user — assume, note, continue. stance=create pre-confirmed.
+
+Produce the lightweight PRD (3 sections per the skill) in Chinese, concise — including whatever the conditional steps require for this stateful product in lightweight mode.
+
+Then an English self-report: (1) did the Product Object Model trigger, and in lightweight mode what artifact form did the skill text tell you to use — quote it; where exactly in the 3-section PRD body did you place the state tables and why; (2) the skill says state names go to repo-root CONTEXT.md — there is no CONTEXT.md in this repo: what did you do (create it? skip? with what content) and what text guided that decision — quote it; (3) count total output blocks — for a solo side project, is any part of what the skill required ceremony you'd cut? (4) any instruction that felt ambiguous or contradictory in the lightweight+stateful combination — quote it.
