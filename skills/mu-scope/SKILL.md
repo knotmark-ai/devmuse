@@ -145,6 +145,8 @@ Work through scenarios with the user, one category at a time.
 
 **Order:** Happy paths first (establish the core), then edge cases (expand boundaries), then error cases (handle failures), then **reverse cases** (what must NOT happen).
 
+**Transition coverage:** if a PRD object model exists (`docs/prd/*.objects.md`, or state tables in the PRD body), its transition table is a UC checklist — every transition the feature touches (including clock-driven ones) earns at least one use case, using the model's state names; retries and races around a transition are edge cases.
+
 **Reverse use cases:** For every new behavior introduced, ask: "What existing behavior must remain unchanged?" Frame these as negative assertions:
 ```
 - UC-R1: When <scenario that worked before>, Then <must still behave the same way>
