@@ -38,7 +38,7 @@ Before Depth Mode Selection, detect the current state of any existing PRD artifa
 | Stance | Action |
 |--------|--------|
 | `create` | Run Depth Mode Selection, then existing Process (Lightweight or Full) unchanged. |
-| `update` | Load existing PRD artifact → apply sub-type logic (`expand` fills stub sections; `gap-fill` appends a new feature spec section titled "Gap-fill: `<feature>`"; `sync` aligns feature descriptions to current code behavior) → merge via section approval. |
+| `update` | Load the existing PRD artifact and its object model (the companion `.objects.md` linked from the header, or in-body tables), when one exists → classify each change and apply sub-type logic (`expand` fills stub sections; `gap-fill` appends a new feature spec section titled "Gap-fill: `<feature>`" — state changes it implies are edited in the object model, with the body citing state names; `sync` aligns feature descriptions and object-model states to current code behavior) → merge via section approval, machines before the body sections that cite them. Each touched state machine is one approval unit: re-run the state-modeling self-check on it, and treat a terminal-state change as a fork to confirm with the user. New state names follow the same CONTEXT.md vocabulary rule as creation. Multiple sub-types in one invocation: commit prefix takes the highest-priority sub-type (expand > gap-fill > sync); History records one row per change. |
 | `extract` | Read source dirs (pages/screens/views/app or fallback src/) section-by-section, synthesize a PRD covering observed features + flows + screens. Commit prefix: `extract:`. |
 | `skip` | Append pass-through history entry; invoke `mu-scope` for the first MVP feature per existing Integration. No stance hint is passed to `mu-scope` since it isn't a creative skill. |
 
@@ -141,9 +141,9 @@ Minimum viable PRD for solo/small projects:
 
 When triggered, build the model per @../../knowledge/principles/state-modeling.md: classify candidate states (business state vs attribute / computed / page / sub-object), then per object produce the closed state list, transition table (state × event × actor → next state, with boundary semantics), invariants, terminal states, and retry/race guarantees. Drive every unfilled blank with the lifecycle sentence; run the self-check before the model is approved.
 
-- **Placement:** build it after the Information Architecture section (the feature map names the objects) and before Core User Flows — flows walk the machine, and feature specs cite its states by name.
+- **Placement:** build it after the Information Architecture section (the feature map names the objects) and before Core User Flows — flows walk the machine, and feature specs cite its states by name. Lightweight mode has no IA section: place the tables directly before the core flows.
 - **Artifact:** full mode → companion file `docs/prd/YYYY-MM-DD-<product>.objects.md`, linked from the PRD header and committed with it. Lightweight mode → one states+transitions table per object inside the PRD body.
-- **Vocabulary:** approved state names are domain language — add them to repo-root `CONTEXT.md` (definition + `_Avoid_` synonyms) in the same commit. Downstream skills use these names exactly.
+- **Vocabulary:** approved state names are domain language — add those passing the qualification test in @../../knowledge/principles/domain-glossary.md to repo-root `CONTEXT.md` (create it if absent; definition + `_Avoid_` synonyms) in the same commit. Downstream skills use these names exactly.
 
 ### 4. Visual Companion
 
@@ -165,10 +165,10 @@ Ask the user which MVP feature to start with. Then invoke mu-scope for that feat
 > **Date:** YYYY-MM-DD
 > **Depth mode:** lightweight | full
 > **Stance:** <create | update | extract | skip>
-> **Sub-type:** <expand | gap-fill | sync | —>
+> **Sub-type:** <expand | gap-fill | sync | —> (highest-priority sub-type when one update carries several)
 > **Detected at:** YYYY-MM-DD (commit `<short-sha>`)
 > **Biz reference:** docs/biz/YYYY-MM-DD-<name>.md (or "inline" if none)
-> **Object model:** docs/prd/YYYY-MM-DD-<product>.objects.md (omit if the Product Object Model did not trigger)
+> **Object model:** docs/prd/YYYY-MM-DD-<product>.objects.md (lightweight: "in-body"; omit if the Product Object Model did not trigger)
 
 ## 1. Persona Deepening
 ...
@@ -242,6 +242,6 @@ Before invoking mu-scope, consult `@../../knowledge/principles/sign-off-gate.md`
 ## Integration
 
 - **Invoked by:** user manually (`/mu-prd`); or auto-invoked by `mu-biz full` on completion (passing `stance=create` pre-confirmed per spec §2.5)
-- **Reads:** `docs/biz/*.md` (biz artifact if present); `@../../knowledge/principles/stance-detection.md` (Phase 0); `@../../knowledge/principles/state-modeling.md` (Product Object Model, when triggered); `@../../knowledge/principles/sign-off-gate.md` (terminal if team-touching)
+- **Reads:** `docs/biz/*.md` (biz artifact if present); `@../../knowledge/principles/stance-detection.md` (Phase 0); `@../../knowledge/principles/state-modeling.md` (Product Object Model, when triggered); `@../../knowledge/principles/domain-glossary.md` (vocabulary qualification); `@../../knowledge/principles/sign-off-gate.md` (terminal if team-touching)
 - **Produces:** `docs/prd/YYYY-MM-DD-<product>.md`; `docs/prd/YYYY-MM-DD-<product>.objects.md` (when the Product Object Model triggers, full mode)
 - **Terminal state:** Invoke mu-scope for the first MVP feature. Further features iterate through mu-scope one at a time.
