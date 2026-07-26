@@ -7,7 +7,9 @@ description: Use when you have a spec or requirements for a multi-step task, bef
 
 ## Overview
 
-Write comprehensive implementation plans assuming the engineer has zero context for our codebase and questionable taste. Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
+Write comprehensive implementation plans assuming the engineer has zero context for our codebase. Document everything they need to know: which files to touch for each task, interfaces and constraints, tests, docs they might need to check, how to verify it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
+
+**Tests are the contract; bodies are the implementer's.** Test code appears in the plan verbatim — it pins behavior checkably. Implementation steps carry a signature plus the load-bearing constraints (the decisions a fresh implementer could get wrong), never full bodies: a copied body turns the TDD loop into a transcription checksum, while a fresh derivation checked against the plan's tests is a genuine second opinion. Include a full body only when the code itself is the decision — a worked algorithm, a tricky regex, a schema — and say why.
 
 Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.
 
@@ -78,7 +80,7 @@ This structure informs the task decomposition. Each task should produce self-con
 ```markdown
 # [Feature Name] Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use devmuse:mu-code (recommended) or devmuse:mu-code to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use devmuse:mu-code to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** [One sentence describing what this builds]
 
@@ -114,12 +116,14 @@ def test_specific_behavior():
 Run: `pytest tests/path/test.py::test_name -v`
 Expected: FAIL with "function not defined"
 
-- [ ] **Step 3: Write minimal implementation**
+- [ ] **Step 3: Implement to make the test pass**
 
-```python
-def function(input):
-    return expected
-```
+Signature: `def function(input: InputType) -> OutputType`
+Constraints:
+- <each load-bearing decision a fresh implementer could get wrong, one line — e.g. "boundary is inclusive: reject at count > limit, not >=">
+- <e.g. "the fail-open catch wraps every Redis call, not just the first">
+
+(Full body only when the code itself is the decision — then include it and say why.)
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -136,7 +140,7 @@ git commit -m "feat: add specific feature"
 
 ## Remember
 - Exact file paths always
-- Complete code in plan (not "add validation")
+- Complete TEST code in plan; implementation as signature + constraints — name the exact rules ("reject emails without @", not "add validation"); a full body only where the code is the decision
 - Exact commands with expected output
 - Reference relevant skills with @ syntax
 - DRY, YAGNI, TDD, frequent commits
