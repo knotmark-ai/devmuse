@@ -27,11 +27,7 @@ Before Depth Mode Selection, detect the current state of any existing PRD artifa
    - **Watched source dirs**: `src/pages/`, `src/screens/`, `src/views/`, `app/`. **Fallback**: if none of those exist (backend/CLI/library projects), fall back to top-level `src/` directly; if that also doesn't exist, H3 returns `insufficient-signal`.
    - **Legacy locations**: root `PRD.md`
    - Never watch `docs/prd/` itself (circular).
-3. Act based on confidence:
-   - **High confidence** → proceed silently, no confirmation dialog
-   - **Ambiguous** → present recommendation and ask: "Detected: stance=`<stance>`, confidence=`ambiguous`. Reason: `<one-line>`. Override? (`create` / `update` / `extract` / `skip`)"
-   - Slash-command hints (`/mu-prd <stance>`) — including the `/mu-prd create` that mu-mrd's full-mode terminal prompts the user to run — are treated as **pre-confirmed** — no dialog, proceed directly.
-5. Record approved stance. Route to matching branch below.
+3. Apply the Shared Consumption Protocol in that file (confidence handling, slash pre-confirmation — including the `/mu-prd create` prompted by mu-mrd's terminal — stance metadata), then route below.
 
 **Branch routing**:
 
@@ -56,7 +52,6 @@ mu-prd has two independent concepts: **Stance** (Phase 0) and **Depth Mode** (li
 
 Phase 0 parses only the stance token; Depth Mode Selection parses only the depth token.
 
-**Stance → artifact metadata**: add `> **Stance:** <stance>`, `> **Sub-type:** <sub-type or —>`, `> **Detected at:** YYYY-MM-DD (commit <short-sha>)` to the PRD header. Commit prefix: `docs(prd): <stance>[(sub-type)]: ...`. Opt-out per invocation via `--no-stance-meta`.
 
 ## Depth Mode Selection
 
@@ -168,8 +163,8 @@ Ask the user which MVP feature to start with. Then invoke mu-scope for that feat
 > **Date:** YYYY-MM-DD
 > **Depth mode:** lightweight | full
 > **Stance:** <create | update | extract | skip>
-> **Sub-type:** <expand | gap-fill | sync | —> (highest-priority sub-type when one update carries several)
-> **Detected at:** YYYY-MM-DD (commit `<short-sha>`)
+> **Sub-type:** <expand | gap-fill | sync | —> (highest-priority when one update carries several; omitted on fresh create)
+> **Detected at:** YYYY-MM-DD (commit `<short-sha>`) (omitted on fresh create — appears from first update/extract)
 > **MRD reference:** docs/mrd/YYYY-MM-DD-<name>.md (legacy docs/biz/*.md; or "inline" if none)
 > **Object model:** docs/prd/YYYY-MM-DD-<product>.objects.md (lightweight: "in-body"; omit if the Product Object Model did not trigger)
 

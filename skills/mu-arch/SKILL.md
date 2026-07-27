@@ -30,11 +30,7 @@ Before engaging the design process, detect the current state of any existing arc
    - **Watched source dirs**: `src/`, `lib/`, `internal/`, `pkg/`, `cmd/` (whichever exist; else H3 returns `insufficient-signal`)
    - **Legacy locations**: root `ARCHITECTURE.md`, `DESIGN.md`
    - **General rule**: artifact dir (`docs/specs/`) is never in its own watched set — prevents circular staleness.
-3. Act based on confidence:
-   - **High confidence** → proceed silently, no confirmation dialog
-   - **Ambiguous** → present recommendation and ask: "Detected: stance=`<stance>`, confidence=`ambiguous`. Reason: `<one-line>`. Override? (`create` / `update` / `extract` / `skip`)"
-   - Slash-command hints (`/mu-arch <stance>`) are treated as **pre-confirmed** — no dialog, proceed directly.
-4. Record approved stance. Route to matching branch below.
+3. Apply the Shared Consumption Protocol in that file (confidence handling, slash pre-confirmation, stance metadata), then route below.
 
 **Branch routing**:
 
@@ -45,7 +41,8 @@ Before engaging the design process, detect the current state of any existing arc
 | `extract` | If target code region is unfamiliar, optionally delegate to `mu-explore` first (pre-change variant) for a mental model. Then read source dirs section-by-section and populate the arch artifact from current code, with each section approved by the user. Commit prefix: `extract:`. |
 | `skip` | Append a pass-through entry to the existing artifact's History section (`| <date> | <sha> | skip | — | passthrough for <task> |`); commit only if header/History needed initialization; invoke `mu-plan` per existing Integration. |
 
-**Stance → artifact metadata**: update the artifact's header with `> **Stance:** <stance>`, `> **Sub-type:** <sub-type or —>`, `> **Detected at:** YYYY-MM-DD (commit <short-sha>)`. Commit message prefix uses `docs(specs): <stance>[(sub-type)]: ...` pattern. Users who want to opt out of stance metadata this invocation pass `--no-stance-meta`.
+**Commit prefix:** `docs(specs): <stance>[(sub-type)]: ...`
+
 
 ## Anti-Pattern: "This Is Too Simple To Need A Design"
 

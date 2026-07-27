@@ -26,11 +26,7 @@ Before Depth Mode Selection, detect the current state of any existing MRD artifa
    - **Artifact dir**: `docs/mrd/`
    - **Watched source dirs**: root `README*` only. **Note**: MRD staleness is weakly defined — the market shifting is a human judgment, not a file signal. H3 catches only the coarse "README says something very different now" case. Users override to `update(sync)` manually when they know a pivot has happened. **Never watch** `docs/prd/` (PRD edits don't imply MRD staleness) or `docs/mrd/` itself (circular).
    - **Legacy locations**: `docs/biz/` (mu-biz era), `docs/premise/` (deprecated), root `BUSINESS.md`
-3. Act based on confidence:
-   - **High confidence** → proceed silently, no confirmation dialog
-   - **Ambiguous** → present recommendation and ask: "Detected: stance=`<stance>`, confidence=`ambiguous`. Reason: `<one-line>`. Override? (`create` / `update` / `extract` / `skip`)"
-   - Slash-command hints (`/mu-mrd <stance>`) are treated as **pre-confirmed** — no dialog, proceed directly. See **Stance × Depth Mode interaction** below for how stance tokens interact with depth-mode tokens like `quick` / `full`.
-5. Record approved stance. Route to matching branch below.
+3. Apply the Shared Consumption Protocol in that file (confidence handling, slash pre-confirmation, stance metadata), then route below. See **Stance × Depth Mode interaction** for how stance tokens interact with depth-mode tokens like `quick` / `full`.
 
 **Branch routing**:
 
@@ -55,7 +51,6 @@ mu-mrd has two independent concepts: **Stance** (Phase 0, `create`/`update`/`ext
 
 Phase 0 parses only the stance token; Depth Mode Selection parses only the depth token. They run sequentially and do not interfere.
 
-**Stance → artifact metadata**: add `> **Stance:** <stance>`, `> **Sub-type:** <sub-type or —>`, `> **Detected at:** YYYY-MM-DD (commit <short-sha>)` to the Artifact Format header (below). Commit prefix: `docs(mrd): <stance>[(sub-type)]: ...`. User opts out per invocation via `--no-stance-meta`.
 
 ## Depth Mode Selection
 
@@ -151,8 +146,8 @@ Use when: greenfield product, team project, investor-facing analysis, major pivo
 > **Date:** YYYY-MM-DD
 > **Depth mode:** quick
 > **Stance:** <create | update | extract | skip>
-> **Sub-type:** <expand | gap-fill | sync | —>
-> **Detected at:** YYYY-MM-DD (commit `<short-sha>`)
+> **Sub-type:** <expand | gap-fill | sync | —> (omitted on fresh create)
+> **Detected at:** YYYY-MM-DD (commit `<short-sha>`) (omitted on fresh create — appears from first update/extract)
 
 ## Context
 - Greenfield or existing project
@@ -189,7 +184,7 @@ Commit message prefix reflects the stance and (if update) sub-type:
 - `docs(mrd): extract: ...` — reverse-engineered from product signals
 - `docs(mrd): skip: passthrough for <task>` — short history-only commit if header needed initialization
 
-**Opt-out**: the user can pass `--no-stance-meta` on invocation to suppress the Stance / Sub-type / Detected-at header fields for that session and fall back to the legacy commit convention. Default is on.
+**Opt-out**: the user can pass `--no-stance-meta` on invocation to suppress the Stance / Sub-type / Detected-at header fields for that session. Default is on.
 
 ## Key Principles
 

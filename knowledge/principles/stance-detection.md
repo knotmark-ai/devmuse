@@ -145,6 +145,15 @@ h3_status: <stale | not-stale | insufficient-signal>   # surface when H3 was rel
 
 The consuming skill uses `stance` to select its Phase 0 branch, `sub_type` to parametrize `update` behavior, and `confidence` to decide whether to flag the proposal to the user with an uncertainty notice.
 
+## Shared Consumption Protocol
+
+Every consuming skill runs the same four steps once the algorithm returns; skills carry only their parameter block and branch-routing table.
+
+1. **Confidence handling** — high → proceed silently, no dialog; ambiguous → present: "Detected: stance=`<stance>`, confidence=`ambiguous`. Reason: `<one-line>`. Override? (`create` / `update` / `extract` / `skip`)"
+2. **Slash pre-confirmation** — `/<skill> <stance>` hints, including a slash command the previous skill's terminal prompted the user to run, are pre-confirmed: no dialog, proceed directly.
+3. **Record and route** — record the approved stance; route to the skill's own branch table.
+4. **Stance → artifact metadata** — the artifact header gains `> **Stance:** <stance>`, `> **Sub-type:** <sub-type or —>`, `> **Detected at:** YYYY-MM-DD (commit <short-sha>)`; commit prefix `docs(<artifact-dir>): <stance>[(sub-type)]: ...`. A fresh `create` (no prior artifact detected) omits Sub-type and Detected-at — there was no detection to record; both appear from the first `update`/`extract` onward. Opt-out per invocation: `--no-stance-meta`.
+
 ## Worked example
 
 Scenario: mu-mrd invoked on a repo where `docs/mrd/2025-11-pilot.md` exists (250 words, 1 TODO placeholder, mtime 2026-04-01), watched source `README.md` last changed 2026-04-10, current task identifier is "complete MRD for pilot".
