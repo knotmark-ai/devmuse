@@ -20,7 +20,7 @@ Only business states enter the state model. Classify before modeling:
 | Attribute | Describes the object, never gates its lifecycle | room type, channel, priority | Feature spec fields |
 | Computed | Derived from other fields at read time | is-overdue, time-remaining | Note the formula where used; never a stored state |
 | Page state | Affects only what the screen shows | loading, empty, network error | Wireframes section |
-| Sub-object state | A different object's lifecycle | payment status inside an order | Its own state model — one machine per object |
+| Sub-object state | A different object's lifecycle | payment status inside an order; a revision inside an article | Its own state model — one machine per object |
 | Mapping | A relation between objects resolved at read/query time | anonymous→identified identity merge | Its own mapping design — never a state field |
 
 The absence of an object is not a state: creation is the entry event, not a transition out of a phantom "not-exists" state.
@@ -51,6 +51,7 @@ Run before the model is approved; ask any unanswered item as an A/B question wit
 3. Any event that can fire in more than one state — is the outcome defined per state?
 4. Any transition without an actor (who or what clock moves it)?
 5. Any deadline or window without inclusive/exclusive semantics?
+6. Any async external operation (refund, payout, notification, webhook) without a user-visible failure state — or an explicit exclusion?
 
 ## Steady State First
 

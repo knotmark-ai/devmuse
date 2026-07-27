@@ -152,7 +152,7 @@ Every consuming skill runs the same four steps once the algorithm returns; skill
 1. **Confidence handling** — high → proceed silently, no dialog; ambiguous → present: "Detected: stance=`<stance>`, confidence=`ambiguous`. Reason: `<one-line>`. Override? (`create` / `update` / `extract` / `skip`)"
 2. **Slash pre-confirmation** — `/<skill> <stance>` hints, including a slash command the previous skill's terminal prompted the user to run, are pre-confirmed: no dialog, proceed directly.
 3. **Record and route** — record the approved stance; route to the skill's own branch table.
-4. **Stance → artifact metadata** — the artifact header gains `> **Stance:** <stance>`, `> **Sub-type:** <sub-type or —>`, `> **Detected at:** YYYY-MM-DD (commit <short-sha>)`; commit prefix `docs(<artifact-dir>): <stance>[(sub-type)]: ...`. A fresh `create` (no prior artifact detected) omits Sub-type and Detected-at — there was no detection to record; both appear from the first `update`/`extract` onward. Opt-out per invocation: `--no-stance-meta`.
+4. **Stance → artifact metadata** — the artifact header gains `> **Stance:** <stance>`, `> **Sub-type:** <sub-type or —>`, `> **Detected at:** YYYY-MM-DD (commit <short-sha>)`; commit prefix `docs(<artifact-dir>): <stance>[(sub-type)]: ...`. A fresh `create` (no prior artifact detected) omits Sub-type and Detected-at — there was no detection to record; both appear from the first `update`/`extract` onward. History's initial row summarizes the create round's key decisions — a bare "Initial creation" row is noise. Opt-out per invocation: `--no-stance-meta`.
 
 ## Worked example
 
