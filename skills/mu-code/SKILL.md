@@ -9,6 +9,10 @@ description: Use when you have an implementation plan ready to execute - support
 
 Execute implementation plan task by task. Two modes: subagent-driven (recommended) or inline.
 
+<HARD-GATE>
+mu-code requires an implementation plan (docs/plans/*.md, or one handed over inline). A design spec is not a plan — if only a spec exists, invoke mu-plan first.
+</HARD-GATE>
+
 **Core principle (Subagent-Driven Mode):** Fresh subagent per task + two-stage review (spec then quality) = high quality, fast iteration
 
 **Announce at start:** "I'm using the mu-code skill to implement this plan."

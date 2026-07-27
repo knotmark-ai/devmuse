@@ -39,7 +39,7 @@ Before Depth Mode Selection, detect the current state of any existing MRD artifa
 | `create` | Run Depth Mode Selection, then existing Process (Quick or Full) unchanged. |
 | `update` | Load existing MRD artifact → apply sub-type logic (`expand` fills stub sections; `gap-fill` adds a new section for a sister-product / new-market; `sync` updates stale market/competitor/revenue claims to current state) → merge via section approval. |
 | `extract` | Read product signals (code, commits, README, user interviews if user provides them) and synthesize an MRD section-by-section. Commit prefix: `extract:`. |
-| `skip` | Append pass-through history entry; move to downstream (manually if Quick depth mode, or `mu-prd create` if Full depth mode — see Full-mode Terminal). |
+| `skip` | Append pass-through history entry; move to downstream (manually if Quick depth mode; Full → the terminal prompt for `/mu-prd create`). |
 
 **Stance × Depth Mode interaction**:
 
@@ -80,7 +80,7 @@ digraph mu_mrd {
     "Write artifact\n(docs/mrd/)" [shape=box];
     "Quick?" [shape=diamond];
     "Terminal: user proceeds\n(manually to mu-scope or mu-prd)" [shape=doublecircle];
-    "Terminal: invoke mu-prd" [shape=doublecircle];
+    "Terminal: prompt /mu-prd create" [shape=doublecircle];
 
     "Detect mode\n(quick or full)" -> "Load premise-check.md";
     "Load premise-check.md" -> "Detect context:\ngreenfield vs existing?";
@@ -88,10 +88,13 @@ digraph mu_mrd {
     "Detect context:\ngreenfield vs existing?" -> "Full mode:\nquick + 5 market sections" [label="full"];
     "Quick mode:\n4 forcing questions" -> "Evaluate answers";
     "Full mode:\nquick + 5 market sections" -> "Evaluate answers";
+    "User approves MRD?" [shape=diamond];
     "Evaluate answers" -> "Write artifact\n(docs/mrd/)";
-    "Write artifact\n(docs/mrd/)" -> "Quick?";
+    "Write artifact\n(docs/mrd/)" -> "User approves MRD?";
+    "User approves MRD?" -> "Write artifact\n(docs/mrd/)" [label="changes requested"];
+    "User approves MRD?" -> "Quick?" [label="approved"];
     "Quick?" -> "Terminal: user proceeds\n(manually to mu-scope or mu-prd)" [label="yes"];
-    "Quick?" -> "Terminal: invoke mu-prd" [label="no (full)"];
+    "Quick?" -> "Terminal: prompt /mu-prd create" [label="no (full)"];
 }
 ```
 
@@ -134,8 +137,9 @@ Use when: greenfield product, team project, investor-facing analysis, major pivo
    5. **MVP scope boundary** — product-level feature list (not UC-level); free/paid tier boundaries if applicable
 3. Write artifact to `docs/mrd/YYYY-MM-DD-<product>.md`
 4. Commit
+5. User reviews and approves the assembled MRD — this is the HARD-GATE; section approvals alone don't clear it
 
-**Terminal:** Invoke mu-prd skill with pre-confirmed stance `create` — per spec §2.5 (Pipeline-handoff regression guard), passes stance hint so mu-prd's Phase 0 does not present a confirmation dialog. (Greenfield products typically need PRD next.)
+**Terminal:** mu-prd is slash-only (`disable-model-invocation`), so hand the baton to the user: "MRD approved — run `/mu-prd create` to define the product." That slash hint arrives pre-confirmed per spec §2.5, so mu-prd's Phase 0 presents no dialog. (Greenfield products typically need PRD next.)
 
 ## Artifact Format
 
@@ -210,4 +214,4 @@ Before terminal (user-decides in Quick mode, invoke mu-prd in Full mode), consul
 - **Produces:** `docs/mrd/YYYY-MM-DD-<name>[-quick].md`
 - **Terminal state:**
   - Quick mode → user decides (no chaining)
-  - Full mode → invoke `mu-prd create` (pre-confirmed stance, per spec §2.5)
+  - Full mode → prompt the user to run `/mu-prd create` (slash hint arrives pre-confirmed per spec §2.5; mu-prd is slash-only, so the baton passes through the user's hand)

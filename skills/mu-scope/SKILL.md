@@ -73,7 +73,7 @@ digraph mu_scope {
 }
 ```
 
-**The terminal state is invoking mu-arch** — with one exception: the micro exit (Phase 2), which ends the pipeline after the verified in-session change. Everything else: do NOT invoke any other skill; the ONLY skill you invoke after mu-scope is mu-arch.
+**The terminal state is invoking mu-arch** — with two exceptions: the micro exit (Phase 2), which ends the pipeline after the verified in-session change; and **bug-fix scoping** (the router's fix intent), where the approved single UC is a reproduction — `Given <broken state> When <action> Then <observed failure, vs expected>` — and hands off to **mu-debug**, whose red loop consumes it. A fix-route request may still take the micro exit when its conditions hold: the red test IS the reproduction, and if the stated edit does not turn it green, that surprise cancels micro and the repro hands to mu-debug. Everything else: do NOT invoke any other skill; the ONLY skill you invoke after mu-scope is mu-arch.
 
 ## Phase 1: Quick Probe
 
@@ -143,7 +143,7 @@ Present the probe results and recommend a depth level. The user confirms or over
 
 **Micro exit (condition-gated by the probe, never by feel):** offer it only when the probe shows ALL of — single file, zero or one dependent, no public interface or contract change, no guard/condition/filter semantics change, low risk — AND the user's request itself fully specifies the change (nothing left to design; the message contains the exact edit). Offer: "Micro change — probe shows <evidence>. Skip the artifact and design phases: 1-UC inline scope, implement test-first here, run the affected tests. (micro / full)"
 
-On confirmation: state the single UC in conversation, get a nod, implement test-first in this session, run the affected tests, present the diff. No scope file, no mu-arch, no mu-plan. The probe and the UC approval still happen — micro sheds files and phases, not thinking.
+On confirmation: state the single UC in conversation, get a nod, implement test-first in this session, run the affected tests, present the diff. No scope file, no mu-arch, no mu-plan — mu-arch's design gate binds mu-arch executions and is not engaged here; the change lands on the current branch, with the micro confirmation as the consent. The probe and the UC approval still happen — micro sheds files and phases, not thinking.
 
 **Cancels the exit** (revert the partial edit, return here, run the full flow): hidden dependents surfacing, unrelated tests failing, the edit growing past the stated scope, or any design question appearing mid-change. **Never qualifies:** guard/condition/filter edits (one-line condition changes are exactly where Guard Semantic Analysis earns its keep), auth/security-adjacent code, schema or data migrations, dependency/lockfile changes.
 

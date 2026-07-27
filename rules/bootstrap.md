@@ -51,7 +51,8 @@ bypasses routing.
 
 **Signals are git/fs facts, not inference** — on a failed command, ask
 the user for the opening move: intent verbs (table below); artifact
-existence means a file on disk under `docs/scope|specs|prd|biz/*.md`,
+existence means a file on disk under `docs/scope|specs|plans|prd|mrd/*.md`
+(legacy `docs/biz`),
 not text in the conversation; recent-author familiarity (`git log
 --author --since="30 days ago" -- <area>`) when reshape fires; plausible
 match against installed non-DevMuse skills.
@@ -64,10 +65,11 @@ fix > review > reshape > create-feature > implement > understand):
 | understand / figure out / take over / evaluate / what does this do | **Explore** (mu-explore) |
 | fix / broken / error / bug / test failing / crash | **Reproduce** (mu-scope 1-UC repro) |
 | review / 检查 / look at this diff or PR / 审一下 | **Review** (mu-review) |
-| reshape (refactor / clean up / restructure) — unfamiliar area | **Explore** (pre-change) → Design-tech |
-| reshape or create-feature — familiar, no specs on disk | **Design-tech** (mu-arch, stance=auto) |
-| implement / build this — no specs on disk | **Design-tech** (mu-arch, stance=auto) |
-| implement / build this — specs exist | **Implement** (mu-code) |
+| reshape (refactor / clean up / restructure) — unfamiliar area | **Explore** (pre-change) → Scope |
+| reshape or create-feature — familiar, no scope on disk | **Scope** (mu-scope; its terminal chains into mu-arch) |
+| implement / build this — no scope on disk | **Scope** (mu-scope) |
+| implement / build this — design spec exists, no plan | **Plan** (mu-plan) |
+| implement / build this — plan exists (docs/plans) | **Implement** (mu-code) |
 | plausibly matches an installed non-DevMuse skill | propose delegating to it |
 | no verb match / pathological repo state (empty, shallow) | **Explore** safe default / ask the user |
 

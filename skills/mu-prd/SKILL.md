@@ -8,10 +8,10 @@ disable-model-invocation: true
 
 **Scope:** User-facing product requirements — personas, flows, wireframes, feature specs, tiering rules, NFRs, metrics. For market questions (worth building? competitors? revenue opportunity?) use **mu-mrd** first. For technical architecture use **mu-arch** after this.
 
-Independent of the feature-level pipeline. Product-level skill that runs **once per product**, not per feature. Reads biz artifact as input; outputs PRD that becomes input for per-feature mu-scope.
+Independent of the feature-level pipeline. Product-level skill that runs **once per product**, not per feature. Reads the MRD as input; outputs PRD that becomes input for per-feature mu-scope.
 
 <HARD-GATE>
-Do NOT invoke mu-scope or any feature-level skill until the user has approved the PRD artifact. The PRD must cover all MVP features from the biz artifact.
+Do NOT invoke mu-scope or any feature-level skill until the user has approved the PRD artifact. The PRD must cover all MVP features from the MRD when a full-mode MRD exists; otherwise, the features the user names.
 </HARD-GATE>
 
 **HARD-GATEs evaluated BEFORE Phase 0.** A `skip` stance does not bypass them.
@@ -30,7 +30,7 @@ Before Depth Mode Selection, detect the current state of any existing PRD artifa
 3. Act based on confidence:
    - **High confidence** → proceed silently, no confirmation dialog
    - **Ambiguous** → present recommendation and ask: "Detected: stance=`<stance>`, confidence=`ambiguous`. Reason: `<one-line>`. Override? (`create` / `update` / `extract` / `skip`)"
-   - Slash-command hints (`/mu-prd <stance>`) and upstream-invoked hints (e.g., `mu-prd create` from mu-mrd Full-mode terminal) are treated as **pre-confirmed** — no dialog, proceed directly.
+   - Slash-command hints (`/mu-prd <stance>`) — including the `/mu-prd create` that mu-mrd's full-mode terminal prompts the user to run — are treated as **pre-confirmed** — no dialog, proceed directly.
 5. Record approved stance. Route to matching branch below.
 
 **Branch routing**:
@@ -52,7 +52,7 @@ mu-prd has two independent concepts: **Stance** (Phase 0) and **Depth Mode** (li
 | `/mu-prd create` | `create` (forced) | auto-detect |
 | `/mu-prd lightweight` | auto-detect | `lightweight` (forced) |
 | `/mu-prd create full` | `create` | `full` |
-| `mu-prd create` (upstream-invoked from mu-mrd Full-mode terminal) | `create` (pre-confirmed, no dialog) | auto-detect |
+| `/mu-prd create` (prompted by mu-mrd's full-mode terminal) | `create` (pre-confirmed, no dialog) | auto-detect |
 
 Phase 0 parses only the stance token; Depth Mode Selection parses only the depth token.
 
@@ -72,9 +72,9 @@ Phase 0 parses only the stance token; Depth Mode Selection parses only the depth
 
 ```dot
 digraph mu_prd {
-    "Read biz artifact" [shape=box];
-    "Biz artifact exists?" [shape=diamond];
-    "Ask user for biz context inline\n(flag 'no biz artifact')" [shape=box];
+    "Read MRD" [shape=box];
+    "MRD exists?" [shape=diamond];
+    "Ask user for market context inline\n(flag 'no MRD referenced')" [shape=box];
     "Detect mode\n(lightweight or full)" [shape=diamond];
     "Stateful business objects?\n(approval, orders, quotas, ...)" [shape=diamond];
     "Build object model\n(companion .objects.md,\nafter IA section)" [shape=box];
@@ -84,10 +84,10 @@ digraph mu_prd {
     "User picks first MVP feature" [shape=box];
     "Invoke mu-scope\nfor that feature" [shape=doublecircle];
 
-    "Read biz artifact" -> "Biz artifact exists?";
-    "Biz artifact exists?" -> "Detect mode\n(lightweight or full)" [label="yes"];
-    "Biz artifact exists?" -> "Ask user for biz context inline\n(flag 'no biz artifact')" [label="no"];
-    "Ask user for biz context inline\n(flag 'no biz artifact')" -> "Detect mode\n(lightweight or full)";
+    "Read MRD" -> "MRD exists?";
+    "MRD exists?" -> "Detect mode\n(lightweight or full)" [label="yes"];
+    "MRD exists?" -> "Ask user for market context inline\n(flag 'no MRD referenced')" [label="no"];
+    "Ask user for market context inline\n(flag 'no MRD referenced')" -> "Detect mode\n(lightweight or full)";
     "Detect mode\n(lightweight or full)" -> "Stateful business objects?\n(approval, orders, quotas, ...)";
     "Stateful business objects?\n(approval, orders, quotas, ...)" -> "Build object model\n(companion .objects.md,\nafter IA section)" [label="yes"];
     "Stateful business objects?\n(approval, orders, quotas, ...)" -> "Produce PRD sections\n(one at a time, user approves each)" [label="no"];
@@ -102,7 +102,7 @@ digraph mu_prd {
 
 ## Process
 
-### 1. Read biz artifact
+### 1. Read the MRD
 
 Look for `docs/mrd/YYYY-MM-DD-*.md` (legacy: `docs/biz/*.md`). If found, extract:
 - Target persona (baseline)
@@ -110,7 +110,7 @@ Look for `docs/mrd/YYYY-MM-DD-*.md` (legacy: `docs/biz/*.md`). If found, extract
 - Tiering rules (if any)
 - Success metrics / North Star
 
-If not found, ask the user to provide business context inline. Log "no biz artifact referenced" in the PRD header.
+If not found, ask the user to provide market context inline. Log "no MRD referenced" in the PRD header.
 
 ### 2. PRD Sections
 
@@ -229,7 +229,7 @@ Ask the user which MVP feature to start with. Then invoke mu-scope for that feat
 - **One section at a time** — get approval before moving on
 - **User-facing, not tech** — describe what users see/do, not how it's built
 - **Concrete specs** — "rules" are user-observable behaviors, not API contracts
-- **Reference the biz artifact** — personas and MVP scope come from there; don't re-derive
+- **Reference the MRD** — personas and MVP scope come from there; don't re-derive
 - **Defer technical choices** — tech stack, API schema, DB design belong in mu-arch, not here
 - **Defer use case enumeration** — per-feature UCs (happy/edge/error paths) are mu-scope's job, not mu-prd's. PRD states product rules — including the object model's state guarantees — and mu-scope enumerates concrete scenarios through them.
 - **Single-home every rule** — state each rule in exactly one section and reference it elsewhere; two copies of a rule will diverge.
@@ -241,7 +241,7 @@ Before invoking mu-scope, consult `@../../knowledge/principles/sign-off-gate.md`
 
 ## Integration
 
-- **Invoked by:** user manually (`/mu-prd`); or auto-invoked by `mu-mrd full` on completion (passing `stance=create` pre-confirmed per spec §2.5)
+- **Invoked by:** user manually (`/mu-prd`); mu-mrd's full-mode terminal prompts `/mu-prd create` (slash hint pre-confirmed per spec §2.5)
 - **Reads:** `docs/mrd/*.md` (MRD if present; legacy `docs/biz/*.md`); `@../../knowledge/principles/stance-detection.md` (Phase 0); `@../../knowledge/principles/state-modeling.md` (Product Object Model, when triggered); `@../../knowledge/principles/domain-glossary.md` (vocabulary qualification); `@../../knowledge/principles/sign-off-gate.md` (terminal if team-touching)
 - **Produces:** `docs/prd/YYYY-MM-DD-<product>.md`; `docs/prd/YYYY-MM-DD-<product>.objects.md` (when the Product Object Model triggers, full mode)
 - **Terminal state:** Invoke mu-scope for the first MVP feature. Further features iterate through mu-scope one at a time.

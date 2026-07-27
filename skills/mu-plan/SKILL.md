@@ -15,7 +15,7 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Announce at start:** "I'm using the mu-plan skill to create the implementation plan."
 
-**Context:** This should be run in a dedicated worktree (created by mu-arch skill).
+**Context:** The plan is written in the main checkout; worktree isolation happens later, at mu-code Step 1.
 
 **Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
 - (User preferences for plan location override this default)

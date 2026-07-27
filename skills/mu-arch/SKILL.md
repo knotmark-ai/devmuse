@@ -327,7 +327,7 @@ If they agree to the companion, read the detailed guide before proceeding:
 
 ## Integration
 
-- **Invoked by:** mu-scope (terminal state) or the bootstrap routing rules (Design-tech move)
+- **Invoked by:** mu-scope (terminal state); or directly when a scope artifact already exists (e.g., the user's design-tech override)
 - **Produces:** Architecture spec at `docs/specs/YYYY-MM-DD-<name>.md`
 - **Consumed by:** mu-plan (reads spec, breaks into tasks)
 - **Terminal state:** invoke mu-plan
