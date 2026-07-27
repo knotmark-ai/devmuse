@@ -122,7 +122,6 @@ devmuse/
 
 | Hook | Trigger | Role |
 |------|---------|------|
-| **pipeline-gate** | Edit/Write | Enforces scope + design artifact existence before code changes. Exempts plugin self-editing. Fail-open. |
 | **destructive-guard** | Bash | Warns before destructive commands (rm -rf, git push -f, DROP TABLE, git reset --hard). Allows known-safe patterns. |
 
 ### Knowledge

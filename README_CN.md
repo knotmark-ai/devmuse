@@ -122,7 +122,6 @@ devmuse/
 
 | 钩子 | 触发时机 | 角色 |
 |------|----------|------|
-| **pipeline-gate** | Edit/Write | 在代码变更前强制要求 scope + design 产物存在。豁免插件自身编辑。失败时放行。 |
 | **destructive-guard** | Bash | 在执行破坏性命令（rm -rf、git push -f、DROP TABLE、git reset --hard）前发出警告。允许已知安全模式。 |
 
 ### 知识

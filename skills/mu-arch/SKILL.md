@@ -15,7 +15,7 @@ Start by understanding the current project context, then ask questions one at a 
 Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
 </HARD-GATE>
 
-**Input evidence (guided, per the Pipeline Graph):** design needs requirements evidence before any approach talk — an approved scope artifact (default), or an equivalent that already enumerates the feature's cases (e.g., a detailed PRD feature section plus object model). With an equivalent, record it under Requirements Reference and have mu-scope's evidence fast path contribute its non-duplicated trio first (Quick Probe, conflict cross-check, reverse UCs) — one report, one confirmation. With no evidence at all, recommend mu-scope and offer the alternatives; the user decides, and an override is flagged in the spec.
+**Input evidence (guided, per the Pipeline Graph):** design needs requirements evidence before any approach talk — an approved scope artifact (default), or an equivalent that already enumerates the feature's cases (e.g., a detailed PRD feature section plus object model). With an equivalent, record it under Requirements Reference and run mu-scope's evidence fast path first — its non-duplicated trio (Quick Probe, conflict cross-check, reverse UCs) as one report, one confirmation — then design. With no evidence at all, recommend mu-scope and offer the alternatives; the user decides, and an override is flagged in the spec.
 
 **HARD-GATEs evaluated BEFORE Phase 0.** A `skip` stance does not bypass them.
 
@@ -292,8 +292,7 @@ If `docs/wiki/_index.md` exists AND the design introduces new components, change
 
 **Implementation:**
 
-- Invoke the mu-plan skill to create a detailed implementation plan
-- Do NOT invoke any other skill. mu-plan is the next step.
+- Hand off per the Pipeline Graph (bootstrap) — mu-plan turns the approved spec into an implementation plan.
 
 ## Key Principles
 

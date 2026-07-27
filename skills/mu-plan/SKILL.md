@@ -173,7 +173,7 @@ After saving the plan, offer execution choice:
 
 **Which approach?"**
 
-**Invoke devmuse:mu-code** to execute the plan. mu-code supports both modes.
+Hand off per the Pipeline Graph (bootstrap) — mu-code executes the plan and supports both modes.
 
 ## Integration
 

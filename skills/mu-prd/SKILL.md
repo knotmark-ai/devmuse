@@ -81,8 +81,9 @@ digraph mu_prd {
     "Produce PRD sections\n(one at a time, user approves each)" [shape=box];
     "Visual Companion\n(for wireframes)" [shape=box];
     "Write PRD artifact\n(docs/prd/)" [shape=box];
+    "User approves PRD?" [shape=diamond];
     "User picks first MVP feature" [shape=box];
-    "Invoke mu-scope\nfor that feature" [shape=doublecircle];
+    "Hand off: mu-scope\n(first MVP feature)" [shape=doublecircle];
 
     "Read MRD" -> "MRD exists?";
     "MRD exists?" -> "Detect mode\n(lightweight or full)" [label="yes"];
@@ -95,8 +96,10 @@ digraph mu_prd {
     "Produce PRD sections\n(one at a time, user approves each)" -> "Visual Companion\n(for wireframes)" [label="when visual needed"];
     "Visual Companion\n(for wireframes)" -> "Produce PRD sections\n(one at a time, user approves each)";
     "Produce PRD sections\n(one at a time, user approves each)" -> "Write PRD artifact\n(docs/prd/)";
-    "Write PRD artifact\n(docs/prd/)" -> "User picks first MVP feature";
-    "User picks first MVP feature" -> "Invoke mu-scope\nfor that feature";
+    "Write PRD artifact\n(docs/prd/)" -> "User approves PRD?";
+    "User approves PRD?" -> "Write PRD artifact\n(docs/prd/)" [label="changes requested"];
+    "User approves PRD?" -> "User picks first MVP feature" [label="approved"];
+    "User picks first MVP feature" -> "Hand off: mu-scope\n(first MVP feature)";
 }
 ```
 
@@ -153,7 +156,7 @@ For screen/layout questions, offer the Visual Companion (same pattern as mu-arch
 
 Save to `docs/prd/YYYY-MM-DD-<product>.md` (plus the `.objects.md` companion when one exists). Commit together.
 
-### 6. Invoke mu-scope
+### 6. Hand off
 
 Ask the user which MVP feature to start with. Then invoke mu-scope for that feature. Remaining features go through mu-scope iteratively, one at a time.
 
