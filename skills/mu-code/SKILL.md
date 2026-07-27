@@ -22,7 +22,7 @@ digraph process_overview {
     rankdir=TB;
 
     "Read plan, extract tasks" [shape=box];
-    "Step 1: Worktree Setup" [shape=box style=filled fillcolor=lightyellow];
+    "Step 1: Isolation decision\n(worktree or branch-in-place)" [shape=box style=filled fillcolor=lightyellow];
     "Step 2: Select Execution Mode" [shape=diamond];
     "Subagent-Driven Mode" [shape=box];
     "Inline Mode" [shape=box];
@@ -31,8 +31,8 @@ digraph process_overview {
     "All tasks complete" [shape=diamond];
     "Chain to mu-review" [shape=box style=filled fillcolor=lightgreen];
 
-    "Read plan, extract tasks" -> "Step 1: Worktree Setup";
-    "Step 1: Worktree Setup" -> "Step 2: Select Execution Mode";
+    "Read plan, extract tasks" -> "Step 1: Isolation decision\n(worktree or branch-in-place)";
+    "Step 1: Isolation decision\n(worktree or branch-in-place)" -> "Step 2: Select Execution Mode";
     "Step 2: Select Execution Mode" -> "Subagent-Driven Mode" [label="subagents available\n(recommended)"];
     "Step 2: Select Execution Mode" -> "Inline Mode" [label="no subagents /\nparallel session"];
     "Step 2: Select Execution Mode" -> "Parallel Dispatch" [label="multiple independent\nfailures/tasks"];
@@ -47,7 +47,9 @@ digraph process_overview {
 }
 ```
 
-## Step 1: Worktree Setup
+## Step 1: Isolation Decision + Worktree Setup
+
+**Isolation is proportionate, not mandatory.** Worktree isolation is the default for multi-task plan executions that will churn many files. For a small plan (1-2 tasks) or when the user prefers the main checkout, work on a feature branch in place — follow the Git Safety Protocol (@../../knowledge/principles/git-safety.md), run the baseline tests (sub-step 4 below), and skip the rest of this section.
 
 Git worktrees create isolated workspaces sharing the same repository, allowing work on multiple branches simultaneously without switching.
 
@@ -192,28 +194,7 @@ Ready to implement <feature-name>
 | Directory not ignored | Add to .gitignore + commit |
 | Tests fail during baseline | Report failures + ask |
 | No package.json/Cargo.toml | Skip dependency install |
-
-### Common Worktree Mistakes
-
-#### Skipping ignore verification
-
-- **Problem:** Worktree contents get tracked, pollute git status
-- **Fix:** Always use `git check-ignore` before creating project-local worktree
-
-#### Assuming directory location
-
-- **Problem:** Creates inconsistency, violates project conventions
-- **Fix:** Follow priority: existing > CLAUDE.md > ask
-
-#### Proceeding with failing tests
-
-- **Problem:** Can't distinguish new bugs from pre-existing issues
-- **Fix:** Report failures, get explicit permission to proceed
-
-#### Hardcoding setup commands
-
-- **Problem:** Breaks on projects using different tools
-- **Fix:** Auto-detect from project files (package.json, etc.)
+| Small plan (1-2 tasks) / user prefers main checkout | Branch in place (git safety) + baseline tests |
 
 ## Step 2: Execution Mode Selection
 
@@ -453,136 +434,7 @@ After all tasks complete and verified:
 
 ### Parallel Dispatch
 
-You delegate tasks to specialized agents with isolated context. By precisely crafting their instructions and context, you ensure they stay focused and succeed at their task. They should never inherit your session's context or history — you construct exactly what they need. This also preserves your own context for coordination work.
-
-When you have multiple unrelated failures (different test files, different subsystems, different bugs), investigating them sequentially wastes time. Each investigation is independent and can happen in parallel.
-
-**Core principle:** Dispatch one agent per independent problem domain. Let them work concurrently.
-
-#### When to Use Parallel Dispatch
-
-```dot
-digraph when_to_use {
-    "Multiple failures?" [shape=diamond];
-    "Are they independent?" [shape=diamond];
-    "Single agent investigates all" [shape=box];
-    "One agent per problem domain" [shape=box];
-    "Can they work in parallel?" [shape=diamond];
-    "Sequential agents" [shape=box];
-    "Parallel dispatch" [shape=box];
-
-    "Multiple failures?" -> "Are they independent?" [label="yes"];
-    "Are they independent?" -> "Single agent investigates all" [label="no - related"];
-    "Are they independent?" -> "Can they work in parallel?" [label="yes"];
-    "Can they work in parallel?" -> "Parallel dispatch" [label="yes"];
-    "Can they work in parallel?" -> "Sequential agents" [label="no - shared state"];
-}
-```
-
-**Use when:**
-- 3+ test files failing with different root causes
-- Multiple subsystems broken independently
-- Each problem can be understood without context from others
-- No shared state between investigations
-
-**Don't use when:**
-- Failures are related (fix one might fix others)
-- Need to understand full system state
-- Agents would interfere with each other
-
-#### The Pattern
-
-##### 1. Identify Independent Domains
-
-Group failures by what's broken:
-- File A tests: Tool approval flow
-- File B tests: Batch completion behavior
-- File C tests: Abort functionality
-
-Each domain is independent - fixing tool approval doesn't affect abort tests.
-
-##### 2. Create Focused Agent Tasks
-
-Each agent gets:
-- **Specific scope:** One test file or subsystem
-- **Clear goal:** Make these tests pass
-- **Constraints:** Don't change other code
-- **Expected output:** Summary of what you found and fixed
-
-##### 3. Dispatch in Parallel
-
-```typescript
-// In Claude Code / AI environment
-Task("Fix agent-tool-abort.test.ts failures")
-Task("Fix batch-completion-behavior.test.ts failures")
-Task("Fix tool-approval-race-conditions.test.ts failures")
-// All three run concurrently
-```
-
-##### 4. Review and Integrate
-
-When agents return:
-- Read each summary
-- Verify fixes don't conflict
-- Run full test suite
-- Integrate all changes
-
-#### Agent Prompt Structure
-
-Good agent prompts are:
-1. **Focused** - One clear problem domain
-2. **Self-contained** - All context needed to understand the problem
-3. **Specific about output** - What should the agent return?
-
-```markdown
-Fix the 3 failing tests in src/agents/agent-tool-abort.test.ts:
-
-1. "should abort tool with partial output capture" - expects 'interrupted at' in message
-2. "should handle mixed completed and aborted tools" - fast tool aborted instead of completed
-3. "should properly track pendingToolCount" - expects 3 results but gets 0
-
-These are timing/race condition issues. Your task:
-
-1. Read the test file and understand what each test verifies
-2. Identify root cause - timing issues or actual bugs?
-3. Fix by:
-   - Replacing arbitrary timeouts with event-based waiting
-   - Fixing bugs in abort implementation if found
-   - Adjusting test expectations if testing changed behavior
-
-Do NOT just increase timeouts - find the real issue.
-
-Return: Summary of what you found and what you fixed.
-```
-
-#### Common Parallel Dispatch Mistakes
-
-**Too broad:** "Fix all the tests" - agent gets lost
-**Specific:** "Fix agent-tool-abort.test.ts" - focused scope
-
-**No context:** "Fix the race condition" - agent doesn't know where
-**Context:** Paste the error messages and test names
-
-**No constraints:** Agent might refactor everything
-**Constraints:** "Do NOT change production code" or "Fix tests only"
-
-**Vague output:** "Fix it" - you don't know what changed
-**Specific:** "Return summary of root cause and changes"
-
-#### When NOT to Use Parallel Dispatch
-
-**Related failures:** Fixing one might fix others - investigate together first
-**Need full context:** Understanding requires seeing entire system
-**Exploratory debugging:** You don't know what's broken yet
-**Shared state:** Agents would interfere (editing same files, using same resources)
-
-#### Parallel Dispatch Verification
-
-After agents return:
-1. **Review each summary** - Understand what changed
-2. **Check for conflicts** - Did agents edit same code?
-3. **Run full suite** - Verify all fixes work together
-4. **Spot check** - Agents can make systematic errors
+For multiple independent failures/tasks (3+ unrelated test files or subsystems), dispatch one agent per problem domain concurrently. Trigger test, prompt structure, and verification steps: read `skills/mu-code/parallel-dispatch.md` before dispatching in parallel.
 
 ## Tidy First Discipline
 
@@ -632,7 +484,7 @@ Write code before the test? Delete it. Start over.
 - Don't look at it
 - Delete means delete
 
-Implement fresh from tests. Period.
+Implement fresh from tests. Period. Exceptions exist only with your human partner's explicit permission (the enumerated categories under When to Use TDD, or a case you surface to them).
 
 ### Red-Green-Refactor
 
@@ -799,56 +651,6 @@ When the plan includes `Covers: UC-xxx` per task, ensure the coder annotates tes
 
 The coder agent handles this automatically when given the `Covers:` field — see @../../agents/mu-coder.md Test Traceability section.
 
-### Why Order Matters
-
-**"I'll write tests after to verify it works"**
-
-Tests written after code pass immediately. Passing immediately proves nothing:
-- Might test wrong thing
-- Might test implementation, not behavior
-- Might miss edge cases you forgot
-- You never saw it catch the bug
-
-Test-first forces you to see the test fail, proving it actually tests something.
-
-**"I already manually tested all the edge cases"**
-
-Manual testing is ad-hoc. You think you tested everything but:
-- No record of what you tested
-- Can't re-run when code changes
-- Easy to forget cases under pressure
-- "It worked when I tried it" ≠ comprehensive
-
-Automated tests are systematic. They run the same way every time.
-
-**"Deleting X hours of work is wasteful"**
-
-Sunk cost fallacy. The time is already gone. Your choice now:
-- Delete and rewrite with TDD (X more hours, high confidence)
-- Keep it and add tests after (30 min, low confidence, likely bugs)
-
-The "waste" is keeping code you can't trust. Working code without real tests is technical debt.
-
-**"TDD is dogmatic, being pragmatic means adapting"**
-
-TDD IS pragmatic:
-- Finds bugs before commit (faster than debugging after)
-- Prevents regressions (tests catch breaks immediately)
-- Documents behavior (tests show how to use code)
-- Enables refactoring (change freely, tests catch breaks)
-
-"Pragmatic" shortcuts = debugging in production = slower.
-
-**"Tests after achieve the same goals - it's spirit not ritual"**
-
-No. Tests-after answer "What does this do?" Tests-first answer "What should this do?"
-
-Tests-after are biased by your implementation. You test what you built, not what's required. You verify remembered edge cases, not discovered ones.
-
-Tests-first force edge case discovery before implementing. Tests-after verify you remembered everything (you didn't).
-
-30 minutes of tests after ≠ TDD. You get coverage, lose proof tests work.
-
 ### Common Rationalizations
 
 | Excuse | Reality |
@@ -956,15 +758,6 @@ When adding mocks or test utilities, avoid these common pitfalls:
 - Testing mock behavior instead of real behavior
 - Adding test-only methods to production classes
 - Mocking without understanding dependencies
-
-### TDD Final Rule
-
-```
-Production code → test exists and failed first
-Otherwise → not TDD
-```
-
-No exceptions without your human partner's permission.
 
 ## Review Gates (Subagent-Driven Mode)
 
