@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Product Requirements
 
-**Scope:** User-facing product requirements — personas, flows, wireframes, feature specs, tiering rules, NFRs, metrics. For business strategy use **mu-biz** first. For technical architecture use **mu-arch** after this.
+**Scope:** User-facing product requirements — personas, flows, wireframes, feature specs, tiering rules, NFRs, metrics. For market questions (worth building? competitors? revenue opportunity?) use **mu-mrd** first. For technical architecture use **mu-arch** after this.
 
 Independent of the feature-level pipeline. Product-level skill that runs **once per product**, not per feature. Reads biz artifact as input; outputs PRD that becomes input for per-feature mu-scope.
 
@@ -30,7 +30,7 @@ Before Depth Mode Selection, detect the current state of any existing PRD artifa
 3. Act based on confidence:
    - **High confidence** → proceed silently, no confirmation dialog
    - **Ambiguous** → present recommendation and ask: "Detected: stance=`<stance>`, confidence=`ambiguous`. Reason: `<one-line>`. Override? (`create` / `update` / `extract` / `skip`)"
-   - Slash-command hints (`/mu-prd <stance>`) and upstream-invoked hints (e.g., `mu-prd create` from mu-biz Full-mode terminal) are treated as **pre-confirmed** — no dialog, proceed directly.
+   - Slash-command hints (`/mu-prd <stance>`) and upstream-invoked hints (e.g., `mu-prd create` from mu-mrd Full-mode terminal) are treated as **pre-confirmed** — no dialog, proceed directly.
 5. Record approved stance. Route to matching branch below.
 
 **Branch routing**:
@@ -52,7 +52,7 @@ mu-prd has two independent concepts: **Stance** (Phase 0) and **Depth Mode** (li
 | `/mu-prd create` | `create` (forced) | auto-detect |
 | `/mu-prd lightweight` | auto-detect | `lightweight` (forced) |
 | `/mu-prd create full` | `create` | `full` |
-| `mu-prd create` (upstream-invoked from mu-biz Full-mode terminal) | `create` (pre-confirmed, no dialog) | auto-detect |
+| `mu-prd create` (upstream-invoked from mu-mrd Full-mode terminal) | `create` (pre-confirmed, no dialog) | auto-detect |
 
 Phase 0 parses only the stance token; Depth Mode Selection parses only the depth token.
 
@@ -104,7 +104,7 @@ digraph mu_prd {
 
 ### 1. Read biz artifact
 
-Look for `docs/biz/YYYY-MM-DD-*.md`. If found, extract:
+Look for `docs/mrd/YYYY-MM-DD-*.md` (legacy: `docs/biz/*.md`). If found, extract:
 - Target persona (baseline)
 - MVP feature list
 - Tiering rules (if any)
@@ -167,7 +167,7 @@ Ask the user which MVP feature to start with. Then invoke mu-scope for that feat
 > **Stance:** <create | update | extract | skip>
 > **Sub-type:** <expand | gap-fill | sync | —> (highest-priority sub-type when one update carries several)
 > **Detected at:** YYYY-MM-DD (commit `<short-sha>`)
-> **Biz reference:** docs/biz/YYYY-MM-DD-<name>.md (or "inline" if none)
+> **MRD reference:** docs/mrd/YYYY-MM-DD-<name>.md (legacy docs/biz/*.md; or "inline" if none)
 > **Object model:** docs/prd/YYYY-MM-DD-<product>.objects.md (lightweight: "in-body"; omit if the Product Object Model did not trigger)
 
 ## 1. Persona Deepening
@@ -241,7 +241,7 @@ Before invoking mu-scope, consult `@../../knowledge/principles/sign-off-gate.md`
 
 ## Integration
 
-- **Invoked by:** user manually (`/mu-prd`); or auto-invoked by `mu-biz full` on completion (passing `stance=create` pre-confirmed per spec §2.5)
-- **Reads:** `docs/biz/*.md` (biz artifact if present); `@../../knowledge/principles/stance-detection.md` (Phase 0); `@../../knowledge/principles/state-modeling.md` (Product Object Model, when triggered); `@../../knowledge/principles/domain-glossary.md` (vocabulary qualification); `@../../knowledge/principles/sign-off-gate.md` (terminal if team-touching)
+- **Invoked by:** user manually (`/mu-prd`); or auto-invoked by `mu-mrd full` on completion (passing `stance=create` pre-confirmed per spec §2.5)
+- **Reads:** `docs/mrd/*.md` (MRD if present; legacy `docs/biz/*.md`); `@../../knowledge/principles/stance-detection.md` (Phase 0); `@../../knowledge/principles/state-modeling.md` (Product Object Model, when triggered); `@../../knowledge/principles/domain-glossary.md` (vocabulary qualification); `@../../knowledge/principles/sign-off-gate.md` (terminal if team-touching)
 - **Produces:** `docs/prd/YYYY-MM-DD-<product>.md`; `docs/prd/YYYY-MM-DD-<product>.objects.md` (when the Product Object Model triggers, full mode)
 - **Terminal state:** Invoke mu-scope for the first MVP feature. Further features iterate through mu-scope one at a time.

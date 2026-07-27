@@ -1,8 +1,8 @@
 # Sign-off Gate (Stakeholder-scope axis)
 
-Shared principle consumed by `mu-biz`, `mu-prd`, and `mu-arch` at exit-criterion time when stakeholder-scope signals team-touching work. Parallels `stance-detection.md` in structure: a cheap heuristic block + a protocol the consuming skill runs locally.
+Shared principle consumed by `mu-mrd`, `mu-prd`, and `mu-arch` at exit-criterion time when stakeholder-scope signals team-touching work. Parallels `stance-detection.md` in structure: a cheap heuristic block + a protocol the consuming skill runs locally.
 
-Orthogonal to stance: a `create` biz doc can still require sign-off; a `skip` stance skips the work AND the gate (nothing to sign off on).
+Orthogonal to stance: a `create` MRD can still require sign-off; a `skip` stance skips the work AND the gate (nothing to sign off on).
 
 ## When It Fires
 
@@ -29,7 +29,7 @@ Any ONE sufficient. If ALL absent → solo (no gate).
 | S3 | Explicit user declaration | User said "team project", "shared code", "need RFC", "team-touching" in session |
 
 **Per-skill watched-dirs** (matches stance-detection.md parameter tables):
-- mu-biz: root `README*`
+- mu-mrd: root `README*`
 - mu-prd: `src/pages/`, `src/screens/`, `src/views/`, `app/` (fallback `src/`)
 - mu-arch: `src/`, `lib/`, `internal/`, `pkg/`, `cmd/`
 
@@ -54,7 +54,7 @@ Any ONE sufficient. If ALL absent → solo (no gate).
 
 ## Consumption Pattern in Creative Skills
 
-Each of mu-biz / mu-prd / mu-arch, at the **end of its Process section** (after artifact approval + commit, before terminal invocation), should include:
+Each of mu-mrd / mu-prd / mu-arch, at the **end of its Process section** (after artifact approval + commit, before terminal invocation), should include:
 
 ```markdown
 Before terminal invocation, consult `@../../knowledge/principles/sign-off-gate.md`.

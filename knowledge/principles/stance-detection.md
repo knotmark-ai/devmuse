@@ -1,11 +1,11 @@
 # Stance Detection (`create` | `update` | `extract` | `skip`)
 
-Shared principle consumed by `mu-biz`, `mu-prd`, and `mu-arch` at their Phase 0 step. Each creative skill runs this algorithm locally against its own artifact type and source dirs to pick the correct entry stance.
+Shared principle consumed by `mu-mrd`, `mu-prd`, and `mu-arch` at their Phase 0 step. Each creative skill runs this algorithm locally against its own artifact type and source dirs to pick the correct entry stance.
 
 ## Inputs
 
-- **Artifact type**: `biz` | `prd` | `arch`
-- **Artifact dir**: per skill (`docs/biz/`, `docs/prd/`, or `docs/specs/`)
+- **Artifact type**: `mrd` | `prd` | `arch`
+- **Artifact dir**: per skill (`docs/mrd/`, `docs/prd/`, or `docs/specs/`)
 - **Legacy locations**: per skill — additional paths to consider as "artifact exists"
 - **Current task identifier**: extracted from user message OR from scope artifact (for `arch`)
 - **Watched source dirs**: per skill — directories to check for commits newer than artifact mtime
@@ -147,7 +147,7 @@ The consuming skill uses `stance` to select its Phase 0 branch, `sub_type` to pa
 
 ## Worked example
 
-Scenario: mu-biz invoked on a repo where `docs/biz/2025-11-pilot.md` exists (250 words, 1 TODO placeholder, mtime 2026-04-01), watched source `README.md` last changed 2026-04-10, current task identifier is "complete biz plan for pilot".
+Scenario: mu-mrd invoked on a repo where `docs/mrd/2025-11-pilot.md` exists (250 words, 1 TODO placeholder, mtime 2026-04-01), watched source `README.md` last changed 2026-04-10, current task identifier is "complete MRD for pilot".
 
 - Step 1: 1 candidate (`pilot.md`)
 - Step 4: title matches task identifier → picked candidate confirmed
@@ -161,6 +161,6 @@ Scenario: mu-biz invoked on a repo where `docs/biz/2025-11-pilot.md` exists (250
   sub_type: expand
   confidence: high
   reason: H1 stub triggered (250 words < 300)
-  candidate_file: docs/biz/2025-11-pilot.md
+  candidate_file: docs/mrd/2025-11-pilot.md
   h3_status: stale   # recorded for history even though R3 won on structure first
   ```

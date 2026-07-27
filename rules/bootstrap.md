@@ -39,7 +39,7 @@ Use the `Skill` tool. When you invoke a skill, its content is loaded and present
 
 DevMuse handles two categories of work:
 1. **Software engineering** — coding, architecture, debugging, refactoring, testing, code review, deployment
-2. **Product/business analysis** — premise validation, product requirements, competitive analysis, business modeling
+2. **Product/market analysis** — premise validation, product requirements, competitive and market analysis
 
 **Not in scope:** general questions, open-ended discussion, brainstorming without a concrete goal, non-software topics. For these, respond normally without invoking any skill.
 
@@ -82,10 +82,11 @@ ask the user to restate with one word from the override list (non-blocking).
 - **Core pipeline** (auto-routed): mu-scope → mu-arch → mu-plan → mu-code → mu-review
 - **Orthogonal** (auto-routed): mu-explore, mu-debug
 - **On-demand** (slash only, never auto-routed — matching intents get a
-  pointer, not an invocation: validate idea / business model → `/mu-biz`;
-  product requirements / user flows → `/mu-prd`; wiki / architecture docs
-  → `/mu-wiki`; retro / look back → `/mu-retro`; grill me / stress-test
-  this plan → `/mu-grill`): mu-biz, mu-prd, mu-wiki, mu-retro, mu-grill
+  pointer, not an invocation: is this idea worth building / competitor or
+  market analysis → `/mu-mrd`; product requirements / user flows →
+  `/mu-prd`; wiki / architecture docs → `/mu-wiki`; retro / look back →
+  `/mu-retro`; grill me / stress-test this plan → `/mu-grill`): mu-mrd,
+  mu-prd, mu-wiki, mu-retro, mu-grill
 - **Meta**: mu-write-skill (skill authoring)
 
 ### Continuation vs Transition

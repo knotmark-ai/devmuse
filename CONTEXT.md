@@ -17,11 +17,11 @@ An auto-routed skill that runs at any point outside the core pipeline's order (m
 _Avoid_: side skill, utility skill
 
 **On-demand skill**
-A skill that is never auto-routed and runs only via explicit slash invocation (mu-biz, mu-prd, mu-wiki, mu-retro, mu-grill); the routing rules answer matching intents with a pointer, not an invocation.
+A skill that is never auto-routed and runs only via explicit slash invocation (mu-mrd, mu-prd, mu-wiki, mu-retro, mu-grill); the routing rules answer matching intents with a pointer, not an invocation.
 _Avoid_: slash-only skill, manual skill
 
 **Creative skill**
-One of mu-biz, mu-prd, mu-arch — the skills that author a judgment-bearing artifact, run stance detection at Phase 0, and face the sign-off gate at exit.
+One of mu-mrd, mu-prd, mu-arch — the skills that author a judgment-bearing artifact, run stance detection at Phase 0, and face the sign-off gate at exit.
 _Avoid_: authoring skill, artifact skill
 
 **Stance**

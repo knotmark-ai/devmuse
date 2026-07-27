@@ -104,7 +104,7 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 |---|---|---|
 | languages/ | 语言特定审查标准 | mu-reviewer（review-code） |
 | templates/ | 产物模板 | mu-scope, mu-explore, mu-arch, mu-wiki |
-| principles/ | 决策点加载的思维原则 | mu-arch, mu-scope, mu-biz, mu-prd 等（如 stance-detection.md 被每个 creative skill 的 Phase 0 消费） |
+| principles/ | 决策点加载的思维原则 | mu-arch, mu-scope, mu-mrd, mu-prd 等（如 stance-detection.md 被每个 creative skill 的 Phase 0 消费） |
 | reviews/ | 特定关注点的审查清单 | mu-reviewer（review-security, review-design） |
 | schemas/ | 外部工具调用的结构化输出 schema | mu-review（codex cross-review） |
 
@@ -129,7 +129,7 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 
 - **skills → agents：单向派遣。** skill 是编排者，agent 是执行者。
 - **agents → skills：禁止。** agent 不反向触发用户级工作流。
-- **skills → skills：允许链式调用。** 如 mu-biz → mu-prd → mu-scope → mu-arch → mu-plan → mu-code → mu-review。
+- **skills → skills：允许链式调用。** 如 mu-mrd → mu-prd → mu-scope → mu-arch → mu-plan → mu-code → mu-review。
 - **rules 引导但不调用。** bootstrap.md 告诉 Claude 遇到什么情况触发哪个 skill。
 - **knowledge 纯被动。** 只被引用，不调用任何层。
 

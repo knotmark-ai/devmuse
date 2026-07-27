@@ -1,6 +1,6 @@
 # Grilling
 
-**When to use:** Referenced by mu-scope (use case elicitation), mu-arch (clarifying questions), mu-prd (section interviews), and mu-biz (full-mode sections) at their questioning steps; standalone via `/mu-grill`. Adapted from mattpocock/skills' grilling.
+**When to use:** Referenced by mu-scope (use case elicitation), mu-arch (clarifying questions), mu-prd (section interviews), and mu-mrd (full-mode sections) at their questioning steps; standalone via `/mu-grill`. Adapted from mattpocock/skills' grilling.
 
 **Purpose:** one interview discipline shared by every skill that questions the user — the same process every run, whichever skill is asking.
 

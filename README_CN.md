@@ -57,7 +57,7 @@ scope → arch → plan → code → review
 
 ### 按需技能（仅通过 `/slash` 直接调用）
 
-- **mu-biz** — 商业分析：验证前提（quick 模式）或完整分析（竞品、BMC、VPC、用户画像、MVP 范围）。使用 `/mu-biz` 调用。
+- **mu-mrd** — 市场需求：该不该做（前提验证，quick 模式）或完整市场分析（竞品、目标市场、收入机会、MVP 范围）。使用 `/mu-mrd` 调用。
 - **mu-prd** — 产品需求：用户流程、对象生命周期模型、线框图、特性规格、分级规则。使用 `/mu-prd` 调用。
 - **mu-wiki** — 架构 Wiki：生成和维护项目级架构文档，包含 Mermaid 图和源码引用。使用 `/mu-wiki generate` 或 `/mu-wiki update` 调用。
 - **mu-retro** — 定期回顾：git 指标、审查模式分析、发现写入记忆。使用 `/mu-retro` 调用。
@@ -72,10 +72,10 @@ scope → arch → plan → code → review
 ### 典型路径
 
 - **已有项目加特性**：`mu-scope → mu-arch → mu-plan → mu-code → mu-review`
-- **全新产品**：`/mu-biz` → `/mu-prd` → 然后走上述特性循环
+- **全新产品**：`/mu-mrd` → `/mu-prd` → 然后走上述特性循环
 - **修 Bug**：`mu-scope (1 UC) → mu-debug → mu-code`
 
-**Sign-off gate**：当 `CODEOWNERS` 文件或多作者 git 历史表明涉及团队协作时，creative skill（mu-biz / mu-prd / mu-arch）会在制品输出时提示获取利益相关者签字。非阻塞 — 用户可随时跳过。
+**Sign-off gate**：当 `CODEOWNERS` 文件或多作者 git 历史表明涉及团队协作时，creative skill（mu-mrd / mu-prd / mu-arch）会在制品输出时提示获取利益相关者签字。非阻塞 — 用户可随时跳过。
 
 ## 架构
 
@@ -98,7 +98,7 @@ devmuse/
 | 管线 | **mu-review** | 审查 + 验证 + 集成（反馈处理、验证门禁、覆盖度检查、合并/PR） |
 | 正交 | **mu-explore** | 不熟悉代码的系统化理解 — 产出活文档形式的心智模型 |
 | 正交 | **mu-debug** | 系统化根因分析 |
-| 按需 | **mu-biz** | 商业分析 — 前提验证（quick）或完整分析（市场、BMC、画像、MVP 范围） |
+| 按需 | **mu-mrd** | 市场需求 — 该不该做（quick）或完整市场分析（竞品、目标市场、收入机会、MVP 范围） |
 | 按需 | **mu-prd** | 产品需求 — 用户流程、对象生命周期模型、线框图、特性规格、分级规则 |
 | 按需 | **mu-wiki** | 架构 Wiki — 生成和维护项目级架构文档 |
 | 按需 | **mu-retro** | 定期回顾，收集 git 指标并写入记忆 |

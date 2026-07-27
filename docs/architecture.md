@@ -104,7 +104,7 @@ All other skills dispatch no agents.
 |---|---|---|
 | languages/ | Language-specific review criteria | mu-reviewer (review-code) |
 | templates/ | Artifact templates | mu-scope, mu-explore, mu-arch, mu-wiki |
-| principles/ | Thinking rubrics for decision points | mu-arch, mu-scope, mu-biz, mu-prd (stance-detection.md consumed at Phase 0 of each creative skill) |
+| principles/ | Thinking rubrics for decision points | mu-arch, mu-scope, mu-mrd, mu-prd (stance-detection.md consumed at Phase 0 of each creative skill) |
 | reviews/ | Review checklists for specific concerns | mu-reviewer (review-security, review-design) |
 | schemas/ | Structured output schemas for external tool invocation | mu-review (codex cross-review) |
 
@@ -129,7 +129,7 @@ Each file opens with a **"When to use"** header naming its consuming skills — 
 
 - **skills → agents: one-way dispatch.** Skills orchestrate, agents execute.
 - **agents → skills: forbidden.** Agents don't trigger user-level workflows.
-- **skills → skills: chain calls allowed.** e.g. mu-biz → mu-prd → mu-scope → mu-arch → mu-plan → mu-code → mu-review.
+- **skills → skills: chain calls allowed.** e.g. mu-mrd → mu-prd → mu-scope → mu-arch → mu-plan → mu-code → mu-review.
 - **rules guide but don't call.** bootstrap.md tells Claude when to invoke which skill.
 - **knowledge is passive.** Only referenced, never calls anything.
 

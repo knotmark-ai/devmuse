@@ -5,7 +5,7 @@ description: "Use before any creative engineering work to design technical archi
 
 # Technical Architecture
 
-**Scope:** Technical architecture only (components, interfaces, data flow, error handling, testing strategy). For product requirements (user flows, wireframes, feature specs, tiering rules), use **mu-prd** first. For business strategy (market, business model, MVP scope), use **mu-biz** first.
+**Scope:** Technical architecture only (components, interfaces, data flow, error handling, testing strategy). For product requirements (user flows, wireframes, feature specs, tiering rules), use **mu-prd** first. For market questions (worth building, competitors, MVP scope), use **mu-mrd** first.
 
 Help turn approved requirements into fully formed technical designs and specs through natural collaborative dialogue.
 

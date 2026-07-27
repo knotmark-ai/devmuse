@@ -57,7 +57,7 @@ scope → arch → plan → code → review
 
 ### On-demand skills (direct `/slash` invocation only)
 
-- **mu-biz** — Business analysis: validate premise (quick mode) or full analysis (competitive, BMC, VPC, personas, MVP scope). Invoke with `/mu-biz`.
+- **mu-mrd** — Market requirements: should we build it (premise, quick mode) or full market analysis (competitors, target market, revenue opportunity, MVP scope). Invoke with `/mu-mrd`.
 - **mu-prd** — Product requirements: user flows, object lifecycle models, wireframes, per-feature specs, tiering rules. Invoke with `/mu-prd`.
 - **mu-wiki** — Architecture wiki: generates and maintains project-level architecture documentation with Mermaid diagrams and source citations. Invoke with `/mu-wiki generate` or `/mu-wiki update`.
 - **mu-retro** — Periodic retrospective: git metrics, review patterns, learnings captured to memory. Invoke with `/mu-retro`.
@@ -72,10 +72,10 @@ Routing lives in the always-on bootstrap rule: unprefixed messages are classifie
 ### Typical Paths
 
 - **Feature on existing project**: `mu-scope → mu-arch → mu-plan → mu-code → mu-review`
-- **Greenfield product**: `/mu-biz` → `/mu-prd` → then feature loop above
+- **Greenfield product**: `/mu-mrd` → `/mu-prd` → then feature loop above
 - **Bug fix**: `mu-scope (1 UC) → mu-debug → mu-code`
 
-**Sign-off gate**: when `CODEOWNERS` or multi-author git history indicates team-touching work, creative skills (mu-biz / mu-prd / mu-arch) prompt for stakeholder sign-off at artifact exit. Non-blocking — user can always override.
+**Sign-off gate**: when `CODEOWNERS` or multi-author git history indicates team-touching work, creative skills (mu-mrd / mu-prd / mu-arch) prompt for stakeholder sign-off at artifact exit. Non-blocking — user can always override.
 
 ## Architecture
 
@@ -98,7 +98,7 @@ devmuse/
 | Pipeline | **mu-review** | Review + verify + integrate (feedback handling, verification gates, coverage check, merge/PR) |
 | Orthogonal | **mu-explore** | Code comprehension for unfamiliar code — produces a living mental-model artifact |
 | Orthogonal | **mu-debug** | Systematic root cause analysis |
-| On-demand | **mu-biz** | Business analysis — premise validation (quick) or full analysis (market, BMC, personas, MVP scope) |
+| On-demand | **mu-mrd** | Market requirements — worth building? (quick) or full market analysis (competitors, target market, revenue opportunity, MVP scope) |
 | On-demand | **mu-prd** | Product requirements — user flows, object lifecycle models, wireframes, feature specs, tiering rules |
 | On-demand | **mu-wiki** | Architecture wiki — generates and maintains project-level architecture documentation |
 | On-demand | **mu-retro** | Periodic retrospective with git metrics and memory capture |

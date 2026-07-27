@@ -1,6 +1,6 @@
 # Premise Check
 
-**When to use:** Loaded by mu-biz (quick mode, all 4 questions) and inlined by mu-scope Quick Probe (lightweight, 3 questions, skip Q4).
+**When to use:** Loaded by mu-mrd (quick mode, all 4 questions) and inlined by mu-scope Quick Probe (lightweight, 3 questions, skip Q4).
 
 Validate the premise before investing in scoping/design.
 
@@ -24,8 +24,8 @@ Validate the premise before investing in scoping/design.
 
 ## Modes
 - **Lightweight (3 questions):** Inlined by mu-scope Quick Probe. Skip Q4.
-- **Full (4 questions):** Loaded by mu-biz quick mode. All questions.
+- **Full (4 questions):** Loaded by mu-mrd quick mode. All questions.
 
 ## Output
-Produced by mu-biz quick mode at `docs/biz/YYYY-MM-DD-<name>-quick.md`:
+Produced by mu-mrd quick mode at `docs/mrd/YYYY-MM-DD-<name>-quick.md`:
 - Problem owner, status quo, temporal test, narrowest wedge, validation status
