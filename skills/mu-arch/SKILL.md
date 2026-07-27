@@ -17,8 +17,6 @@ Do NOT invoke any implementation skill, write any code, scaffold any project, or
 
 **Input evidence (guided, per the Pipeline Graph):** design needs requirements evidence before any approach talk — an approved scope artifact (default), or an equivalent that already enumerates the feature's cases (e.g., a detailed PRD feature section plus object model). With an equivalent, record it under Requirements Reference and run mu-scope's evidence fast path first — its non-duplicated trio (Quick Probe, conflict cross-check, reverse UCs) as one report, one confirmation — then design. With no evidence at all, recommend mu-scope and offer the alternatives; the user decides, and an override is flagged in the spec.
 
-**HARD-GATEs evaluated BEFORE Phase 0.** A `skip` stance does not bypass them.
-
 ## Phase 0: Stance Detection
 
 Before engaging the design process, detect the current state of any existing arch artifact and pick an entry stance.

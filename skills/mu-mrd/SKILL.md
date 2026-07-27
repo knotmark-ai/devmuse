@@ -11,10 +11,8 @@ disable-model-invocation: true
 Independent of the main feature-level pipeline. Product-level skill that runs **once per product**, not per feature.
 
 <HARD-GATE>
-Do NOT invoke mu-prd or any feature-level skill until the user has approved the MRD artifact. Two depth modes — pick one explicitly.
+Do NOT invoke mu-prd or any feature-level skill until the user has approved the MRD artifact.
 </HARD-GATE>
-
-**HARD-GATEs evaluated BEFORE Phase 0.** A `skip` stance does not bypass them.
 
 ## Phase 0: Stance Detection
 

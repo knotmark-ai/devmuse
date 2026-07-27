@@ -14,8 +14,6 @@ Independent of the feature-level pipeline. Product-level skill that runs **once 
 Do NOT invoke mu-scope or any feature-level skill until the user has approved the PRD artifact. The PRD must cover all MVP features from the MRD when a full-mode MRD exists; otherwise, the features the user names.
 </HARD-GATE>
 
-**HARD-GATEs evaluated BEFORE Phase 0.** A `skip` stance does not bypass them.
-
 ## Phase 0: Stance Detection
 
 Before Depth Mode Selection, detect the current state of any existing PRD artifact and pick an entry stance.

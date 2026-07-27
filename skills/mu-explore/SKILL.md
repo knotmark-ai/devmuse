@@ -8,7 +8,7 @@ description: "Use when user needs to understand unfamiliar code before acting â€
 Build a mental model of unfamiliar code. Produce a **persistent, living artifact** that captures components, entry points, domain terms, and explicit unknowns. Distinct from architectural design (`mu-arch`), use case scoping (`mu-scope`), and ephemeral codebase Q&A (just use Grep/Read).
 
 <HARD-GATE>
-Do NOT hand off to Implement / Design-tech / Reproduce until a persistent artifact has been written to `docs/explore/` AND the user has confirmed it. A chat-only summary is NOT an artifact. Skipping persistence is the default failure mode this skill exists to prevent.
+Do NOT hand off to any downstream move until a persistent artifact has been written to `docs/explore/` AND the user has confirmed it. A chat-only summary is NOT an artifact. Skipping persistence is the default failure mode this skill exists to prevent.
 </HARD-GATE>
 
 ## Anti-Pattern: "I'll just summarize in chat"
