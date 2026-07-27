@@ -168,7 +168,7 @@ Use when: greenfield product, team project, investor-facing analysis, major pivo
 
 | Date | Commit | Stance | Sub-type | Change |
 |------|--------|--------|----------|--------|
-| YYYY-MM-DD | `<sha>` | create | — | Initial creation |
+| YYYY-MM-DD | `<sha>` | create | — | Initial creation: <the create round's key decisions — never leave this bare> |
 ```
 
 **Full mode:** Same header + Validation section + 5 market sections (each its own `##` heading) + History section at the bottom.

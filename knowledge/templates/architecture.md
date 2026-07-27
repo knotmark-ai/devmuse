@@ -1,12 +1,12 @@
 # Architecture: <feature-name>
 
 > **Date:** YYYY-MM-DD
-> **Scope reference:** docs/scope/YYYY-MM-DD-<name>.md
+> **Requirements evidence:** docs/scope/YYYY-MM-DD-<name>.md (or the recorded equivalent, e.g., docs/prd/...#<feature> + .objects.md)
 > **Stance:** <create | update | extract | skip>
 
 ## Requirements Reference
-- Scope: [link to scope artifact]
-- Use cases covered: UC-1, UC-2, ...
+- Requirements evidence: [link to scope artifact or recorded equivalent]
+- Use cases covered: UC-1, UC-2, ... (or the evidence's case identifiers)
 
 ## Alternatives Considered
 
@@ -90,4 +90,4 @@ stateDiagram-v2
 
 | Date | Commit | Change |
 |------|--------|--------|
-| YYYY-MM-DD | `<sha>` | Initial creation |
+| YYYY-MM-DD | `<sha>` | Initial creation: <the create round's key decisions — never leave this bare> |

@@ -9,7 +9,7 @@ description: Use when you have an implementation plan ready to execute - support
 
 Execute implementation plan task by task. Two modes: subagent-driven (recommended) or inline.
 
-**Input evidence (guided, per the Pipeline Graph):** execution needs a plan — a `docs/plans/*.md` file (default) or an inline plan handed over in conversation. A design spec alone is not a plan: recommend mu-plan; if the user directs proceeding anyway, implement directly with TDD and flag the missing plan in the final report.
+**Input evidence (guided, per the Pipeline Graph):** execution needs a plan — a `docs/plans/*.md` file (default) or an inline plan handed over in conversation. A design spec alone is not a plan: recommend mu-plan; if the user directs proceeding anyway, take the **waived-plan path**: derive a task list from the approved evidence (spec sections → tasks), present it for a nod, then continue exactly as Inline Mode from Step 1 — isolation decision, TDD per task, verification, and the final mu-review chain — flagging the missing plan in the final report.
 
 **Core principle (Subagent-Driven Mode):** Fresh subagent per task + two-stage review (spec then quality) = high quality, fast iteration
 
@@ -207,8 +207,10 @@ digraph when_to_use {
     "Inline Mode" [shape=box];
     "Manual execution or brainstorm first" [shape=box];
 
+    "Recommend mu-plan;\nuser waives → derive tasks\nfrom evidence (waived-plan path)" [shape=box];
     "Have implementation plan?" -> "Tasks mostly independent?" [label="yes"];
-    "Have implementation plan?" -> "Manual execution or brainstorm first" [label="no"];
+    "Have implementation plan?" -> "Recommend mu-plan;\nuser waives → derive tasks\nfrom evidence (waived-plan path)" [label="no"];
+    "Recommend mu-plan;\nuser waives → derive tasks\nfrom evidence (waived-plan path)" -> "Inline Mode";
     "Tasks mostly independent?" -> "Subagents available?" [label="yes"];
     "Tasks mostly independent?" -> "Manual execution or brainstorm first" [label="no - tightly coupled"];
     "Subagents available?" -> "Subagent-Driven Mode" [label="yes (recommended)"];

@@ -208,7 +208,7 @@ Ask the user which MVP feature to start with. Then invoke mu-scope for that feat
 
 | Date | Commit | Stance | Sub-type | Change |
 |------|--------|--------|----------|--------|
-| YYYY-MM-DD | `<sha>` | create | — | Initial creation |
+| YYYY-MM-DD | `<sha>` | create | — | Initial creation: <the create round's key decisions — never leave this bare> |
 ```
 
 ### Commit Convention

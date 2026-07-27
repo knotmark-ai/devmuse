@@ -257,8 +257,8 @@ Naming is a cross-cutting concern like ADRs. Before coining any component or con
 
 ```markdown
 ## Requirements Reference
-- Scope: docs/scope/YYYY-MM-DD-<name>.md
-- Covers: UC-1, UC-2, UC-3, ...
+- Requirements evidence: docs/scope/YYYY-MM-DD-<name>.md (or the recorded equivalent — e.g., docs/prd/YYYY-MM-DD-<product>.md §<feature> + .objects.md, per the Pipeline Graph's evidence rule)
+- Covers: UC-1, UC-2, UC-3, ... (or the evidence's case identifiers)
 - NFRs: NFR-1, NFR-2, ...
 ```
 
