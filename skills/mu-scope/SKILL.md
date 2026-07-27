@@ -26,7 +26,7 @@ You MUST create a task for each of these items and complete them in order:
 3. **Use case elicitation** — enumerate happy paths → edge cases → error cases
 4. **Conflict detection** — cross-check all use cases, resolve with user
 5. **Write scope artifact** — save to `docs/scope/YYYY-MM-DD-<name>.md`, user confirms
-6. **Transition to design** — invoke mu-arch skill with scope file path
+6. **Hand off** — announce the artifact; the Pipeline Graph (bootstrap) names the next move
 
 ## Process Flow
 
@@ -73,7 +73,7 @@ digraph mu_scope {
 }
 ```
 
-**The terminal state is invoking mu-arch** — with two exceptions: the micro exit (Phase 2), which ends the pipeline after the verified in-session change; and **bug-fix scoping** (the router's fix intent), where the approved single UC is a reproduction — `Given <broken state> When <action> Then <observed failure, vs expected>` — and hands off to **mu-debug**, whose red loop consumes it. A fix-route request may still take the micro exit when its conditions hold: the red test IS the reproduction, and if the stated edit does not turn it green, that surprise cancels micro and the repro hands to mu-debug. Everything else: do NOT invoke any other skill; the ONLY skill you invoke after mu-scope is mu-arch.
+**Done:** the UC set is approved — as a committed scope file, an inline 1-UC reproduction (fix route: `Given <broken state> When <action> Then <observed failure, vs expected>`), or a completed micro exit. The Pipeline Graph (bootstrap) names each next move. One intra-skill precedence rule stays here: on the fix route, the red test IS the reproduction — a stated edit that does not turn it green cancels the micro exit, and the repro hands to mu-debug.
 
 ## Phase 1: Quick Probe
 
@@ -149,6 +149,8 @@ On confirmation: state the single UC in conversation, get a nod, implement test-
 
 ## Phase 3: Use Case Elicitation
 
+**Evidence fast path:** when the requirements evidence already enumerates the cases — a detailed PRD feature section plus object model, an approved spec from elsewhere — do not re-interview. Scope's non-duplicated work is the probe (already run), the conflict cross-check over the evidence's rules, and reverse UCs; deliver them as one report with UCs cited from the evidence, one confirmation, and a thin artifact referencing the source. Elicitation below is for requirements that exist only in the user's head.
+
 Work through scenarios with the user, one category at a time.
 
 **Methodology:** grill per @../../knowledge/principles/grilling.md — one question per message with options + recommendation, facts self-served, decisions to the user, converge every fork. Focus on purpose, constraints, success criteria. If the request covers multiple independent subsystems, flag immediately — decompose into sub-projects before detailing.
@@ -223,5 +225,5 @@ Wait for confirmation.
 - **Invoked by:** bootstrap rule (highest-priority process skill)
 - **Produces:** Use Case Set artifact at `docs/scope/YYYY-MM-DD-<name>.md`
 - **Consumed by:** mu-arch (reads scope, designs to cover all UCs)
-- **Terminal state:** invoke mu-arch
+- **Terminal state:** per the Pipeline Graph (bootstrap)
 - **Template:** @../../knowledge/templates/scope.md

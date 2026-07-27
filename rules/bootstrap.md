@@ -91,6 +91,37 @@ ask the user to restate with one word from the override list (non-blocking).
   mu-prd, mu-wiki, mu-retro, mu-grill
 - **Meta**: mu-write-skill (skill authoring)
 
+### Pipeline Graph
+
+Cross-skill handoffs live here, not in skills: a skill finishes by announcing
+its artifact, and this graph names the next move.
+
+| From | Consumes | Next |
+|---|---|---|
+| mu-mrd (full) | approved MRD | prompt `/mu-prd create` |
+| mu-prd | approved PRD | mu-scope, first MVP feature |
+| mu-scope | approved scope | mu-arch |
+| mu-scope (fix route) | approved 1-UC repro | mu-debug |
+| mu-scope (micro exit) | verified in-session change | end |
+| mu-arch | approved design spec | mu-plan |
+| mu-plan | reviewed plan | mu-code |
+| mu-code | all tasks complete | mu-review |
+| mu-review / mu-debug | verified result | end |
+
+**Edges consume evidence, not file paths.** The named artifact is the default
+form; an equivalent that already answers the same questions satisfies the
+edge — record the substitution in the consuming artifact's header. The common
+case: a detailed PRD feature section + object model stands in for a scope
+artifact — mu-scope then runs its evidence fast path (probe, conflict
+cross-check, reverse UCs; no re-interview). An inline plan handed over in
+conversation stands in for `docs/plans` at mu-code. Missing evidence →
+recommend the producer skill, offer the alternatives, the user decides —
+the recommendation itself is the agent's obligation; only the user can
+decline it, and a declined recommendation is flagged in the consuming
+artifact or final report.
+Control gates (user approval of an artifact) and safety gates (TDD,
+verification-before-completion, git safety) are never substitutable.
+
 ### Continuation vs Transition
 
 During an active skill, same-type follow-ups are continuations — just respond, no re-routing: "查下这个日志" mid-debug, clarifying questions, providing requested info. When the user's intent **shifts category** — debug→fix, explore→implement, anything→review, fix→redesign — re-route using the Routing section above.

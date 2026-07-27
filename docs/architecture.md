@@ -129,7 +129,7 @@ Each file opens with a **"When to use"** header naming its consuming skills — 
 
 - **skills → agents: one-way dispatch.** Skills orchestrate, agents execute.
 - **agents → skills: forbidden.** Agents don't trigger user-level workflows.
-- **skills → skills: chain calls allowed.** e.g. mu-mrd → mu-prd → mu-scope → mu-arch → mu-plan → mu-code → mu-review.
+- **skills → skills: handoffs are declared in bootstrap's Pipeline Graph.** A skill announces completion; the graph names the successor (e.g. mu-mrd → mu-prd → mu-scope → mu-arch → mu-plan → mu-code → mu-review).
 - **rules guide but don't call.** bootstrap.md tells Claude when to invoke which skill.
 - **knowledge is passive.** Only referenced, never calls anything.
 

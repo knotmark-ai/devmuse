@@ -6,7 +6,7 @@ Rules for keeping this repo's documentation in sync. The failure mode these prev
 
 - **Skill inventory** (names, categories, roles): the Skills table in `README.md`. Every other doc points there; none repeats it.
 - **Agent dispatch mapping**: `docs/architecture.md` (skills → agents). Nowhere else.
-- **Routing** (intent tables, categories, confidence): `rules/bootstrap.md` — its only home.
+- **Routing** (intent tables, categories, confidence, and the cross-skill **Pipeline Graph**): `rules/bootstrap.md` — its only home. Skills decide internal flow only; a skill's Done line may name its default successor, but the graph is the authority.
 - **Domain language**: `CONTEXT.md` at repo root — use its terms, respect its `_Avoid_` lists.
 - **No hardcoded counts or file-level directory listings in docs** — they drift; say "see the directory" instead.
 

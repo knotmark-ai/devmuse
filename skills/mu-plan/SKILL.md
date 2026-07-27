@@ -177,7 +177,7 @@ After saving the plan, offer execution choice:
 
 ## Integration
 
-- **Invoked by:** mu-arch (terminal state)
+- **Invoked by:** the Pipeline Graph (after mu-arch), or directly when a design spec exists
 - **Produces:** Implementation plan at `docs/plans/<name>.md`
 - **Consumed by:** mu-code (reads plan, executes tasks)
-- **Terminal state:** invoke mu-code
+- **Terminal state:** per the Pipeline Graph (bootstrap)

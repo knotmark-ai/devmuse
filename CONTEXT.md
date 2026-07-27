@@ -24,6 +24,10 @@ _Avoid_: slash-only skill, manual skill
 One of mu-mrd, mu-prd, mu-arch — the skills that author a judgment-bearing artifact, run stance detection at Phase 0, and face the sign-off gate at exit.
 _Avoid_: authoring skill, artifact skill
 
+**Pipeline Graph**
+The single declaration of cross-skill handoffs, in `rules/bootstrap.md`: skills announce completion, the graph names the successor; edges consume evidence, not file paths.
+_Avoid_: terminal chain, hardwired terminal
+
 **Stance**
 The entry mode a creative skill picks at Phase 0 — `create`, `update` (sub-types expand > gap-fill > sync), `extract`, or `skip` — produced by the deterministic detection algorithm in `knowledge/principles/stance-detection.md` and overridable in one word.
 _Avoid_: mode, entry state

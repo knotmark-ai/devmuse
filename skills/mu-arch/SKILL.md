@@ -15,9 +15,7 @@ Start by understanding the current project context, then ask questions one at a 
 Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
 </HARD-GATE>
 
-<HARD-GATE>
-mu-arch requires a scope artifact (docs/scope/*.md) as input. If no scope artifact exists, invoke mu-scope first. Do NOT proceed with design without a scope artifact.
-</HARD-GATE>
+**Input evidence (guided, per the Pipeline Graph):** design needs requirements evidence before any approach talk — an approved scope artifact (default), or an equivalent that already enumerates the feature's cases (e.g., a detailed PRD feature section plus object model). With an equivalent, record it under Requirements Reference and have mu-scope's evidence fast path contribute its non-duplicated trio first (Quick Probe, conflict cross-check, reverse UCs) — one report, one confirmation. With no evidence at all, recommend mu-scope and offer the alternatives; the user decides, and an override is flagged in the spec.
 
 **HARD-GATEs evaluated BEFORE Phase 0.** A `skip` stance does not bypass them.
 
@@ -58,7 +56,7 @@ Every project goes through this process. A todo list, a single-function utility,
 You MUST create a task for each of these items and complete them in order:
 
 0. **Phase 0: Stance Detection** — see §Phase 0 above; establishes entry stance before any other work. Branch routing below assumes stance is already picked and confirmed.
-1. **Read scope artifact** — read the Use Case Set, understand all use cases, conflicts, and constraints
+1. **Read the requirements evidence** — the scope artifact, or the recorded equivalent (PRD section + object model); understand all cases, conflicts, and constraints
 2. **Explore project context** — check files, docs, recent commits
 3. **Find architecture doc** — look for existing architecture/design docs in the project (README, docs/, ARCHITECTURE.md, DESIGN.md, docs/wiki/_index.md, or similar). If found, read it. If not found or unclear, ask the user.
 4. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
@@ -83,7 +81,7 @@ digraph mu_design {
     "Phase 0: Detect stance\n(create|update|extract|skip)" [shape=box];
     "User confirms stance" [shape=diamond];
     "skip branch\n(append history, handoff)" [shape=doublecircle];
-    "Read scope artifact\n(docs/scope/*.md)" [shape=box];
+    "Read requirements evidence\n(scope artifact or recorded equivalent)" [shape=box];
     "Explore project context" [shape=box];
     "Find architecture doc\n(README, docs/, or ask user)" [shape=box];
     "Visual questions ahead?" [shape=diamond];
@@ -102,9 +100,9 @@ digraph mu_design {
 
     "Phase 0: Detect stance\n(create|update|extract|skip)" -> "User confirms stance";
     "User confirms stance" -> "skip branch\n(append history, handoff)" [label="skip"];
-    "User confirms stance" -> "Read scope artifact\n(docs/scope/*.md)" [label="create / update / extract"];
+    "User confirms stance" -> "Read requirements evidence\n(scope artifact or recorded equivalent)" [label="create / update / extract"];
     "skip branch\n(append history, handoff)" -> "Invoke mu-plan skill";
-    "Read scope artifact\n(docs/scope/*.md)" -> "Explore project context";
+    "Read requirements evidence\n(scope artifact or recorded equivalent)" -> "Explore project context";
     "Explore project context" -> "Find architecture doc\n(README, docs/, or ask user)";
     "Find architecture doc\n(README, docs/, or ask user)" -> "Visual questions ahead?";
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
@@ -126,7 +124,7 @@ digraph mu_design {
 }
 ```
 
-**The terminal state is invoking mu-plan.** Do NOT invoke any other implementation skill. The ONLY skill you invoke after mu-arch is mu-plan.
+**Done:** design approved and committed. The Pipeline Graph (bootstrap) names the next move — mu-plan.
 
 ## The Process
 
@@ -330,6 +328,6 @@ If they agree to the companion, read the detailed guide before proceeding:
 - **Invoked by:** mu-scope (terminal state); or directly when a scope artifact already exists (e.g., the user's design-tech override)
 - **Produces:** Architecture spec at `docs/specs/YYYY-MM-DD-<name>.md`
 - **Consumed by:** mu-plan (reads spec, breaks into tasks)
-- **Terminal state:** invoke mu-plan
+- **Terminal state:** per the Pipeline Graph (bootstrap)
 - **Template:** @../../knowledge/templates/architecture.md
 - **Principle references:** stance-detection.md, inversion.md, architecture-assessment.md, nfr-checklist.md, sign-off-gate.md

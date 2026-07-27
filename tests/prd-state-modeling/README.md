@@ -1,6 +1,6 @@
-# PRD State-Modeling Regression Suite
+# DevMuse Regression Suite
 
-Re-runnable versions of the scenarios that gated the 1.3.0 state-modeling changes (mu-prd Product Object Model, state-modeling.md principle, bootstrap de-coercion). Run them after editing mu-prd, state-modeling.md, grilling.md, or the bootstrap routing rules — and after switching default models.
+Re-runnable versions of the scenarios that gated the 1.3.0 state-modeling changes and the 2.0 guidance-over-enforcement change. Run them after editing the pipeline skills, state-modeling.md, grilling.md, or the bootstrap routing rules — and after switching default models.
 
 Each prompt instructs the agent to simulate the skill against a fixed product brief and end with a structured self-report. Judgment is against the self-report + artifact, per the criteria below. A scenario regresses when any of its pass criteria fails.
 
@@ -24,6 +24,8 @@ Judge the transcript manually or hand it to a subagent with the criteria table b
 | `lightweight-stateful.txt` | Lightweight create, stateful product, repo without CONTEXT.md | In-body state tables placed before core flows; CONTEXT.md created via domain-glossary qualification test; header uses "in-body"; no companion file |
 | `update-stance-companion.txt` | `/mu-prd update` on a PRD with `.objects.md`, dual gap-fill+sync changes | Companion loaded (quotes branch text); state edits go to object model, body cites names; terminal-state change surfaced as user fork; sync covers object-model drift; self-check re-run per touched machine; History one row per change, prefix = highest-priority sub-type |
 | `bootstrap-routing-probes.txt` | Five routing probes against rules/bootstrap.md | Probe decisions: (1) bug→mu-scope silent, (2) understand→mu-explore silent, (3) small talk→no route, (4) "太简单直接改"→still routes (cites Red Flags + WHAT-not-HOW), (5) product-flow ask→pointer to /mu-prd, no invocation |
+| `evidence-substitution.txt` | Detailed PRD, no scope; user asks for design directly | PRD accepted as requirements evidence; scope collapses to the evidence fast path (~1 report + 1 confirmation, no re-interview); full override honored with a flag |
+| `guidance-floor.txt` | No artifacts, vague ask, "别问那么多直接开写" pressure | Recommendation made BEFORE any override; user (not agent) waives sequence; TDD/verification/approval gates never yield |
 
 ## History
 

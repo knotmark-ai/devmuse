@@ -129,7 +129,7 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 
 - **skills → agents：单向派遣。** skill 是编排者，agent 是执行者。
 - **agents → skills：禁止。** agent 不反向触发用户级工作流。
-- **skills → skills：允许链式调用。** 如 mu-mrd → mu-prd → mu-scope → mu-arch → mu-plan → mu-code → mu-review。
+- **skills → skills：交接由 bootstrap 的 Pipeline Graph 声明。** 技能宣告完成，图指名后继（如 mu-mrd → mu-prd → mu-scope → mu-arch → mu-plan → mu-code → mu-review）。
 - **rules 引导但不调用。** bootstrap.md 告诉 Claude 遇到什么情况触发哪个 skill。
 - **knowledge 纯被动。** 只被引用，不调用任何层。
 
