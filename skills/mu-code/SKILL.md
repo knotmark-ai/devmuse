@@ -9,7 +9,7 @@ description: Use when you have an implementation plan ready to execute - support
 
 Execute implementation plan task by task. Two modes: subagent-driven (recommended) or inline.
 
-**Core principle:** Fresh subagent per task + two-stage review (spec then quality) = high quality, fast iteration
+**Core principle (Subagent-Driven Mode):** Fresh subagent per task + two-stage review (spec then quality) = high quality, fast iteration
 
 **Announce at start:** "I'm using the mu-code skill to implement this plan."
 
@@ -34,8 +34,10 @@ digraph process_overview {
     "Step 2: Select Execution Mode" -> "Subagent-Driven Mode" [label="subagents available\n(recommended)"];
     "Step 2: Select Execution Mode" -> "Inline Mode" [label="no subagents /\nparallel session"];
     "Step 2: Select Execution Mode" -> "Parallel Dispatch" [label="multiple independent\nfailures/tasks"];
+    "Per-task loop: implement → self-check → next\n(review at final mu-review)" [shape=box];
     "Subagent-Driven Mode" -> "Per-task loop: implement → review → next";
-    "Inline Mode" -> "Per-task loop: implement → review → next";
+    "Inline Mode" -> "Per-task loop: implement → self-check → next\n(review at final mu-review)";
+    "Per-task loop: implement → self-check → next\n(review at final mu-review)" -> "All tasks complete";
     "Parallel Dispatch" -> "Per-task loop: implement → review → next";
     "Per-task loop: implement → review → next" -> "All tasks complete";
     "All tasks complete" -> "Chain to mu-review" [label="yes"];
@@ -409,7 +411,10 @@ For each task:
 1. Mark as in_progress
 2. Follow each step exactly (plan has bite-sized steps)
 3. Run verifications as specified
-4. Mark as completed
+4. Self-check against the task text: every requirement present, nothing extra added
+5. Mark as completed
+
+The two-stage reviewer gates are Subagent-Driven Mode machinery — in Inline Mode, actual review happens once, at the final mu-review chain. The per-task self-check is a floor, not a substitute for that review.
 
 #### Step 3: Complete Development
 
@@ -959,9 +964,9 @@ Otherwise → not TDD
 
 No exceptions without your human partner's permission.
 
-## Review Gates
+## Review Gates (Subagent-Driven Mode)
 
-Two-stage review after each task ensures both correctness and quality.
+Two-stage review after each task ensures both correctness and quality. Inline Mode reviews once, at the final mu-review chain — see Inline Mode Step 2.
 
 ### Stage 1: Spec Compliance Review
 
@@ -998,7 +1003,7 @@ After all tasks complete, chain to mu-review for comprehensive review of entire 
 **Never:**
 - Start implementation on main/master branch without explicit user consent
 - Switch branches, create branches, or run destructive git commands without verifying current state first (@../../knowledge/principles/git-safety.md)
-- Skip reviews (spec compliance OR code quality)
+- Skip reviews — per task in Subagent-Driven Mode; the final mu-review chain in Inline Mode
 - Proceed with unfixed issues
 - Dispatch multiple implementation subagents in parallel (conflicts)
 - Make subagent read plan file (provide full text instead)
@@ -1006,9 +1011,9 @@ After all tasks complete, chain to mu-review for comprehensive review of entire 
 - Ignore subagent questions (answer before letting them proceed)
 - Accept "close enough" on spec compliance (spec reviewer found issues = not done)
 - Skip review loops (reviewer found issues = implementer fixes = review again)
-- Let implementer self-review replace actual review (both are needed)
+- Let implementer self-review replace actual review (both are needed; in Inline Mode the actual review is the final mu-review chain)
 - Start code quality review before spec compliance is approved (wrong order)
-- Move to next task while either review has open issues
+- Move to next task while either review has open issues (Subagent-Driven Mode)
 - Create worktree without verifying it's ignored (project-local)
 - Skip baseline test verification
 - Proceed with failing baseline tests without asking

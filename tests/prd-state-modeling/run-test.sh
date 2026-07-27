@@ -30,12 +30,18 @@ echo "Output dir: $OUTPUT_DIR"
 
 # Run from the plugin root so relative skill paths in prompts resolve.
 cd "$PLUGIN_DIR"
-timeout 600 claude -p "$PROMPT" \
+
+# macOS ships no GNU timeout; degrade gracefully (coreutils installs gtimeout)
+if command -v timeout >/dev/null 2>&1; then TO="timeout 600";
+elif command -v gtimeout >/dev/null 2>&1; then TO="gtimeout 600";
+else TO=""; fi
+
+$TO claude -p "$PROMPT" \
     --plugin-dir "$PLUGIN_DIR" \
     --dangerously-skip-permissions \
     --max-turns "$MAX_TURNS" \
     --output-format json \
-    > "$OUTPUT_DIR/claude-output.json" || true
+    > "$OUTPUT_DIR/claude-output.json" || echo "WARN: claude run exited non-zero"
 
 echo "Transcript: $OUTPUT_DIR/claude-output.json"
 echo "Judge against the criteria table in tests/prd-state-modeling/README.md"
