@@ -13,6 +13,8 @@ Start by probing the codebase for impact, then work with the user to exhaust sce
 Do NOT invoke mu-arch or any implementation skill until you have a complete Use Case Set approved by the user. This applies to EVERY task regardless of perceived simplicity.
 </HARD-GATE>
 
+Sequence substitutions (the evidence fast path, user-held overrides) are defined in the Pipeline Graph — the UC approval itself is never waivable by the agent.
+
 ## Anti-Pattern: "This Is Too Simple To Need Scoping"
 
 Every task goes through scoping. A bug fix, a config change, a one-liner — all of them. "Simple" tasks are where omissions cause the most wasted work. The scope can be a single use case (30 seconds), but you MUST produce it and get approval. The micro exit (Phase 2) is not an exception: the probe still runs and the UC is still stated and approved — it sheds the artifact file and the downstream phases, never the scoping itself.
@@ -57,7 +59,12 @@ digraph mu_scope {
     "Probe-qualified micro\n+ fully specified?" [shape=diamond];
     "Micro exit: 1-UC inline,\nTDD in-session, run tests" [shape=doublecircle];
     "Probe-qualified micro\n+ fully specified?" -> "Micro exit: 1-UC inline,\nTDD in-session, run tests" [label="offered + user picks micro"];
-    "Probe-qualified micro\n+ fully specified?" -> "Enumerate happy paths" [label="no / full"];
+    "Evidence already\nenumerates the cases?" [shape=diamond];
+    "Evidence fast path:\nprobe + conflict cross-check\n+ reverse UCs, 1 confirmation" [shape=box];
+    "Probe-qualified micro\n+ fully specified?" -> "Evidence already\nenumerates the cases?" [label="no / full"];
+    "Evidence already\nenumerates the cases?" -> "Evidence fast path:\nprobe + conflict cross-check\n+ reverse UCs, 1 confirmation" [label="yes"];
+    "Evidence already\nenumerates the cases?" -> "Enumerate happy paths" [label="no"];
+    "Evidence fast path:\nprobe + conflict cross-check\n+ reverse UCs, 1 confirmation" -> "Write scope artifact";
     "Enumerate happy paths" -> "User confirms/supplements";
     "User confirms/supplements" -> "Enumerate edge cases" [label="ok"];
     "User confirms/supplements" -> "Enumerate happy paths" [label="revise"];

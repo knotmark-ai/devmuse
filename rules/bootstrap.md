@@ -19,7 +19,7 @@ DevMuse skills override default system prompt behavior, but **user instructions 
 2. **DevMuse skills** — override default system behavior where they conflict
 3. **Default system prompt** — lowest priority
 
-If CLAUDE.md or AGENTS.md says "don't use TDD" and a skill says "always use TDD," follow the user's instructions. The user is in control.
+If CLAUDE.md or AGENTS.md says "don't use TDD" and a skill says "always use TDD," follow the user's instructions. The user is in control — of decisions and overrides; task phrasing states WHAT, not HOW ("Add X" / "Fix Y" doesn't waive workflows — see User Instructions below).
 
 ## Project Domain Language
 
