@@ -36,10 +36,6 @@ _Avoid_: mode, entry state
 A structural, non-negotiable precondition embedded in a skill body (e.g., no design without an approved scope artifact); evaluated before stance detection and never bypassed by a `skip` stance or a sign-off.
 _Avoid_: blocker, hard requirement, checkpoint
 
-**Pipeline gate**
-The pre-tool-use hook that denies Edit/Write until both a scope artifact and a design spec exist on disk; exempts paths under the plugin root and fails open on script errors.
-_Avoid_: write guard, edit hook
-
 **Sign-off gate**
 The non-blocking stakeholder-approval protocol a creative skill runs at exit when work is team-touching; always skippable with "skip sign-off" — explicitly not a HARD-GATE.
 _Avoid_: approval gate, RFC gate
@@ -82,14 +78,14 @@ _Avoid_: skill SEO, discoverability tuning
 
 ## Relationships
 
-- The core pipeline is ordered; the pipeline gate enforces it mechanically (hook), HARD-GATEs enforce it textually (skill body).
+- The core pipeline is ordered by the Pipeline Graph: routing enters at the first missing artifact, edges consume evidence (equivalents substitute), and HARD-GATEs are the control gates — user approval of a deliverable before what depends on it.
 - UC-IDs from the Use Case Set are the anchors that review-coverage audits across design, plan, code, and tests.
 - mu-reviewer runs exactly one of six modes per dispatch: review-design, review-plan, review-code, review-compliance, review-coverage, review-security.
-- HARD-GATEs are evaluated before stance detection; a `skip` stance passes through the artifact work and the sign-off gate, but never a HARD-GATE.
-- Opening moves map to skills: Explore → mu-explore, Design-tech → mu-arch, Reproduce → mu-scope (1-UC repro) + mu-debug, Implement → mu-code.
+- A `skip` stance passes through the artifact work and the sign-off gate, but never a HARD-GATE — pass-through presupposes a previously approved artifact.
+- Opening moves map to skills by the artifact ladder: Explore → mu-explore, Scope → mu-scope, Reproduce → mu-scope (1-UC repro) + mu-debug, Plan → mu-plan, Implement → mu-code, Review → mu-review.
 
 ## Flagged Ambiguities
 
 - "UC" vs exploration variants — **resolved 2026-07-13** (grill session): "UC" belongs exclusively to mu-scope's Use Case; mu-explore's five exploration types are called **variant** (renamed throughout mu-explore's SKILL.md; template and downstream skills already used "variant").
-- "gate" unqualified — **resolved 2026-07-13** (grill session): never use "gate" bare; always qualify (HARD-GATE / pipeline gate / sign-off gate / size-area gate). No renames needed — the four compound names are already mutually exclusive.
+- "gate" unqualified — **resolved 2026-07-13** (grill session): never use "gate" bare; always qualify (HARD-GATE / sign-off gate / size-area gate; "pipeline gate" retired with its hook in v2.0). The compound names are mutually exclusive.
 - "mu-design" vs "mu-arch" — **resolved 2026-04-14**: renamed to mu-arch (`108f3f6`; hook straggler fixed in `304043d`). Dated plan snapshots under `docs/plans/` retain the old name as historical records.
