@@ -82,7 +82,7 @@ git log -1 --format=%as -- docs/wiki/ && git rev-list --count "$(git log -1 --fo
    - "What went best this period?"
    - "What was most surprising?"
    - "What would you change next period?"
-8. **Write retro artifact** to `docs/retro/YYYY-MM-DD-retro.md`
+8. **Write retro artifact** to `docs/retro/YYYY-MM-DD-retro.md`, drafted per @../../knowledge/principles/prose-discipline.md
 9. **Commit artifact**
 10. **Write to Claude Code memory** (project type):
    - Only non-obvious findings worth remembering across sessions

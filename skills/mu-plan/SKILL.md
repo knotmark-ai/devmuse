@@ -17,7 +17,7 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Context:** The plan is written in the main checkout; worktree isolation happens later, at mu-code Step 1.
 
-**Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
+**Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md` — drafted per @../../knowledge/principles/prose-discipline.md
 - (User preferences for plan location override this default)
 
 ## Process Flow

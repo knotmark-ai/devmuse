@@ -209,7 +209,7 @@ After all use cases are enumerated, cross-check every pair for contradictions.
 
 ## Phase 5: Output
 
-Write the Use Case Set to `docs/scope/YYYY-MM-DD-<name>.md` using the template at @../../knowledge/templates/scope.md.
+Write the Use Case Set to `docs/scope/YYYY-MM-DD-<name>.md` using the template at @../../knowledge/templates/scope.md, drafted per @../../knowledge/principles/prose-discipline.md.
 
 Commit the file, then ask the user to review:
 

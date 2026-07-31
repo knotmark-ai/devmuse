@@ -245,7 +245,7 @@ Read ALL of the following files using the Read tool before writing:
 
 ## Output Requirements
 
-Write the wiki page to: docs/wiki/{page_id}.md
+Write the wiki page to: docs/wiki/{page_id}.md — drafted per @../../knowledge/principles/prose-discipline.md
 
 The page MUST follow this structure:
 

@@ -147,7 +147,7 @@ For screen/layout questions, offer the Visual Companion (same pattern as mu-arch
 
 ### 5. Write artifact
 
-Save to `docs/prd/YYYY-MM-DD-<product>.md` (plus the `CONTEXT.md` machines when the Product Object Model triggered). Commit together.
+Save to `docs/prd/YYYY-MM-DD-<product>.md` (plus the `CONTEXT.md` machines when the Product Object Model triggered). Commit together. Draft per @../../knowledge/principles/prose-discipline.md.
 
 ### 6. Hand off
 

@@ -136,6 +136,8 @@ Use when: greenfield product, team project, investor-facing analysis, major pivo
 
 ## Artifact Format
 
+Drafted per @../../knowledge/principles/prose-discipline.md — conclusion first, derivations shown, negative claims scoped.
+
 **Quick mode:**
 
 ```markdown
