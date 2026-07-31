@@ -1,8 +1,0 @@
-You are testing a Claude Code skill's update path with an object-model companion. Read skills/mu-prd/SKILL.md and the principle files its update path needs. Do not write any files.
-
-Simulate executing this skill under these repo conditions:
-- `docs/prd/2026-07-23-shop.md` exists — a full-mode PRD for a 拼团购物小程序, whose header links `> **Object model:** docs/prd/2026-07-23-shop.objects.md`
-- `docs/prd/2026-07-23-shop.objects.md` exists — object model with two machines: 团 (拼团中/已成团/已失败, with 已成团 and 已失败 terminal) and 参团订单 (待支付/占位成功/待发货/已发货/已完成/退款中/已退款)
-- The user invokes `/mu-prd update` with: 「两个变更：①成团后支持团长撤团，整团进入已解散、全员退款；②代码里现在成团 24 小时未发货会自动标记异常单」
-
-Walk the update branch as written and report (English, concise): (1) which files you load — quote the driving text; (2) for 变更① — where do the state edits go, what does the branch text say about the body vs the object model, and what happens because 已成团 is currently terminal — quote the driving text; (3) for 变更② — which sub-type, does its wording cover object-model drift, and what classification question would you ask about 异常单 first; (4) approval unit and self-check — what do you re-run and on what; (5) CONTEXT.md — do the new state names get vocabulary treatment in the update path — quote the text; (6) commit message + History rows for this dual-sub-type invocation per the convention; (7) verdict: is any companion-touching behavior in this scenario left to unguided judgment rather than instruction? List each, or state none.

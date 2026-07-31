@@ -1,6 +1,6 @@
 # DevMuse Domain Language
 
-Shared vocabulary for this repo. Humans and agents use these terms — in code, docs, commits, and conversation. Synonyms under _Avoid_ are deliberately not used. Maintained by `mu-explore` (harvest) and `mu-arch` (coin); see `knowledge/principles/domain-glossary.md` for the qualification test.
+Shared vocabulary for this repo. Humans and agents use these terms — in code, docs, commits, and conversation. Synonyms under _Avoid_ are deliberately not used. Maintained by `mu-explore` (harvest) and `mu-arch` (coin); see `knowledge/principles/domain-model.md` for the qualification test.
 
 ## Language
 

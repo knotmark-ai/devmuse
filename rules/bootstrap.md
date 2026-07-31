@@ -23,7 +23,7 @@ If CLAUDE.md or AGENTS.md says "don't use TDD" and a skill says "always use TDD,
 
 ## Project Domain Language
 
-If the repo root has a `CONTEXT.md`, it is the project's shared vocabulary: use its terms in code names, artifacts, and replies, and respect its `_Avoid_` lists. Consult it before naming anything new.
+If the repo root has a `CONTEXT.md`, it is the project's domain model — the concept structure settled before design: use its terms in code names, artifacts, and replies, respect its `_Avoid_` lists, and treat its state machines and invariants as authoritative over any downstream restatement. Consult it before naming anything new.
 
 ## How to Access Skills
 
@@ -111,7 +111,7 @@ its artifact, and this graph names the next move.
 **Edges consume evidence, not file paths.** The named artifact is the default
 form; an equivalent that already answers the same questions satisfies the
 edge — record the substitution in the consuming artifact's header. The common
-case: a detailed PRD feature section + object model stands in for a scope
+case: a detailed PRD feature section + its CONTEXT.md machine stands in for a scope
 artifact — mu-scope then runs its evidence fast path (probe, conflict
 cross-check, reverse UCs; no re-interview). An inline plan handed over in
 conversation stands in for `docs/plans` at mu-code. Missing evidence →

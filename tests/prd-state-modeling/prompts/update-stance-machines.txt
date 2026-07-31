@@ -1,0 +1,8 @@
+You are testing a Claude Code skill's update path against domain-model-hosted state machines. Read skills/mu-prd/SKILL.md and the principle files its update path needs. Do not write any files.
+
+Simulate executing this skill under these repo conditions:
+- `docs/prd/2026-07-23-shop.md` exists — a full-mode PRD for a 拼团购物小程序, whose header reads `> **Object model:** CONTEXT.md §6 — 团, 参团订单`
+- Repo-root `CONTEXT.md` exists — its §6 carries two machines: 团 (拼团中/已成团/已失败, with 已成团 and 已失败 terminal) and 参团订单 (待支付/占位成功/待发货/已发货/已完成/退款中/已退款)
+- The user invokes `/mu-prd update` with: 「两个变更：①成团后支持团长撤团，整团进入已解散、全员退款；②代码里现在成团 24 小时未发货会自动标记异常单」
+
+Walk the update branch as written and report (English, concise): (1) which files you load — quote the driving text; (2) for 变更① — which file receives the state edits and which receives the prose, what does the branch text say about that split, and what happens because 已成团 is currently terminal — quote the driving text; (3) for 变更② — which sub-type, does its wording cover machine drift against current code, and what classification question would you ask about 异常单 first; (4) approval unit and self-check — what do you re-run and on what; (5) new state names — what treatment do they get on arrival in CONTEXT.md, and where does the retirement of any replaced name go — quote the text; (6) commit message and History rows for this dual-sub-type invocation per the convention — name the file each row lands in; (7) verdict: is any behavior that crosses the PRD/CONTEXT.md boundary left to unguided judgment rather than instruction? List each, or state none.

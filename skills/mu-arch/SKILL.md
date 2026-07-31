@@ -15,7 +15,7 @@ Start by understanding the current project context, then ask questions one at a 
 Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
 </HARD-GATE>
 
-**Input evidence (guided, per the Pipeline Graph):** design needs requirements evidence before any approach talk — an approved scope artifact (default), or an equivalent that already enumerates the feature's cases (e.g., a detailed PRD feature section plus object model). With an equivalent, record it under Requirements Reference and run mu-scope's evidence fast path first — its non-duplicated trio (Quick Probe, conflict cross-check, reverse UCs) as one report, one confirmation — then design. With no evidence at all, recommend mu-scope and offer the alternatives; the user decides, and an override is flagged in the spec.
+**Input evidence (guided, per the Pipeline Graph):** design needs requirements evidence before any approach talk — an approved scope artifact (default), or an equivalent that already enumerates the feature's cases (e.g., a detailed PRD feature section plus the object's `CONTEXT.md` §6 machine). With an equivalent, record it under Requirements Reference and run mu-scope's evidence fast path first — its non-duplicated trio (Quick Probe, conflict cross-check, reverse UCs) as one report, one confirmation — then design. With no evidence at all, recommend mu-scope and offer the alternatives; the user decides, and an override is flagged in the spec.
 
 ## Phase 0: Stance Detection
 
@@ -51,7 +51,7 @@ Every project goes through this process. A todo list, a single-function utility,
 You MUST create a task for each of these items and complete them in order:
 
 0. **Phase 0: Stance Detection** — see §Phase 0 above; establishes entry stance before any other work. Branch routing below assumes stance is already picked and confirmed.
-1. **Read the requirements evidence** — the scope artifact, or the recorded equivalent (PRD section + object model); understand all cases, conflicts, and constraints
+1. **Read the requirements evidence** — the scope artifact, or the recorded equivalent (PRD section + `CONTEXT.md` §6 machine); understand all cases, conflicts, and constraints
 2. **Explore project context** — check files, docs, recent commits
 3. **Find architecture doc** — look for existing architecture/design docs in the project (README, docs/, ARCHITECTURE.md, DESIGN.md, docs/wiki/_index.md, or similar). If found, read it. If not found or unclear, ask the user.
 4. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
@@ -203,7 +203,7 @@ These tools are used during functional design (step 8) when their trigger condit
 **Trigger:** The design involves entities with lifecycle states (order status, subscription state, approval workflow, account status, content publishing state).
 
 **How to use:**
-0. If a PRD object model exists (`docs/prd/*.objects.md`, or state tables in the PRD body), start from its states and transitions — inherit the names verbatim (they are CONTEXT.md vocabulary) and design only the technical realization: idempotency, transactions, compensation states, timers. Implementation-only states the product layer doesn't see (e.g., "refund-in-flight") extend the model; flag them back to the PRD rather than renaming product states.
+0. If `CONTEXT.md` §6 carries a machine for the object, start from its states and transitions — inherit the names verbatim and design only the technical realization: idempotency, transactions, compensation states, timers. Implementation-only states the product layer never sees (e.g., "refund-in-flight") extend the domain model: add them to `CONTEXT.md` rather than renaming domain states or keeping a private list (see @../../knowledge/principles/state-modeling.md Layer Boundaries).
 1. Enumerate all states the entity can be in
 2. Draw all valid transitions with their trigger actions
 3. Check for missing transitions (e.g., can a "shipped" order be "cancelled"?)
@@ -239,7 +239,7 @@ ADRs are a **cross-cutting concern** throughout the design process, not a single
 
 ## Domain Language
 
-Naming is a cross-cutting concern like ADRs. Before coining any component or concept name, read the repo-root `CONTEXT.md` (if present) and reuse its terms — including respecting `_Avoid_` lists. When the design coins a new name and the user approves it, add the entry (definition + `_Avoid_` synonyms) to `CONTEXT.md` in the same commit as the design doc, per the qualification test in `@../../knowledge/principles/domain-glossary.md`.
+Naming is a cross-cutting concern like ADRs. Before coining any component or concept name, read the repo-root `CONTEXT.md` (if present) and reuse its terms — including respecting `_Avoid_` lists. When the design coins a new name and the user approves it, add the entry (definition + `_Avoid_` synonyms) to `CONTEXT.md` in the same commit as the design doc, per the qualification test in `@../../knowledge/principles/domain-model.md`.
 
 ## After the Design
 
@@ -255,7 +255,7 @@ Naming is a cross-cutting concern like ADRs. Before coining any component or con
 
 ```markdown
 ## Requirements Reference
-- Requirements evidence: docs/scope/YYYY-MM-DD-<name>.md (or the recorded equivalent — e.g., docs/prd/YYYY-MM-DD-<product>.md §<feature> + .objects.md, per the Pipeline Graph's evidence rule)
+- Requirements evidence: docs/scope/YYYY-MM-DD-<name>.md (or the recorded equivalent — e.g., docs/prd/YYYY-MM-DD-<product>.md §<feature> + its CONTEXT.md §6 machines, per the Pipeline Graph's evidence rule)
 - Covers: UC-1, UC-2, UC-3, ... (or the evidence's case identifiers)
 - NFRs: NFR-1, NFR-2, ...
 ```

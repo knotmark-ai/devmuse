@@ -45,7 +45,7 @@ Narrative of the 2-4 most important flows. Each flow: trigger → steps → outc
 
 ## Domain Terms
 
-Area-local jargon only — terms used solely inside this component. Project-wide vocabulary lives in the repo-root `CONTEXT.md` (single source of truth); do not restate its definitions here.
+Area-local jargon only — terms used solely inside this component. Project-wide concepts live in the repo-root `CONTEXT.md` domain model (single source of truth); do not restate its definitions here.
 
 | Term | Meaning (area-local) |
 |------|---------------------|

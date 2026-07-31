@@ -1,7 +1,7 @@
 # Architecture: <feature-name>
 
 > **Date:** YYYY-MM-DD
-> **Requirements evidence:** docs/scope/YYYY-MM-DD-<name>.md (or the recorded equivalent, e.g., docs/prd/...#<feature> + .objects.md)
+> **Requirements evidence:** docs/scope/YYYY-MM-DD-<name>.md (or the recorded equivalent, e.g., docs/prd/...#<feature> + CONTEXT.md §6 machine)
 > **Stance:** <create | update | extract | skip>
 
 ## Requirements Reference

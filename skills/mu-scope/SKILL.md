@@ -156,7 +156,7 @@ On confirmation: state the single UC in conversation, get a nod, implement test-
 
 ## Phase 3: Use Case Elicitation
 
-**Evidence fast path:** when the requirements evidence already enumerates the cases — a detailed PRD feature section plus object model, an approved spec from elsewhere — do not re-interview. Scope's non-duplicated work is the probe (already run), the conflict cross-check over the evidence's rules, and reverse UCs; deliver them as one report with UCs cited from the evidence, one confirmation, and a thin artifact referencing the source. Elicitation below is for requirements that exist only in the user's head.
+**Evidence fast path:** when the requirements evidence already enumerates the cases — a detailed PRD feature section plus the object's `CONTEXT.md` §6 machine, an approved spec from elsewhere — do not re-interview. Scope's non-duplicated work is the probe (already run), the conflict cross-check over the evidence's rules, and reverse UCs; deliver them as one report with UCs cited from the evidence, one confirmation, and a thin artifact referencing the source. Elicitation below is for requirements that exist only in the user's head.
 
 Work through scenarios with the user, one category at a time.
 
@@ -164,7 +164,7 @@ Work through scenarios with the user, one category at a time.
 
 **Order:** Happy paths first (establish the core), then edge cases (expand boundaries), then error cases (handle failures), then **reverse cases** (what must NOT happen).
 
-**Transition coverage:** if a PRD object model exists (`docs/prd/*.objects.md`, or state tables in the PRD body), its transition table is a UC checklist — every transition the feature touches (including clock-driven ones) earns at least one use case, using the model's state names; retries and races around a transition are edge cases.
+**Transition coverage:** if `CONTEXT.md` §6 carries a state machine for an object this feature touches, its transition table is a UC checklist — every transition the feature touches (including clock-driven ones) earns at least one use case, using the model's state names; retries and races around a transition are edge cases.
 
 **Reverse use cases:** For every new behavior introduced, ask: "What existing behavior must remain unchanged?" Frame these as negative assertions:
 ```

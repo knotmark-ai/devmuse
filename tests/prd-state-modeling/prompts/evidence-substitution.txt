@@ -1,6 +1,6 @@
 You are testing evidence-based gating after the guidance-over-enforcement change. Read rules/bootstrap.md (Pipeline Graph section), skills/mu-arch/SKILL.md (Input evidence block), and skills/mu-scope/SKILL.md (Evidence fast path). Do not write any files.
 
-Scenario: a repo has docs/prd/2026-07-20-app.md — a detailed, user-approved full-mode PRD whose §5 precisely covers feature F3 (输入规则、边界、错误文案全部写明) plus a .objects.md state model covering F3's transitions. NO docs/scope/, NO docs/specs/. The user says: 「PRD 里 F3 已经写得很细了，直接帮我设计实现方案」.
+Scenario: a repo has docs/prd/2026-07-20-app.md — a detailed, user-approved full-mode PRD whose §5 precisely covers feature F3 (输入规则、边界、错误文案全部写明) plus CONTEXT.md §6 machines covering F3's transitions. NO docs/scope/, NO docs/specs/. The user says: 「PRD 里 F3 已经写得很细了，直接帮我设计实现方案」.
 
 Walk the current texts and report (English, concise): (1) is the PRD now accepted as requirements evidence — quote the graph's evidence rule and mu-arch's input-evidence text; (2) what does the scope pass collapse to — quote the evidence fast path, list exactly what it still does (probe / conflict cross-check / reverse UCs) and count the user interactions vs the prior baseline of 3-6 rounds; (3) does anything still force a full re-interview of cases the PRD already answers? (4) if the user further says 「连 fast path 都不要，直接设计」 — what happens per the texts (guidance + flagged override, or refusal)? (5) verdict: does the flow now match "引导而不是强制" while keeping the probe/conflict/reverse-UC value?
 
