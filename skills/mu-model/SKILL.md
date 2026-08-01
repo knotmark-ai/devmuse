@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Domain Modeling
 
-> **Validation status — `create` is unproven.** The `update` and `sync` paths were derived from two real runs (aflaj restructure, devmuse rebuild). The `create` path is reasoned from Event Modeling and Four-Color archetypes and has **never been run on a project starting from zero**. Report what breaks: https://github.com/knotmark-ai/devmuse/issues
+> **Validation status — `create` is unproven.** The `update` and `sync` paths were derived from two real runs (aflaj restructure, devmuse rebuild). The `create` path is reasoned from Event Modeling and Four-Color archetypes and has **never been run on a project starting from zero**. Report what breaks: https://github.com/knotmark-ai/devmuse/issues/47
 
 **Scope:** the concept structure a project is built on — what exists, what has a lifecycle, what depends on what, who produces and maintains each thing. Runs **before** PRD and design work. For product requirements use **mu-prd** after this; for technical architecture use **mu-arch**.
 

@@ -148,7 +148,7 @@ Skills marked 🧪 carry a path that has not been exercised on real projects yet
 
 | Skill | Proven | Not proven | Report to |
 |---|---|---|---|
-| **mu-model** | `update` and `sync`, derived from two real runs (aflaj restructure, devmuse rebuild) | **`create`** — never run on a project starting from zero. Its four-step sequence is reasoned from Event Modeling and Four-Color archetypes, not extracted from practice | [Issues](https://github.com/knotmark-ai/devmuse/issues) — repo type, which step broke, what you did instead |
+| **mu-model** | `update` and `sync`, derived from two real runs (aflaj restructure, devmuse rebuild) | **`create`** — never run on a project starting from zero. Its step sequence is reasoned from Event Modeling and Four-Color archetypes, not extracted from practice | [#47](https://github.com/knotmark-ai/devmuse/issues/47) — carries a report template |
 
 **Exit criterion:** a path drops its 🧪 after running on **two independent projects without a process fix**. One clean run is luck.
 
