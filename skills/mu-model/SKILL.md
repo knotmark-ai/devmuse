@@ -37,9 +37,25 @@ The symptom that this pass was skipped: the team is deep into feature specs and 
 | `create` | No `CONTEXT.md` — run the full Process below | ❌ **unproven** |
 | `update` | Model exists, new concepts or lifecycle changes to fold in — run steps 2–7 on the delta only | ✅ |
 | `sync` | Model exists but a downstream artifact holds domain facts (state machine in a PRD, invariant in a spec) — **move the fact up, leave a reference down**, one History row per move | ✅ |
+
+`sync` is also a **reflex, not only a stance**: any skill that notices a domain fact living downstream, or a model claim the code contradicts, raises it on the spot. The stance is for when the drift is large enough to warrant a pass of its own.
 | `skip` | Model exists and this task does not touch it — append a History pass-through row, hand off | — |
 
 **Commit prefix:** `docs(context): <stance>: ...`
+
+## During the session (every stance)
+
+Four postures that run throughout, not as steps. Adapted from mattpocock/skills' domain-modelling discipline — the same source this repo's `CONTEXT.md` mechanism came from.
+
+**Challenge against the model.** A term that conflicts with an existing entry gets called out the moment it appears: *"§6 defines `cancellation` as X, but you seem to mean Y — which is it?"*
+
+**Sharpen fuzzy language.** A vague or overloaded term gets a precise candidate proposed: *"You're saying 'account' — the Customer or the User? Those are different concepts."*
+
+**Stress-test with concrete scenarios.** When a relationship is under discussion, invent an edge case that forces precision: *"An experiment is running on `/pricing` and someone deploys a change to the same page — do they conflict? Which wins?"* In `create`, this is **the second instrument for surfacing concepts**: step 2's time axis finds the Moments, scenarios find the boundaries between them and the constraints that hold at those boundaries.
+
+**Cross-reference with code.** When the user states how something works, check whether the code agrees. Surface a contradiction immediately rather than saving it for a later `sync` pass: *"You said goals are hard-deleted, but the code sets `isActive = false` — which is intended?"*
+
+**Capture as they resolve, not in a batch.** A term settled in conversation and written down twenty minutes later is a term half-lost — the qualification, the rejected alternative, and the reason all evaporate first.
 
 ## Process
 
@@ -66,6 +82,8 @@ Walk the worked example as a sequence of state changes: who triggers it, what mo
 | **Derived** | Computed at read time; not an object |
 
 Apply @../../knowledge/principles/grilling.md — one question per message with a recommendation, facts self-served, every fork converged.
+
+**When the axis stalls** — no further state changes surface but the model still reads thin — switch instruments: stress-test a relationship with a concrete edge case (see During the session). A change-sequence walk finds the Moments; scenarios find the **boundaries between them** and the constraints that hold there, which is where most missing concepts hide.
 
 ### 3. Derive the spine (→ §4)
 
@@ -125,6 +143,8 @@ Wait for approval. Commit.
 | Writing the conclusion without the derivation | The next person cannot tell whether the spine still holds | Step 3 writes the four lines |
 | Leaving a state machine in the PRD | Two homes, drift on the first correction | `sync` moves it up |
 | Filling §1 with "be user-friendly" | Rejects no concept | Step 6's rejection test |
+| Batching resolved terms until the end of the session | The qualification, the rejected alternative and the reason evaporate first; what lands is a bare definition | Capture as they resolve |
+| Splitting into multiple contexts before a term collision forces it | A guessed boundary is expensive to move once code sits on both sides | Split on the collision — see `domain-model.md` §The Artifact |
 
 ## Integration
 

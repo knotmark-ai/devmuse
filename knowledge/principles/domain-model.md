@@ -12,6 +12,7 @@
 - **Lazy creation:** create it the first time the project has a concept structure worth stating. An empty scaffold is noise.
 - **Size: no term cap.** The necessary concept count is set by the domain, not by a context budget — a model missing a load-bearing concept makes downstream design wrong, which costs far more than the tokens it saved. What is capped is **isolates** (see Qualification Test).
 - **Single source of truth:** explore artifacts, PRDs, design docs, and wiki pages link here for shared terms *and domain facts* (state machines, invariants, guarantees); they never restate them. Area-local jargon stays in that area's explore artifact.
+- **One model or several:** one `CONTEXT.md` until a single term carries two meanings for two audiences **and neither side can be renamed** — that is a bounded-context boundary, not a naming dispute. An open ambiguity that cannot be ruled *because both readings are correct for their own audience* is exactly this signal. Then split: a root `CONTEXT-MAP.md` naming the contexts and how they relate, plus one `CONTEXT.md` per context beside its code. **Split on the collision, never in anticipation of one** — a boundary drawn before the vocabulary forces it is a guess, and guessed boundaries are expensive to move.
 
 ## Qualification Test
 
