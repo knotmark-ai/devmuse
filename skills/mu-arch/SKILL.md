@@ -21,6 +21,8 @@ Do NOT invoke any implementation skill, write any code, scaffold any project, or
 
 Before engaging the design process, detect the current state of any existing arch artifact and pick an entry stance.
 
+**Succession runs first** (@../../knowledge/principles/artifact-succession.md): a spec is a dated snapshot, so the prior question is whether this round writes a *new* file at all. An unconsumed spec (no plan cites it) is revised in place — filename and date unchanged. A consumed one gets a new file with `Supersedes:` / `Extends:` in both directions. Stance detection below then governs how the same file is entered.
+
 1. Read `@../../knowledge/principles/stance-detection.md`
 2. Run the detection algorithm with:
    - **Artifact type**: `arch`
@@ -50,7 +52,7 @@ Every project goes through this process. A todo list, a single-function utility,
 
 You MUST create a task for each of these items and complete them in order:
 
-0. **Phase 0: Stance Detection** — see §Phase 0 above; establishes entry stance before any other work. Branch routing below assumes stance is already picked and confirmed.
+0. **Succession, then stance** — first @../../knowledge/principles/artifact-succession.md: new file, or the same one? Then §Phase 0 decides how the same one is entered. Branch routing below assumes both are picked and confirmed.
 1. **Read the requirements evidence** — the scope artifact, or the recorded equivalent (PRD section + `CONTEXT.md` §6 machine); understand all cases, conflicts, and constraints
 2. **Explore project context** — check files, docs, recent commits
 3. **Find architecture doc** — look for existing architecture/design docs in the project (README, docs/, ARCHITECTURE.md, DESIGN.md, docs/wiki/_index.md, or similar). If found, read it. If not found or unclear, ask the user.

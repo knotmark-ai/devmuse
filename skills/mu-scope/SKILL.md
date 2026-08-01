@@ -23,6 +23,7 @@ Every task goes through scoping. A bug fix, a config change, a one-liner — all
 
 You MUST create a task for each of these items and complete them in order:
 
+0. **Prior artifact check** — is there an earlier scope for this same work? One question, per @../../knowledge/principles/artifact-succession.md. Skip silently when `docs/scope/` is empty.
 1. **Quick Probe** — scan codebase for impact (skip for new/empty projects)
 2. **Depth decision** — present probe results, confirm depth with user; probe-qualified micro changes may take the micro exit here (see Phase 2)
 3. **Use case elicitation** — enumerate happy paths → edge cases → error cases

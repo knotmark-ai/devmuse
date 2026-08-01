@@ -49,6 +49,12 @@ digraph mu_plan {
 }
 ```
 
+## Prior Plan Check
+
+Before writing: is there an earlier plan for this same work? One question, per @../../knowledge/principles/artifact-succession.md. An **unconsumed** plan — no `[x]` checkboxes, no commits referencing its tasks — is revised **in place**, filename and date unchanged. A consumed one gets a new file with `Supersedes:` / `Extends:` written in **both** directions.
+
+Skip silently when `docs/plans/` is empty.
+
 ## Scope Check
 
 If the spec covers multiple independent subsystems, it should have been broken into sub-project specs during mu-arch. If it wasn't, suggest breaking this into separate plans — one per subsystem. Each plan should produce working, testable software on its own.
@@ -81,6 +87,7 @@ This structure informs the task decomposition. Each task should produce self-con
 # [Feature Name] Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use devmuse:mu-code to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Supersedes / Extends:** [path to the prior plan] — omit when this is the first plan for this work; the target file carries the matching reverse field
 
 **Goal:** [One sentence describing what this builds]
 

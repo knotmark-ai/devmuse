@@ -151,6 +151,10 @@ For screen/layout questions, offer the Visual Companion (same pattern as mu-arch
 
 Save to `docs/prd/YYYY-MM-DD-<product>.md` (plus the `CONTEXT.md` machines when the Product Object Model triggered). Commit together. Draft per @../../knowledge/principles/prose-discipline.md.
 
+**On `update` / `extract`, write back to the file Phase 0 detected — the filename and its date do not change.** The date records when the PRD was created, not when it was last touched. A PRD is a living artifact: one per product, iterated in place. (Dated snapshots under `docs/scope|specs|plans` work differently — see @../../knowledge/principles/artifact-succession.md.)
+
+**When the PRD outgrows one file:** keep `docs/prd/YYYY-MM-DD-<product>.md` as the **main file** — it carries the header, the stance metadata, the History, and an index of the parts. Parts live under `docs/prd/<product>/<part>.md` and carry content only. Phase 0 detects against the main file; a part is never detected on its own, and a part never carries its own stance or History. **Splitting without a main file is what breaks iteration** — nine sibling PRD files with no History and no stance between them cannot be entered by `update` at all, only re-created.
+
 ### 6. Hand off
 
 Ask the user which MVP feature to start with. Then invoke mu-scope for that feature. Remaining features go through mu-scope iteratively, one at a time.

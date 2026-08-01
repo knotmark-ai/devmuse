@@ -2,6 +2,7 @@
 
 > **Date:** YYYY-MM-DD
 > **Source:** <link to issue or user request>
+> **Supersedes / Extends:** <path to the prior scope> — omit when this is the first artifact for this work; the target file carries the matching reverse field
 
 ## Context
 - Background and motivation (why this work is needed)

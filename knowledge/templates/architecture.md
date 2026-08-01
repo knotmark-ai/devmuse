@@ -3,6 +3,7 @@
 > **Date:** YYYY-MM-DD
 > **Requirements evidence:** docs/scope/YYYY-MM-DD-<name>.md (or the recorded equivalent, e.g., docs/prd/...#<feature> + CONTEXT.md §6 machine)
 > **Stance:** <create | update | extract | skip>
+> **Supersedes / Extends:** <path to the prior spec> — omit when this is the first artifact for this work; the target file carries the matching reverse field
 
 ## Requirements Reference
 - Requirements evidence: [link to scope artifact or recorded equivalent]
