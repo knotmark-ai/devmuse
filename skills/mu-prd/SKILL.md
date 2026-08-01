@@ -10,6 +10,8 @@ disable-model-invocation: true
 
 Independent of the feature-level pipeline. Product-level skill that runs **once per product**, not per feature. Reads the MRD as input; outputs PRD that becomes input for per-feature mu-scope.
 
+**Domain model check (before Phase 0):** if repo-root `CONTEXT.md` does not exist, recommend `/mu-model` first — the PRD's surfaces are a projection of the model's ownership table, and its state names come from the model. Non-blocking: the user may decline, in which case flag "no domain model" in the PRD header and coin names as you go.
+
 <HARD-GATE>
 Do NOT invoke mu-scope or any feature-level skill until the user has approved the PRD artifact. The PRD must cover all MVP features from the MRD when a full-mode MRD exists; otherwise, the features the user names.
 </HARD-GATE>

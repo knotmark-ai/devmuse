@@ -58,6 +58,7 @@ scope → arch → plan → code → review
 ### 按需技能（仅通过 `/slash` 直接调用）
 
 - **mu-mrd** — 市场需求：该不该做（前提验证，quick 模式）或完整市场分析（竞品、目标市场、收入机会、MVP 范围）。使用 `/mu-mrd` 调用。
+- **mu-model** 🧪 — 领域模型：概念、原型分类、模型主轴、谁产生谁维护。在 PRD 与设计之前跑，产出仓库根目录的 `CONTEXT.md`。使用 `/mu-model` 调用。**其 `create` 路径尚未在从零开始的项目上验证过**——见 README 的 Validation status。
 - **mu-prd** — 产品需求：用户流程、对象生命周期模型、线框图、特性规格、分级规则。使用 `/mu-prd` 调用。
 - **mu-wiki** — 架构 Wiki：生成和维护项目级架构文档，包含 Mermaid 图和源码引用。使用 `/mu-wiki generate` 或 `/mu-wiki update` 调用。
 - **mu-retro** — 定期回顾：git 指标、审查模式分析、发现写入记忆。使用 `/mu-retro` 调用。
@@ -99,6 +100,7 @@ devmuse/
 | 正交 | **mu-explore** | 不熟悉代码的系统化理解 — 产出活文档形式的心智模型 |
 | 正交 | **mu-debug** | 系统化根因分析 |
 | 按需 | **mu-mrd** | 市场需求 — 该不该做（quick）或完整市场分析（竞品、目标市场、收入机会、MVP 范围） |
+| 按需 | **mu-model** 🧪 | 领域模型 — 概念、原型分类、模型主轴、谁产生谁维护；写入 `CONTEXT.md`，在 PRD 与设计之前 |
 | 按需 | **mu-prd** | 产品需求 — 用户流程、对象生命周期模型、线框图、特性规格、分级规则 |
 | 按需 | **mu-wiki** | 架构 Wiki — 生成和维护项目级架构文档 |
 | 按需 | **mu-retro** | 定期回顾，收集 git 指标并写入记忆 |

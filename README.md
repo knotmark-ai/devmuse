@@ -58,6 +58,7 @@ scope → arch → plan → code → review
 ### On-demand skills (direct `/slash` invocation only)
 
 - **mu-mrd** — Market requirements: should we build it (premise, quick mode) or full market analysis (competitors, target market, revenue opportunity, MVP scope). Invoke with `/mu-mrd`.
+- **mu-model** 🧪 — Domain model: concepts, archetypes, the spine, who produces and maintains what. Runs before PRD and design, writes repo-root `CONTEXT.md`. Invoke with `/mu-model`. **Its `create` path has not been validated on a from-zero project — see [Validation status](#validation-status).**
 - **mu-prd** — Product requirements: user flows, object lifecycle models, wireframes, per-feature specs, tiering rules. Invoke with `/mu-prd`.
 - **mu-wiki** — Architecture wiki: generates and maintains project-level architecture documentation with Mermaid diagrams and source citations. Invoke with `/mu-wiki generate` or `/mu-wiki update`.
 - **mu-retro** — Periodic retrospective: git metrics, review patterns, learnings captured to memory. Invoke with `/mu-retro`.
@@ -99,6 +100,7 @@ devmuse/
 | Orthogonal | **mu-explore** | Code comprehension for unfamiliar code — produces a living mental-model artifact |
 | Orthogonal | **mu-debug** | Systematic root cause analysis |
 | On-demand | **mu-mrd** | Market requirements — worth building? (quick) or full market analysis (competitors, target market, revenue opportunity, MVP scope) |
+| On-demand | **mu-model** 🧪 | Domain model — concepts, archetypes, the spine, ownership; written to `CONTEXT.md` before PRD or design. **`create` path unproven — see Validation** |
 | On-demand | **mu-prd** | Product requirements — user flows, object lifecycle models, wireframes, feature specs, tiering rules |
 | On-demand | **mu-wiki** | Architecture wiki — generates and maintains project-level architecture documentation |
 | On-demand | **mu-retro** | Periodic retrospective with git metrics and memory capture |
@@ -139,6 +141,16 @@ devmuse/
 - **Systematic over ad-hoc** — Process over guessing
 - **Complexity reduction** — Simplicity as primary goal
 - **Evidence over claims** — Verify before declaring success
+
+## Validation status
+
+Skills marked 🧪 carry a path that has not been exercised on real projects yet. They ship anyway — holding them back until perfect is how the validation never happens.
+
+| Skill | Proven | Not proven | Report to |
+|---|---|---|---|
+| **mu-model** | `update` and `sync`, derived from two real runs (aflaj restructure, devmuse rebuild) | **`create`** — never run on a project starting from zero. Its four-step sequence is reasoned from Event Modeling and Four-Color archetypes, not extracted from practice | [Issues](https://github.com/knotmark-ai/devmuse/issues) — repo type, which step broke, what you did instead |
+
+**Exit criterion:** a path drops its 🧪 after running on **two independent projects without a process fix**. One clean run is luck.
 
 ## Local Development
 

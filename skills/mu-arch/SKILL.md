@@ -239,7 +239,7 @@ ADRs are a **cross-cutting concern** throughout the design process, not a single
 
 ## Domain Language
 
-Naming is a cross-cutting concern like ADRs. Before coining any component or concept name, read the repo-root `CONTEXT.md` (if present) and reuse its terms — including respecting `_Avoid_` lists. When the design coins a new name and the user approves it, add the entry (definition + `_Avoid_` synonyms) to `CONTEXT.md` in the same commit as the design doc, per the qualification test in `@../../knowledge/principles/domain-model.md`.
+Naming is a cross-cutting concern like ADRs. **If `CONTEXT.md` does not exist and this design introduces domain concepts rather than only technical components, recommend `/mu-model` first — non-blocking, the user may decline.** Before coining any component or concept name, read the repo-root `CONTEXT.md` (if present) and reuse its terms — including respecting `_Avoid_` lists. When the design coins a new name and the user approves it, add the entry (definition + `_Avoid_` synonyms) to `CONTEXT.md` in the same commit as the design doc, per the qualification test in `@../../knowledge/principles/domain-model.md`.
 
 ## After the Design
 

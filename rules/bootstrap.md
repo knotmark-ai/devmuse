@@ -85,10 +85,11 @@ ask the user to restate with one word from the override list (non-blocking).
 - **Orthogonal** (auto-routed): mu-explore, mu-debug
 - **On-demand** (slash only, never auto-routed — matching intents get a
   pointer, not an invocation: is this idea worth building / competitor or
-  market analysis → `/mu-mrd`; product requirements / user flows →
-  `/mu-prd`; wiki / architecture docs → `/mu-wiki`; retro / look back →
-  `/mu-retro`; grill me / stress-test this plan → `/mu-grill`): mu-mrd,
-  mu-prd, mu-wiki, mu-retro, mu-grill
+  market analysis → `/mu-mrd`; domain model / concept model / "what do
+  these words actually mean" → `/mu-model`; product requirements / user
+  flows → `/mu-prd`; wiki / architecture docs → `/mu-wiki`; retro / look
+  back → `/mu-retro`; grill me / stress-test this plan → `/mu-grill`):
+  mu-mrd, mu-model, mu-prd, mu-wiki, mu-retro, mu-grill
 - **Meta**: mu-write-skill (skill authoring)
 
 ### Pipeline Graph
@@ -98,7 +99,8 @@ its artifact, and this graph names the next move.
 
 | From | Consumes | Next |
 |---|---|---|
-| mu-mrd (full) | approved MRD | prompt `/mu-prd create` |
+| mu-mrd (full) | approved MRD | prompt `/mu-model` when no `CONTEXT.md` exists, else `/mu-prd create` |
+| mu-model | approved domain model | prompt `/mu-prd`; or mu-scope directly when a PRD already exists |
 | mu-prd | approved PRD | mu-scope, first MVP feature |
 | mu-scope | approved scope | mu-arch |
 | mu-scope (fix route) | approved 1-UC repro | mu-debug |
