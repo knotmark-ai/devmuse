@@ -888,6 +888,18 @@ git branch -D <feature-branch>
 
 Then: Cleanup worktree (see below)
 
+### Architecture Reflow (Options 1 and 2)
+
+Once the change is merged or the PR is open, `docs/wiki/` is behind by exactly this change. Reflow **after** integration, never during design — a decision the review round overturned would otherwise already be sitting in the architecture's single home.
+
+```
+Did this change add a component, move a module boundary, or alter data flow?
+  no  → nothing to do
+  yes → /mu-wiki update
+```
+
+Non-blocking: declining is fine, the wiki simply carries that much staleness until the next milestone. ADRs recorded during design already live in `docs/adr/` (@../../knowledge/principles/adr.md) — this step refreshes only what the system *is*, not what was decided.
+
 ### Cleanup Worktree
 
 **For Options 1, 2, 4:**

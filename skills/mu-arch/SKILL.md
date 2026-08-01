@@ -59,7 +59,7 @@ You MUST create a task for each of these items and complete them in order:
 4. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
 5. **Grill for technical direction** — apply @../../knowledge/principles/grilling.md (one question per message with a recommendation, facts self-served, decisions to the user, converge every fork); **technical direction only** (not "what to build" — that's in the scope)
 6. **Propose 2-3 approaches** — with trade-offs, your recommendation, impact on existing architecture, and **UC coverage per approach**. Apply inversion test per approach. **Record ADR** for the selected approach (see §Architecture Decision Records).
-7. **C4 positioning** — using the approved approach, identify which C4 levels are involved per @../../knowledge/principles/architecture-assessment.md. Produce an architecture diagram showing current state + proposed changes (➕/✏️/➖ overlay). This establishes the structural map before detailed design.
+7. **C4 positioning** — identify which C4 levels the approved approach touches per @../../knowledge/principles/architecture-assessment.md. **Draw only the neighbourhood this change touches**, with the ➕/✏️/➖ overlay; cite `docs/wiki/` pages for the surrounding picture instead of redrawing it. No wiki present → draw what the change needs and record that no architecture map exists.
 8. **Functional design** — based on C4 components identified in step 7, design the details:
    - **Within components:** data model (schema changes), state machine (if entity has lifecycle — see §Conditional Design Tools)
    - **Between components:** interface contracts (API endpoints, message formats), sequence diagrams per scenario (if multi-party interaction — see §Conditional Design Tools)
@@ -153,7 +153,7 @@ digraph mu_design {
 
 **Inversion test:** Before presenting approaches, apply the inversion reflex from @../../knowledge/principles/inversion.md. For each approach, document "what would make this approach fail?" alongside trade-offs. Present failure modes as a column in the comparison, not as a separate section.
 
-**C4 positioning (structural map):** After the user approves the approach, produce a C4 architecture diagram before detailed design. This establishes the structural map — which containers and components are involved. Follow @../../knowledge/principles/architecture-assessment.md:
+**C4 positioning (structural map):** After the user approves the approach, produce a C4 diagram before detailed design — **scoped to the neighbourhood this change touches**, not the whole system. The surrounding structure is cited from `docs/wiki/`, which is its single home; a spec that redraws the global picture creates a second copy that drifts from the day it ships, and specs are frozen while the system keeps moving. Follow @../../knowledge/principles/architecture-assessment.md:
 
 - Choose the right diagram type for this project (C1/C2/C3/DFD — see the "Diagram Type by Project Type" table)
 - Show the **current** relevant architecture, then overlay the **proposed changes** (mark additions ➕, modifications ✏️, removals ➖)
@@ -216,17 +216,18 @@ These tools are used during functional design (step 8) when their trigger condit
 
 ADRs are a **cross-cutting concern** throughout the design process, not a single step. Whenever you make a decision with meaningful trade-offs (step 6 approach selection, step 8 functional design choices, step 9 NFR trade-offs), record an ADR.
 
-**Format in the design doc:**
+**Home, numbering, format and the earns-one test: @../../knowledge/principles/adr.md.** In short: `docs/adr/NNNN-<slug>.md`, one global sequence, never inside the spec. A decision outlives the change that produced it — and a spec freezes, so an ADR embedded in one becomes unfindable the moment the next spec is written.
+
+**The spec cites, never restates:**
 
 ```markdown
 ## Architecture Decision Records
 
-### ADR-1: <title>
-- **Context:** What situation or constraint led to this decision
-- **Decision:** What was decided
-- **Alternatives:** What was considered and rejected (brief)
-- **Consequences:** What follows from this decision (both positive and negative)
+- [ADR-0007](../adr/0007-out-of-band-control.md) — control signals travel out-of-band, not via function-calling
+- [ADR-0008](../adr/0008-single-pg-both-planes.md) — management and call-handling planes share one Postgres
 ```
+
+Pre-existing specs with inline ADR bodies stay as they are — moving them retro-edits a frozen artifact. New ADRs go to `docs/adr/`.
 
 **What warrants an ADR:**
 - Choosing between 2+ viable approaches (step 6)

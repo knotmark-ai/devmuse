@@ -8,6 +8,8 @@ disable-model-invocation: true
 
 Generate and maintain a **project-level architecture wiki** — structured markdown pages with Mermaid diagrams, tables, and mandatory source citations. Output lives in `docs/wiki/`. Distinct from mu-explore (orientation artifact for personal mental model) and mu-arch (design decisions for a specific change).
 
+**`docs/wiki/` is the single home of architecture state** — what the system *is* right now. A design spec describes what one change *does*; it cites wiki pages rather than redrawing the global picture, because a redrawn global diagram is a second copy that starts drifting the day it is written. What makes the wiki safe to treat as authoritative is that it is **rebuildable from source**: when it disagrees with the code, the wiki is wrong, and one regeneration settles it.
+
 ## Anti-Pattern: "I'll just describe the architecture in chat"
 
 Chat descriptions are lost next session. mu-wiki exists to produce persistent, navigable, source-cited documentation that any team member (or future you) can read. Violations:
@@ -262,15 +264,33 @@ The page MUST follow this structure:
 
 2. **H1 title** — the page title
 
-3. **Introduction** — 1-2 paragraphs summarizing what this page covers and why it matters
+3. **Generated block** — everything derived from source, fenced by markers so `update` can rewrite it without touching anything a human added:
 
-4. **H2/H3 sections** — organized coverage of the topic. Each section should:
+<!-- mu-wiki:generated -->
+
+   3a. **Introduction** — 1-2 paragraphs summarizing what this page covers and why it matters
+
+   3b. **H2/H3 sections** — organized coverage of the topic. Each section should:
    - Explain the WHAT and WHY, not just list code
    - Include source citations inline: `Sources: [filename:start_line-end_line]()`
    - Use Mermaid diagrams where relationships or flows exist (graph TD ONLY — never graph LR)
    - Use Markdown tables for structured comparisons or configuration details
 
-5. **Cross-references** — link to related wiki pages where relevant: `See also: [Related Page Title](related-page-id.md)`
+   3c. **Cross-references** — link to related wiki pages where relevant: `See also: [Related Page Title](related-page-id.md)`
+
+<!-- /mu-wiki:generated -->
+
+4. **Curated block** — emitted as an empty scaffold on generate, and **never rewritten by update**. This is where anything that cannot be derived from source lives: coverage gaps, doc-vs-code contradictions, decisions the code does not explain.
+
+<!-- mu-wiki:curated -->
+## 未验证 / Unverified
+
+<!-- Gaps and uncertainties from building this page. Regeneration never clears them. -->
+
+## 补注 / Notes
+
+<!-- Anything the source cannot tell you. Survives every regeneration. -->
+<!-- /mu-wiki:curated -->
 
 ## Mandatory Constraints
 
@@ -310,7 +330,7 @@ Covers: UC-2, UC-E1, UC-ERR2
    - List each affected page with title and the changed files that triggered it
    - User may confirm, adjust (add/remove pages), or cancel
 
-7. **Dispatch Page subagents** — for affected pages only, dispatch Page subagents using the same Page Subagent Prompt as in Generate Mode. All run in parallel.
+7. **Dispatch Page subagents** — for affected pages only, using the same Page Subagent Prompt as in Generate Mode, **plus the preservation rule: read the existing page first and pass its `<!-- mu-wiki:curated -->` block through verbatim.** Only the `<!-- mu-wiki:generated -->` block is rewritten. A page that comes back without its curated block has lost the one thing nobody can regenerate. All run in parallel.
 
 8. **Update _index.md** — modify `docs/wiki/_index.md`:
    - Update baseline commit to current `git rev-parse HEAD`

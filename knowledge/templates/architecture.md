@@ -69,11 +69,10 @@ stateDiagram-v2
 
 ## Architecture Decision Records
 
-### ADR-1: <title>
-- **Context:** what led to this decision
-- **Decision:** what was decided
-- **Alternatives:** what was rejected
-- **Consequences:** what follows (positive and negative)
+Cited, not restated — the records live in `docs/adr/` under one global sequence.
+
+- [ADR-NNNN](../adr/NNNN-slug.md) — <the decision in one line>
+- [ADR-NNNN](../adr/NNNN-slug.md) — <the decision in one line>
 
 ## Error Handling
 - Failure modes and recovery strategies
