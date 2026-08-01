@@ -127,6 +127,16 @@ Regression gap:       [scenario B, scenario C]
   → scenario C: [intentionally allowed / must still block]
 ```
 
+**Architecture understanding, by probe risk** — an impact analysis run against an un-mapped codebase is a guess wearing a number:
+
+| Probe risk | Before impact analysis |
+|---|---|
+| micro / low | Nothing — the blast radius fits in one head |
+| medium | Read `docs/wiki/` if it exists; do not generate one for this |
+| **high · crosses ≥2 top-level modules · area unfamiliar per `git log --author --since="30 days ago"`** | **Generate or refresh the map first** (`/mu-wiki generate` \| `update`), then run the impact analysis against it |
+
+Non-blocking at every tier. When the user declines the top tier, the scope records "impact analysis run without an architecture map" — the analysis still happens, it just carries its own caveat.
+
 **Output to user:**
 
 ```
@@ -139,7 +149,7 @@ Quick Probe Results:
 - Risk: [low/medium/high]
 
 Recommendation: [quick scope (2-3 use cases) / full enumeration]
-- Wiki: [if risk >= medium AND docs/wiki/_index.md does not exist] "项目暂无架构 wiki，建议 `/mu-wiki generate`"
+- Architecture map: [per the risk tiering above — none / read existing / generate first]
 ```
 
 ## Phase 2: Depth Decision
@@ -148,6 +158,10 @@ Present the probe results and recommend a depth level. The user confirms or over
 
 - **Low risk, small fan-out:** "This touches 1 file with no dependents. I'll list a couple of use cases to confirm, then proceed?"
 - **Medium/high risk:** "This touches shared-form, used by 12 pages. Recommend enumerating all affected scenarios. Agree?"
+
+**Spike exit (feasibility, not size):** when the probe cannot establish whether a use case is *possible* — an unproven integration, an unmeasured performance budget, two approaches that only diverge under load — what is missing is knowledge, and enumerating cases on top of it produces fiction. Offer: "UC-`<n>`'s feasibility is unknown — `<what specifically>`. Spike it first? (**spike** / **proceed with it flagged**)". On `spike`: park the scope, run @../../knowledge/principles/spike-discipline.md, return here with the verdict as evidence. On `proceed`: the UC carries an explicit feasibility flag into the design, and mu-arch treats it as a fork to resolve rather than a given.
+
+**The two exits answer different questions** — micro is *small enough to skip the artifact*, spike is *unknown enough that the artifact would be fiction*. Neither is a route around the scope gate: micro still states its UC and takes a nod, spike still comes back here with its verdict.
 
 **Micro exit (condition-gated by the probe, never by feel):** offer it only when the probe shows ALL of — single file, zero or one dependent, no public interface or contract change, no guard/condition/filter semantics change, low risk — AND the user's request itself fully specifies the change (nothing left to design; the message contains the exact edit). Offer: "Micro change — probe shows <evidence>. Skip the artifact and design phases: 1-UC inline scope, implement test-first here, run the affected tests. (micro / full)"
 

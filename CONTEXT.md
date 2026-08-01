@@ -147,7 +147,7 @@ opening move ──▶ skill
 
 ### Artifact
 
-A durable work product a skill authors, a user approves, and a downstream skill consumes. Two forms: **dated snapshots** (`docs/scope|specs|plans/YYYY-MM-DD-*.md`) freeze on approval and are never retro-edited; **living artifacts** (CONTEXT.md, `docs/wiki/`, explore artifacts) carry no date, update in place, and append a History row per revision.
+A durable work product a skill authors, a user approves, and a downstream skill consumes. Two forms: **dated snapshots** (`docs/scope|specs|plans/YYYY-MM-DD-*.md`) freeze on approval and are never retro-edited; **living artifacts** (CONTEXT.md, `docs/wiki/`, explore artifacts, spike READMEs) carry no date, update in place, and append a History row per revision. A spike README is the thinnest living artifact: no reviewer loop, since it records an observation rather than a decision — but still approved, because its verdict is what a scope will be built on.
 
 **Succession** — dated snapshots relate to each other explicitly, since a feature worked twice leaves two of them. An **unconsumed** artifact is revised in place, filename and date unchanged. A **consumed** one is either *superseded* (its decisions replaced) or *extended* (added to without invalidating), with the link written in **both** directions. Which applies is checkable, not a judgment call: a scope is consumed once a spec's Requirements Reference cites it, a plan once any checkbox reads `[x]`. See `knowledge/principles/artifact-succession.md`.
 

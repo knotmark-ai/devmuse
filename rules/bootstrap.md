@@ -58,7 +58,7 @@ not text in the conversation; recent-author familiarity (`git log
 match against installed non-DevMuse skills.
 
 **Intent → opening move** (first match wins; multi-verb priority:
-fix > review > reshape > create-feature > implement > understand):
+fix > review > reshape > create-feature > spike > implement > understand):
 
 | Signal | Opening move |
 |---|---|
@@ -67,6 +67,7 @@ fix > review > reshape > create-feature > implement > understand):
 | review / 检查 / look at this diff or PR / 审一下 | **Review** (mu-review) |
 | reshape (refactor / clean up / restructure) — unfamiliar area | **Explore** (pre-change) → Scope |
 | reshape or create-feature — familiar, no scope on disk | **Scope** (mu-scope; its terminal chains into mu-arch) |
+| can this even be done / which approach survives / 先做一个看看 — **feasibility unknown AND the question is nameable** | **Spike** (@../knowledge/principles/spike-discipline.md) → Scope |
 | implement / build this — no scope on disk | **Scope** (mu-scope) |
 | implement / build this — design spec exists, no plan | **Plan** (mu-plan) |
 | implement / build this — plan exists (docs/plans) | **Implement** (mu-code) |
@@ -102,6 +103,7 @@ its artifact, and this graph names the next move.
 | mu-mrd (full) | approved MRD | prompt `/mu-model` when no `CONTEXT.md` exists, else `/mu-prd create` |
 | mu-model | approved domain model | prompt `/mu-prd`; or mu-scope directly when a PRD already exists |
 | mu-prd | approved PRD | mu-scope, first MVP feature |
+| Spike | verdict recorded (answered / partial / abandoned) | mu-scope with the verdict as evidence — or end, when the verdict is "don't build it" |
 | mu-scope | approved scope | mu-arch |
 | mu-scope (fix route) | approved 1-UC repro | mu-debug |
 | mu-scope (micro exit) | verified in-session change | end |
