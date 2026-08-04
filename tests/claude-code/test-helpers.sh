@@ -5,9 +5,20 @@
 # Usage: run_claude "prompt text" [timeout_seconds] [allowed_tools]
 run_claude() {
     local prompt="$1"
-    local timeout="${2:-60}"
+    local timeout_seconds="${2:-60}"
     local allowed_tools="${3:-}"
     local output_file=$(mktemp)
+    local timeout_command=()
+
+    if command -v timeout >/dev/null 2>&1; then
+        timeout_command=(timeout "$timeout_seconds")
+    elif command -v gtimeout >/dev/null 2>&1; then
+        timeout_command=(gtimeout "$timeout_seconds")
+    elif command -v perl >/dev/null 2>&1; then
+        # macOS ships Perl but not GNU timeout. SIGALRM survives exec, so this
+        # preserves the same hard limit without adding a test dependency.
+        timeout_command=(perl -e 'alarm shift; exec @ARGV' "$timeout_seconds")
+    fi
 
     # Build command
     local cmd="claude -p \"$prompt\""
@@ -16,7 +27,7 @@ run_claude() {
     fi
 
     # Run Claude in headless mode with timeout
-    if timeout "$timeout" bash -c "$cmd" > "$output_file" 2>&1; then
+    if "${timeout_command[@]}" bash -c "$cmd" > "$output_file" 2>&1; then
         cat "$output_file"
         rm -f "$output_file"
         return 0
@@ -143,7 +154,7 @@ cleanup_test_project() {
 create_test_plan() {
     local project_dir="$1"
     local plan_name="${2:-test-plan}"
-    local plan_file="$project_dir/docs/devmuse/plans/$plan_name.md"
+    local plan_file="$project_dir/docs/plans/$plan_name.md"
 
     mkdir -p "$(dirname "$plan_file")"
 

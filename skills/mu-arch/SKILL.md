@@ -1,6 +1,6 @@
 ---
 name: mu-arch
-description: "Use before any creative engineering work to design technical architecture — components, interfaces, data flow, error handling. For product/UX requirements (user flows, feature specs), use mu-prd first."
+description: Use when approved requirements evidence needs a technical design before implementation
 ---
 
 # Technical Architecture
@@ -38,7 +38,7 @@ Before engaging the design process, detect the current state of any existing arc
 |--------|--------|
 | `create` | Run the full Process (checklist steps 1-13). |
 | `update` | Load existing design artifact → apply sub-type logic (`expand` fills stub sections; `gap-fill` appends a new section titled "Gap-fill: `<task>`"; `sync` diffs against current code and proposes paragraph updates) → merge via the existing section-approval loop. |
-| `extract` | If target code region is unfamiliar, optionally delegate to `mu-explore` first (pre-change variant) for a mental model. Then read source dirs section-by-section and populate the arch artifact from current code, with each section approved by the user. Commit prefix: `extract:`. |
+| `extract` | Current-state architecture documentation belongs to `/mu-wiki`, the single durable home. Point the user there and end. If the real intent is a future change, use `create`/`update`; source informs that design but cannot reconstruct missing decision rationale. |
 | `skip` | Append a pass-through entry to the existing artifact's History section (`| <date> | <sha> | skip | — | passthrough for <task> |`); commit only if header/History needed initialization; invoke `mu-plan` per existing Integration. |
 
 **Commit prefix:** `docs(specs): <stance>[(sub-type)]: ...`
@@ -97,7 +97,7 @@ digraph mu_design {
 
     "Phase 0: Detect stance\n(create|update|extract|skip)" -> "User confirms stance";
     "User confirms stance" -> "skip branch\n(append history, handoff)" [label="skip"];
-    "User confirms stance" -> "Read requirements evidence\n(scope artifact or recorded equivalent)" [label="create / update / extract"];
+    "User confirms stance" -> "Read requirements evidence\n(scope artifact or recorded equivalent)" [label="create / update"];
     "skip branch\n(append history, handoff)" -> "Invoke mu-plan skill";
     "Read requirements evidence\n(scope artifact or recorded equivalent)" -> "Explore project context";
     "Explore project context" -> "Find architecture doc\n(README, docs/, or ask user)";

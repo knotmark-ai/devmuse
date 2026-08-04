@@ -1,6 +1,6 @@
 # Domain Model (CONTEXT.md)
 
-**When to use:** Produced by the modeling pass **before** any PRD or design work; maintained thereafter by `mu-explore` (harvest), `mu-arch` (coin), and a `sync` move against downstream artifacts. All other skills and sessions consume it passively via the bootstrap rule. Adapted from mattpocock/skills' shared-language mechanism, then widened from vocabulary to model.
+**When to use:** Produced and deliberately maintained by `mu-model` **before** PRD or design work; `mu-arch` may coin approved terms and any workflow may surface candidates for the next model update. All other skills and sessions consume it passively via the bootstrap rule. Adapted from mattpocock/skills' shared-language mechanism, then widened from vocabulary to model.
 
 **Purpose:** Settle the domain's concept structure before design starts — what exists, what has a lifecycle, what depends on what, who produces and who maintains each thing. Consistent naming falls out as a by-product; it is not the goal.
 
@@ -11,7 +11,7 @@
 - **Location:** `CONTEXT.md` at the repo root. Root placement makes it visible to humans and agents alike; the user may `@`-reference it from `CLAUDE.md` to force-load it.
 - **Lazy creation:** create it the first time the project has a concept structure worth stating. An empty scaffold is noise.
 - **Size: no term cap.** The necessary concept count is set by the domain, not by a context budget — a model missing a load-bearing concept makes downstream design wrong, which costs far more than the tokens it saved. What is capped is **isolates** (see Qualification Test).
-- **Single source of truth:** explore artifacts, PRDs, design docs, and wiki pages link here for shared terms *and domain facts* (state machines, invariants, guarantees); they never restate them. Area-local jargon stays in that area's explore artifact.
+- **Single source of truth:** PRDs, design docs, and wiki pages link here for shared terms *and domain facts* (state machines, invariants, guarantees); they never restate them. Area-local implementation jargon stays beside the source or in the relevant wiki page.
 - **One model or several:** one `CONTEXT.md` until a single term carries two meanings for two audiences **and neither side can be renamed** — that is a bounded-context boundary, not a naming dispute. An open ambiguity that cannot be ruled *because both readings are correct for their own audience* is exactly this signal. Then split: a root `CONTEXT-MAP.md` naming the contexts and how they relate, plus one `CONTEXT.md` per context beside its code. **Split on the collision, never in anticipation of one** — a boundary drawn before the vocabulary forces it is a guess, and guessed boundaries are expensive to move.
 
 ## Qualification Test
@@ -72,7 +72,7 @@ Machine-checkable: `grep -nE 'docs/(prd|specs|plans)' CONTEXT.md` returns nothin
 ## Maintenance Moves
 
 - **Model** (the modeling pass, before PRD): build §1–§7 from scratch. **Primary producer** — the moves below maintain what this creates.
-- **Harvest** (`mu-explore`): run collected domain terms through the qualification test; promote the passers. The explore artifact keeps area-local jargon and links here for the rest.
+- **Harvest** (`mu-model update` or `sync`): run terms collected from code, conversations, and downstream artifacts through the qualification test; promote only the passers and leave implementation-local jargon near its source.
 - **Coin** (`mu-arch`): read `CONTEXT.md` before naming any component or concept and reuse its language. Record an approved new name — definition plus `_Avoid_` — in the same commit as the design doc.
 - **Sync**: when a downstream artifact holds a domain fact that belongs here (a state machine living in a PRD, an invariant living in a spec), move the fact up and leave a reference down. One row in §7 per sync.
 - **Resolve** (any skill): on finding one term with two meanings or two terms for one meaning, rule with the user — update the winning entry's `_Avoid_` and record the retirement in §7 with its reasoning, so the dead word does not get picked back up. When the ruling needs information nobody has yet, park it in §3's open-ambiguities list together with what it blocks; an unruled ambiguity that goes unwritten gets re-litigated every session.

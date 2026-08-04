@@ -13,17 +13,20 @@
 
 ## 2. Worked Example
 
-> Jeff asks: 「帮我加个批量导出」on a repo he knows well, with no scope file on disk.
+> Jeff asks for a regulated batch-export API that crosses two services and adds a public response contract, with no scope file on disk.
 
-1. Routing reads the verb (`implement`) and the filesystem (no `docs/scope/`) → **opening move** = Scope.
-2. mu-scope runs **Quick Probe** (~30s), proposes depth, enumerates cases with Jeff, and writes a **Use Case Set** — UC-1…UC-9 plus UC-R1…R3.
+1. Routing rejects the **Direct lane** because public-contract and cross-system risk are present → **opening move** = Scope.
+2. mu-scope runs **Quick Probe** and selects the architectural **scope path**. It enumerates cases with Jeff and writes a **Use Case Set** — UC-1…UC-9 plus UC-R1…R3.
 3. Jeff approves it. That approval is the **control gate**; the file is now an approved **artifact**.
 4. The **Pipeline Graph** names the successor: mu-arch. It consumes the scope as **evidence** and produces a design spec, which goes through its own reviewer loop and Jeff's approval.
 5. mu-plan turns the spec into TDD tasks, each carrying `Covers: UC-x` **anchors**.
 6. mu-code implements task by task; TDD and verification-before-completion are **safety gates** — Jeff cannot waive those the way he can waive a recommendation.
 7. mu-review audits coverage against the UC anchors, then merges.
 
-Every concept below is validated against this run.
+Had the request been an exact README correction, Direct would have changed and
+verified it without a skill. Had it been a clear change to an existing private
+export flow, the bounded scope path would have handed 1–3 inline UCs to mu-code.
+Every concept below is validated against these three branches.
 
 ## 3. Concept Table
 
@@ -38,15 +41,17 @@ Archetypes: **Role** · **Thing** · **Moment** (has a lifecycle) · **Descripti
 | **HARD-GATE** | Description | A structural precondition embedded in a skill body, evaluated before stance detection | — | — |
 | **Sign-off gate** | Description | The non-blocking stakeholder-approval protocol at a creative skill's exit | — | — |
 | **Stance** | Description | The entry mode a creative skill picks from the artifact's current state | detection algorithm | user override |
-| **Opening move** | Description | The first skill routing selects for an unprefixed task | routing rules | — |
+| **Direct lane** | Description | The no-skill route for exact, low-risk, mechanical/reversible/execution-only work | routing rules | — |
+| **Opening move** | Description | The first skill routing selects when work is not Direct | routing rules | — |
+| **Scope path** | Description | The bounded or architectural ceremony selected by mu-scope from Quick Probe evidence | mu-scope | — |
 | **Pipeline Graph** | Description | The single declaration of cross-skill handoffs | `rules/bootstrap.md` | — |
-| **Core pipeline** | Description | The ordered auto-routed chain mu-scope → mu-arch → mu-plan → mu-code → mu-review | — | — |
+| **Core pipeline** | Description | The proportional routes: Direct; bounded mu-scope → mu-code; architectural mu-scope → mu-arch → mu-plan → mu-code → mu-review | — | — |
 | **Orthogonal skill** | Description | An auto-routed skill running outside the pipeline's order | — | — |
 | **On-demand skill** | Description | A skill never auto-routed; slash invocation only | — | — |
 | **Creative skill** | Description | A skill authoring a judgment-bearing artifact: stance at entry, sign-off at exit | — | — |
 | **Living artifact** | Description | An artifact form with no date in its filename, updated in place with a History row | — | — |
-| **Use Case Set** | Thing | The approved list of use cases mu-scope produces; its UC-IDs propagate downstream | mu-scope | mu-scope |
-| **Quick Probe** | Description | mu-scope's ~30-second codebase impact scan, run before enumeration | — | — |
+| **Use Case Set** | Thing | The inline or artifact-backed list of use cases mu-scope produces; its UC-IDs propagate downstream | mu-scope | mu-scope |
+| **Quick Probe** | Description | mu-scope's focused impact scan that selects fix, bounded, architectural, or spike | — | — |
 | **Anchor** | Description | A verbatim identifier a reviewer must cite in every finding | — | — |
 | **Cross-review** | Description | The optional second opinion from a different model family | — | — |
 | **Task transition** | Moment | A user message whose intent shifts skill category mid-conversation | user | — |
@@ -109,7 +114,7 @@ stateDiagram-v2
 
 | # | Trigger | State change |
 |---|---|---|
-| 1 | User states an unprefixed task | Routing picks the **opening move** from verbs + filesystem facts |
+| 1 | User states an unprefixed task | Routing selects **Direct lane** or a skill **opening move** from request + git/fs facts |
 | 2 | Skill entered | Phase 0 detects the artifact's state → **stance** |
 | 3 | Skill authors | artifact → `Drafted` |
 | 4 | Reviewer loop (creative skills) | stays `Drafted` until approved or 3 iterations elapse |
@@ -124,9 +129,13 @@ stateDiagram-v2
 
 ```
 user intent
-    │  routing rules (bootstrap): verbs + git/fs facts, never inference
+    │  routing rules (bootstrap): request + git/fs facts
+    ▼
+Direct lane ──▶ proportional verification ──▶ end
+    │ otherwise
     ▼
 opening move ──▶ skill
+                  │  mu-scope: Quick Probe ──▶ bounded / architectural
                   │  Phase 0: stance detection ── artifact state → entry mode
                   ▼
              ARTIFACT  drafted → reviewed → approved
@@ -141,13 +150,19 @@ opening move ──▶ skill
      reachable by no override
 ```
 
-**Walked through §2's example:** the verb `implement` plus an empty `docs/scope/` selects Scope as the opening move (step 1); mu-scope finds no artifact → `create` (2); the Use Case Set reaches `Drafted` (3), then `Approved` when Jeff signs off (5); the graph names mu-arch (6), which consumes the scope as evidence (7); the scope file, being a dated snapshot, ends `Frozen` (8a). TDD inside mu-code is a safety gate — Jeff can waive the plan, never the red-green cycle.
+**Walked through §2's example:** public-contract and cross-system signals reject
+Direct and select Scope (step 1); Quick Probe selects the architectural path;
+mu-scope finds no artifact → `create` (2); the Use Case Set reaches `Drafted`
+(3), then `Approved` when Jeff signs off (5); the graph names mu-arch (6),
+which consumes the scope as evidence (7); the dated scope ends `Frozen` (8a).
+The bounded contrast stops after an inline contract; the Direct contrast creates
+no artifact. TDD inside mu-code remains a safety gate.
 
 ## 6. Concepts in Detail
 
 ### Artifact
 
-A durable work product a skill authors, a user approves, and a downstream skill consumes. Three forms: **dated snapshots** (`docs/scope|specs|plans/YYYY-MM-DD-*.md`) freeze on approval and are never retro-edited; **living artifacts** (CONTEXT.md, `docs/wiki/`, explore artifacts, spike READMEs) carry no date, update in place, and append a History row per revision. A spike README is the thinnest living artifact: no reviewer loop, since it records an observation rather than a decision — but still approved, because its verdict is what a scope will be built on.
+A durable work product a skill authors, a user approves, and a downstream skill consumes. Three forms: **dated snapshots** (`docs/scope|specs|plans/YYYY-MM-DD-*.md`) freeze on approval and are never retro-edited; **living artifacts** (`CONTEXT.md`, `docs/wiki/`, spike READMEs) carry no date, update in place, and append a History row per revision. A spike README is the thinnest living artifact: no reviewer loop, since it records an observation rather than a decision — but still approved, because its verdict is what a scope will be built on.
 
 The third form is the **decision record** (`docs/adr/NNNN-*.md`): one global sequence, only ever appended to. Its states map onto this machine exactly — `Proposed` is Drafted, `Accepted` is Approved, and superseding produces a *new* record rather than an edit. What makes it a separate form is that it is **not rebuildable**: the wiki can be regenerated from source, but a rejected alternative leaves no trace in source. See `knowledge/principles/adr.md`.
 
@@ -193,9 +208,35 @@ _Avoid_: mode, entry state
 
 ### Opening move
 
-The first skill the routing rules select for an unprefixed task — Explore (mu-explore), Design-tech (mu-arch), Reproduce (mu-scope 1-UC repro, then mu-debug), Review (mu-review), or Implement (mu-code). Selected from intent verbs and filesystem facts, never from inference about what the user "really" wants.
+The first skill routing selects after work fails Direct eligibility —
+Scope/Reproduce (mu-scope), Review (mu-review), Plan (mu-plan), or Implement
+(mu-code). Read-only understanding stays in Direct; durable current-state
+architecture documentation is an explicit `/mu-wiki` request. Selection uses
+request and filesystem facts, never inference about what the user "really"
+wants.
 
 _Avoid_: entry skill, first step, initial route
+
+### Direct lane
+
+The no-skill routing result for either read-only inspection with no durable
+artifact, or a sufficiently specified task whose remaining work is mechanical,
+reversible, or execution-only and carries no material contract, safety, data,
+dependency, or non-local behavior risk. It ends after a source-verified answer
+or proportional verification and upgrades to Scope when a requested change
+exposes a disqualifying signal.
+
+_Avoid_: fast mode, skip-process
+
+### Scope path
+
+The ceremony class mu-scope selects from Quick Probe evidence. **Bounded** means
+a clear change to an existing flow inside one subsystem and produces an inline
+acceptance contract consumed by mu-code. **Architectural** means material risk,
+system-boundary impact, or an unresolved decision and produces an approved scope
+artifact consumed by mu-arch.
+
+_Avoid_: depth level, task size
 
 ### Pipeline Graph
 
@@ -205,19 +246,22 @@ _Avoid_: terminal chain, hardwired terminal
 
 ### Core pipeline
 
-The ordered, auto-routed skill chain mu-scope → mu-arch → mu-plan → mu-code → mu-review, where each stage's artifact is the next stage's evidence.
+The proportional routing family: Direct → verification → end; bounded
+mu-scope → mu-code → end; architectural
+mu-scope → mu-arch → mu-plan → mu-code → mu-review. Edges consume evidence;
+only the architectural path requires every dated artifact.
 
 _Avoid_: main flow, workflow chain
 
 ### Orthogonal skill
 
-An auto-routed skill that runs at any point outside the core pipeline's order (mu-explore, mu-debug).
+An auto-routed skill that runs at any point outside the core pipeline's order (currently mu-debug).
 
 _Avoid_: side skill, utility skill
 
 ### On-demand skill
 
-A skill that is never auto-routed and runs only via explicit slash invocation (mu-mrd, mu-prd, mu-wiki, mu-retro, mu-grill); the routing rules answer matching intents with a pointer, not an invocation.
+A skill that is never auto-routed and runs only via explicit slash invocation (mu-mrd, mu-model, mu-prd, mu-wiki, mu-retro, mu-grill); the routing rules answer matching intents with a pointer, not an invocation.
 
 _Avoid_: slash-only skill, manual skill
 
@@ -229,19 +273,24 @@ _Avoid_: authoring skill, artifact skill
 
 ### Living artifact
 
-The artifact form with no date in its filename, updated in place with a History row appended per revision (explore artifacts, wiki, this file) — as opposed to the dated snapshots under `docs/scope|specs|plans`.
+The artifact form with no date in its filename, updated in place with a History row appended per revision (`docs/wiki/`, spike READMEs, this file) — as opposed to the dated snapshots under `docs/scope|specs|plans`.
 
 _Avoid_: evergreen doc
 
 ### Use Case Set
 
-The approved list of use cases (UC-1, UC-2, …) produced by mu-scope; UC-IDs propagate through design, plan tasks, code, and tests, and are what coverage review audits against.
+The list of use cases (UC-1, UC-2, …) produced by mu-scope. On the bounded path
+it is an inline contract approved by a faithful original request; on the
+architectural path it is an explicitly approved artifact. UC-IDs propagate to
+the downstream evidence each path actually creates.
 
 _Avoid_: requirements list, feature list
 
 ### Quick Probe
 
-mu-scope's automatic ~30-second codebase impact scan, run before use-case enumeration to ground the depth recommendation.
+mu-scope's focused codebase impact scan, run before use-case enumeration to
+select fix, bounded, architectural, or spike from blast radius, interface risk,
+test coverage, and system boundaries.
 
 _Avoid_: impact scan, pre-scan
 
@@ -253,13 +302,15 @@ _Avoid_: citation, reference, evidence
 
 ### Cross-review
 
-The optional mu-review step that dispatches the OpenAI Codex CLI for a second opinion from a different model family; entirely invisible when `codex` is not installed.
+The optional mu-review step that obtains a second opinion from another model
+only when the user requests it or accepts the extra cost after a high-risk
+signal; absent tooling stays invisible.
 
 _Avoid_: second review, external review
 
 ### Task transition
 
-A user message whose intent shifts skill category mid-conversation (debug→fix, explore→implement), requiring re-classification by the routing rules — versus a continuation, which stays inside the active skill.
+A user message whose intent shifts skill category mid-conversation (debug→fix, inspect→implement), requiring re-classification by the routing rules — versus a continuation, which stays inside the active skill.
 
 _Avoid_: context switch
 
@@ -279,6 +330,8 @@ _Avoid_: skill SEO, discoverability tuning
 
 | Date | Commit | Change |
 |---|---|---|
+| 2026-08-04 | — (uncommitted) | Retired **mu-explore** as a persistent workflow. Read-only understanding moved to Direct inspection, unfamiliar changes to mu-scope Quick Probe, bug-adjacent investigation to mu-debug, and durable current architecture to explicit `/mu-wiki`. Per-task independent review was also removed from mu-code in favor of one final mu-review. |
+| 2026-08-03 | — (uncommitted) | Added **Direct lane** and **Scope path** so ceremony scales with execution risk: exact mechanical work bypasses skills, bounded behavior stays inline, architectural work retains the artifact pipeline. |
 | 2026-07-13 | — | "UC" ruled exclusive to mu-scope; mu-explore's five exploration types renamed **variant**. Bare "gate" retired — always qualified (HARD-GATE / sign-off gate / size-area gate). |
 | 2026-04-14 | `108f3f6` | mu-design renamed **mu-arch** (hook straggler fixed in `304043d`). Dated plan snapshots keep the old name as history. |
 | 2026-08-01 | — (uncommitted) | **Decision record** added as the Artifact's third form (`docs/adr/`) — states map onto the existing machine, but it is not rebuildable from source, which is what separates it from the wiki. Spike READMEs added to the living form. |

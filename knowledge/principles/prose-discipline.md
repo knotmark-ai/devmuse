@@ -1,6 +1,6 @@
 # Prose Discipline
 
-**When to use:** Every skill that writes a document a human will read — MRD, PRD, scope, design spec, plan, explore artifact, wiki page, retro. Apply while drafting, not as a cleanup pass afterwards. Distilled from the aflaj readability rework (2026-07-28/29), where two full days went into repairing documents that were structurally complete and unreadable.
+**When to use:** Every skill that writes a document a human will read — MRD, PRD, scope, design spec, plan, wiki page, domain model, or retro. Apply while drafting, not as a cleanup pass afterwards. Distilled from the aflaj readability rework (2026-07-28/29), where two full days went into repairing documents that were structurally complete and unreadable.
 
 **Purpose:** A document that passes its template and still has to be re-read three times has failed. Templates guarantee the sections exist; these rules guarantee the sections can be used. The failure they prevent is **information stacking** — true statements piled in the order they were discovered, with the reasoning that connects them left in the author's head.
 

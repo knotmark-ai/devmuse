@@ -1,155 +1,158 @@
 ---
 name: bootstrap
-description: Use when starting any conversation - establishes how to find and use skills, requiring Skill tool invocation before ANY response including clarifying questions
+description: Use when starting any conversation - classifies domain and task ceremony, then establishes how to find and use relevant skills
 ---
 
 <SUBAGENT-STOP>
-If you were dispatched as a subagent to execute a specific task, skip this skill.
+If you were dispatched as a subagent for a specific task, skip this rule.
 </SUBAGENT-STOP>
 
 <SKILL-ROUTING>
-If a skill might apply — even if you're unsure — invoke it before any response, clarifying questions included. The costs are asymmetric: a spurious invocation wastes one tool call; skipping silently loses the workflow the skill encodes. When in doubt, invoke.
+For every unprefixed in-domain message, classify before responding or acting.
+Invoke the selected skill before work. Direct is a routing result, not a
+loophole around an applicable skill. Explicit `/mu-*` invocations bypass
+classification.
 </SKILL-ROUTING>
 
-## Instruction Priority
+User instructions outrank DevMuse skills; DevMuse skills outrank default model
+behavior. A user may settle a design choice, but calling risky work “small” does
+not remove observable risk.
 
-DevMuse skills override default system prompt behavior, but **user instructions always take precedence**:
+If repo-root `CONTEXT.md` exists, use its concepts, `_Avoid_` names, state
+machines, and invariants as the upstream domain model. Invoke skills with the
+Skill tool; read their current content rather than relying on memory.
 
-1. **User's explicit instructions** (CLAUDE.md, AGENTS.md, direct requests) — highest priority
-2. **DevMuse skills** — override default system behavior where they conflict
-3. **Default system prompt** — lowest priority
+## Domain Filter
 
-If CLAUDE.md or AGENTS.md says "don't use TDD" and a skill says "always use TDD," follow the user's instructions. The user is in control — of decisions and overrides; task phrasing states WHAT, not HOW ("Add X" / "Fix Y" doesn't waive workflows — see User Instructions below).
+Route only:
 
-## Project Domain Language
+1. software engineering — code, architecture, debugging, refactoring, testing,
+   review, deployment; or
+2. product/market work — premise, requirements, competition, market analysis.
 
-If the repo root has a `CONTEXT.md`, it is the project's domain model — the concept structure settled before design: use its terms in code names, artifacts, and replies, respect its `_Avoid_` lists, and treat its state machines and invariants as authoritative over any downstream restatement. Consult it before naming anything new.
+General discussion, small talk, and non-software topics receive a normal answer.
 
-## How to Access Skills
+## Entry Gate: Direct / Bounded / Architectural
 
-Use the `Skill` tool. When you invoke a skill, its content is loaded and presented to you—follow it directly. Never use the Read tool on skill files.
+**Direct eligibility is evaluated before intent priority.** “Check the diff”
+does not turn otherwise-Direct execution into a review workflow.
 
-# Using Skills
+**Direct lane** has two entries:
 
-## The Rule
+1. **Read-only inspection** — the request needs no mutation and no durable artifact.
+   Explain existing code, orient to the repo, trace a dependency, or evaluate
+   the current implementation. Use relevant `docs/wiki/` pages as a map when
+   present, verify material claims against source, state coverage, and answer;
+   durable current-state architecture documentation points to `/mu-wiki`.
+2. **Exact execution** — all three hold:
+   - the outcome is specified; ambiguity needs only **low-impact local judgment**
+     and no **material unresolved design decision** remains;
+   - the work is **mechanical, reversible, or execution-only**; and
+   - there is no **contract, safety, data, dependency, or non-local behavior risk**.
 
-**Invoke relevant or requested skills BEFORE any response or action.** But not every message is a task — DevMuse only activates for software engineering and product analysis work.
+Risk signals include public interfaces; guards/filters/conditions; auth or
+security; schemas/migrations; dependencies/lockfiles; cross-subsystem behavior;
+externally consumed text/events/logs; operational defaults; retry, timeout, or
+cache policy; and timing/order/concurrency.
 
-### Domain Filter (before routing)
+Typical Direct execution: an exact prose correction, specified formatter or
+generator, asset organization, exact local rename, or authorized Git operation.
+Before changing runtime code, identifiers, configuration, or automation, do a
+**narrow reference/dependency check**. Execute and verify proportionally. If
+inspection exposes hidden dependents, ambiguity, or a risk signal, stop before
+that surface, briefly name the exclusion, and **upgrade** to mu-scope.
 
-DevMuse handles two categories of work:
-1. **Software engineering** — coding, architecture, debugging, refactoring, testing, code review, deployment
-2. **Product/market analysis** — premise validation, product requirements, competitive and market analysis
+Other behavior-changing work enters mu-scope. Its Quick Probe chooses a
+**Bounded path** (inline contract) or **Architectural path** (approved artifacts).
 
-**Not in scope:** general questions, open-ended discussion, brainstorming without a concrete goal, non-software topics. For these, respond normally without invoking any skill.
+## Intent Routing
 
-### Routing
+**Intent uses verb plus object, not a trigger token alone.** Understanding an
+existing system is inspection; inspecting a diff, PR, patch, branch, or stated
+change is review.
 
-For any **unprefixed** in-domain message — at task start or on a task
-transition — classify and route directly from this section. `/mu-*`
-bypasses routing.
+If Direct fails, an explicit request to review a named diff, PR, patch, branch, or stated change outranks bug/fix words inside that review object. “Review and
+fix” selects mu-review's authorized mode; “fix a bug” selects reproduction.
 
-**Signals are git/fs facts, not inference** — on a failed command, ask
-the user for the opening move: intent verbs (table below); artifact
-existence means a file on disk under `docs/scope|specs|plans|prd|mrd/*.md`
-(legacy `docs/biz`),
-not text in the conversation; recent-author familiarity (`git log
---author --since="30 days ago" -- <area>`) when reshape fires; plausible
-match against installed non-DevMuse skills.
-
-**Intent → opening move** (first match wins; multi-verb priority:
-fix > review > reshape > create-feature > spike > implement > understand):
+First matching row wins.
 
 | Signal | Opening move |
 |---|---|
-| understand / figure out / take over / evaluate / what does this do | **Explore** (mu-explore) |
-| fix / broken / error / bug / test failing / crash | **Reproduce** (mu-scope 1-UC repro) |
-| review / 检查 / look at this diff or PR / 审一下 | **Review** (mu-review) |
-| reshape (refactor / clean up / restructure) — unfamiliar area | **Explore** (pre-change) → Scope |
-| reshape or create-feature — familiar, no scope on disk | **Scope** (mu-scope; its terminal chains into mu-arch) |
-| can this even be done / which approach survives / 先做一个看看 — **feasibility unknown AND the question is nameable** | **Spike** (@../knowledge/principles/spike-discipline.md) → Scope |
-| implement / build this — no scope on disk | **Scope** (mu-scope) |
-| implement / build this — design spec exists, no plan | **Plan** (mu-plan) |
-| implement / build this — plan exists (docs/plans) | **Implement** (mu-code) |
-| plausibly matches an installed non-DevMuse skill | propose delegating to it |
-| no verb match / pathological repo state (empty, shallow) | **Explore** safe default / ask the user |
+| read / understand / take over / evaluate existing code, no change or artifact requested | **Direct** read-only inspection |
+| Direct execution criteria all hold | **Direct** execute, verify, report |
+| review and fix / address findings in a named change set | **Review and fix** (mu-review) |
+| review / 检查 / 审一下 a named change set | **Review** (mu-review, Standalone review) |
+| approved 1-UC reproduction is already present | **Debug** (mu-debug) |
+| fix / broken / error / bug / failing test / crash | **Reproduce** (mu-scope 1-UC repro) |
+| implement an approved inline bounded contract | **Implement** (mu-code bounded) |
+| implement / build, plan exists under `docs/plans/` | **Implement** (mu-code) |
+| plan or implement, approved technical design exists but no plan | **Plan** (mu-plan) |
+| design technical architecture, approved scope/equivalent present | **Architecture** (mu-arch) |
+| feasibility unknown and the question is nameable | **Spike** (`knowledge/principles/spike-discipline.md`) → Scope |
+| refactor / clean up / restructure / create, plan, or implement a software change with no approved evidence | **Scope** (mu-scope; Quick Probe handles unfamiliarity) |
+| create / edit / validate a DevMuse skill | **Skill authoring** (mu-write-skill) |
+| worth building / premise / market / competitors | point to `/mu-mrd` |
+| domain concepts / terminology / “what do these words mean?” | point to `/mu-model` |
+| product requirements / user flows / screens | point to `/mu-prd` |
+| durable current architecture docs / wiki | point to `/mu-wiki` |
+| retrospective / look back | point to `/mu-retro` |
+| stress-test / grill a plan or design | point to `/mu-grill` |
+| plausible installed non-DevMuse skill match | propose that skill |
+| no match / empty or shallow repo | inspect only enough to identify the missing choice, then ask one targeted question |
 
-**Confidence sets friction:** single unambiguous verb → invoke silently;
-two candidate moves, one dominant → one-line check ("→ **<Skill>**, ok?");
-vaguer → full proposal with one-word overrides (explore / design-tech /
-reproduce / review / implement). An unparseable reply to a proposal →
-ask the user to restate with one word from the override list (non-blocking).
+For remaining multi-verb cases: fix > reshape > create-feature > spike >
+implement > understand. Route silently when one move is unambiguous; when two
+remain plausible, ask a one-line check; when the object itself is missing, ask
+one targeted question. If “just do it” still fails Direct, briefly name the
+exclusion and route without asking permission again.
 
-**Four categories:**
+## Skill Categories
 
-- **Core pipeline** (auto-routed): mu-scope → mu-arch → mu-plan → mu-code → mu-review
-- **Orthogonal** (auto-routed): mu-explore, mu-debug
-- **On-demand** (slash only, never auto-routed — matching intents get a
-  pointer, not an invocation: is this idea worth building / competitor or
-  market analysis → `/mu-mrd`; domain model / concept model / "what do
-  these words actually mean" → `/mu-model`; product requirements / user
-  flows → `/mu-prd`; wiki / architecture docs → `/mu-wiki`; retro / look
-  back → `/mu-retro`; grill me / stress-test this plan → `/mu-grill`):
-  mu-mrd, mu-model, mu-prd, mu-wiki, mu-retro, mu-grill
-- **Meta**: mu-write-skill (skill authoring)
+- **Core:** Direct ends after verification; bounded runs mu-scope → mu-code;
+  architectural runs mu-scope → mu-arch → mu-plan → mu-code → mu-review.
+- **Orthogonal:** mu-debug.
+- **On-demand:** never auto-invoke; point to the slash command — `/mu-mrd`
+  (market/premise), `/mu-model` (domain concepts), `/mu-prd` (product flows),
+  `/mu-wiki` (current architecture docs), `/mu-retro` (retrospective),
+  `/mu-grill` (stress-test a plan/design).
+- **Meta:** mu-write-skill.
 
-### Pipeline Graph
-
-Cross-skill handoffs live here, not in skills: a skill finishes by announcing
-its artifact, and this graph names the next move.
+## Pipeline Graph
 
 | From | Consumes | Next |
 |---|---|---|
-| mu-mrd (full) | approved MRD | prompt `/mu-model` when no `CONTEXT.md` exists, else `/mu-prd create` |
-| mu-model | approved domain model | prompt `/mu-prd`; or mu-scope directly when a PRD already exists |
+| mu-mrd (full) | approved MRD | point to `/mu-model` if no `CONTEXT.md`, else `/mu-prd create` |
+| mu-model | approved domain model | point to `/mu-prd`, or mu-scope when PRD exists |
 | mu-prd | approved PRD | mu-scope, first MVP feature |
-| Spike | verdict recorded (answered / partial / abandoned) | mu-scope with the verdict as evidence — or end, when the verdict is "don't build it" |
-| mu-scope | approved scope | mu-arch |
-| mu-scope (fix route) | approved 1-UC repro | mu-debug |
-| mu-scope (micro exit) | verified in-session change | end |
+| Spike | recorded verdict | mu-scope, or end on “do not build” |
+| Direct lane | read-only question or exact request | verified answer/result → end |
+| mu-scope (bounded) | inline acceptance contract | mu-code bounded execution |
+| mu-scope (architectural) | approved scope | mu-arch |
+| mu-scope (fix) | approved 1-UC repro | mu-debug |
 | mu-arch | approved design spec | mu-plan |
 | mu-plan | reviewed plan | mu-code |
-| mu-code | all tasks complete | mu-review |
+| mu-code (bounded) | verified implementation | end |
+| mu-code (architectural) | integrated tasks | mu-review |
 | mu-review / mu-debug | verified result | end |
 
-**Edges consume evidence, not file paths.** The named artifact is the default
-form; an equivalent that already answers the same questions satisfies the
-edge — record the substitution in the consuming artifact's header. The common
-case: a detailed PRD feature section + its CONTEXT.md machine stands in for a scope
-artifact — mu-scope then runs its evidence fast path (probe, conflict
-cross-check, reverse UCs; no re-interview). An inline plan handed over in
-conversation stands in for `docs/plans` at mu-code. Missing evidence →
-recommend the producer skill, offer the alternatives, the user decides —
-the recommendation itself is the agent's obligation; only the user can
-decline it, and a declined recommendation is flagged in the consuming
-artifact or final report.
-Control gates (user approval of an artifact) and safety gates (TDD,
-verification-before-completion, git safety) are never substitutable.
+Edges consume evidence, not file paths. Equivalent evidence may substitute when
+it answers the same questions; record the substitution. Missing evidence
+requires recommending its producer and letting the user decide. User approval
+of authored artifacts remains a control gate. TDD for behavior changes,
+verification-before-completion, and Git safety remain safety gates in every path.
 
-### Continuation vs Transition
+## Continuation vs Transition
 
-During an active skill, same-type follow-ups are continuations — just respond, no re-routing: "查下这个日志" mid-debug, clarifying questions, providing requested info. When the user's intent **shifts category** — debug→fix, explore→implement, anything→review, fix→redesign — re-route using the Routing section above.
-
-**The test:** with all prior conversation context removed, would this message route to a **different** skill than the one currently active? Yes → transition → re-route.
+A follow-up inside the active process is a continuation. A message that would
+select a different route without conversation history is a transition and is
+reclassified — for example inspect→implement, debug→redesign, or anything→review.
 
 ## Red Flags
 
-These thoughts mean STOP—you're rationalizing:
-
-| Thought | Reality |
-|---------|---------|
-| "Let me gather context / explore the codebase / check files first" | Skill check comes BEFORE clarifying questions. Skills tell you HOW to explore and gather. |
-| "This doesn't need a formal skill" / "the skill is overkill" | If a skill exists, use it. Simple things become complex. |
-| "I remember this skill" | Skills evolve. Read the current version. |
-| "Just a quick fix" / "too simple to need scoping" | Simple tasks are where omissions hurt most. Scope can be 1 use case; Quick Probe takes 30 seconds. |
-| "This is a continuation of the current task" | Apply the transition test above. If the intent shifted, re-route. |
-
-**Not a red flag:** "This isn't a dev or product task" — open-ended discussion, general questions, and non-software topics get a normal response, no routing.
-
-## Skill Types
-
-**Rigid** (code with TDD, review with verification): follow exactly — don't adapt away discipline. **Flexible** (design, debug): adapt principles to context. The skill itself tells you which.
-
-## User Instructions
-
-Instructions say WHAT, not HOW. "Add X" or "Fix Y" doesn't mean skip workflows.
+| Thought | Routing correction |
+|---|---|
+| “Let me gather broad context first” | Classify first; read-only Direct inspects proportionally, mutating paths load their skill first |
+| “This one-line change is Direct” | File count is not risk; contracts, guards, security, schemas, and dependencies enter mu-scope |
+| “The user said direct, so risk is gone” | Exact instructions can settle design, not hidden dependents or safety signals |
+| “I remember this skill” | Read the installed version |
+| “This is still the same task” | Apply the transition test |

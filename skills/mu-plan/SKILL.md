@@ -1,6 +1,6 @@
 ---
 name: mu-plan
-description: Use when you have a spec or requirements for a multi-step task, before touching code
+description: Use when an approved technical design needs a multi-step implementation plan
 ---
 
 # Writing Plans
@@ -170,17 +170,11 @@ After writing the complete plan:
 
 ## Execution Handoff
 
-After saving the plan, offer execution choice:
-
-**"Plan complete and saved to `docs/plans/<filename>.md`. Two execution options:**
-
-**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
-
-**2. Inline Execution** - Execute tasks in this session, batch execution with checkpoints
-
-**Which approach?"**
-
-Hand off per the Pipeline Graph (bootstrap) — mu-code executes the plan and supports both modes.
+After saving and reviewing the plan, announce its path and hand it to mu-code
+per the Pipeline Graph. **mu-code selects the execution mode** from task count,
+coupling, write-set overlap, and subagent availability; a user preference already
+stated in the conversation overrides that default. Do not add a mode-selection
+question solely because two implementations are available.
 
 ## Integration
 

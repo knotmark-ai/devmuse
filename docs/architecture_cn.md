@@ -78,22 +78,22 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 
 ### skills/
 
-**权威技能清单**（分类与角色）在 [README_CN 的技能表](../README_CN.md#技能)——本文件不重复它，只记录架构层面独有的信息：哪些 skill 派遣 agent。
+**权威技能清单**（分类与角色）在 [README_CN 的技能表](../README_CN.md#技能)——本文件不重复它，只记录架构层面独有的信息：哪些 skill 派遣 DevMuse agent 文件。
 
 | 技能 | 派遣 |
 |------|-----|
 | mu-arch | mu-reviewer（review-design） |
 | mu-plan | mu-reviewer（review-plan） |
-| mu-code | mu-coder；mu-reviewer（review-code + review-compliance） |
+| mu-code | mu-coder |
 | mu-review | mu-reviewer（review-code + review-coverage + review-security） |
 
-其余技能不派遣任何 agent。
+其余技能不派遣 DevMuse agent 文件。`mu-wiki` 可以使用平台自带的只读/通用子 Agent 对 Wiki 生成做分工；它们是执行机制，不是新增的 DevMuse 角色。
 
 ### agents/
 
 | 名称 | 角色 | 被谁派遣 |
 |------|------|---------|
-| mu-reviewer | 六模式审查者：设计文档（review-design）、实施计划（review-plan）、代码质量（review-code）、规格符合性（review-compliance）、需求覆盖（review-coverage）、安全审计（review-security） | mu-arch, mu-plan, mu-code, mu-review |
+| mu-reviewer | 五模式审查者：设计文档（review-design）、实施计划（review-plan）、代码质量（review-code）、需求覆盖（review-coverage）、安全审计（review-security） | mu-arch, mu-plan, mu-review |
 | mu-coder | 实现者 | mu-code |
 
 **设计决策：** 2 个通用 agent + knowledge 注入，而非 N 个语言专用 agent。审查逻辑 80% 通用，改一处全局生效。扩展新语言只需加 knowledge 文件。
@@ -103,10 +103,9 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 | 类别 | 用途 | 被谁引用 |
 |---|---|---|
 | languages/ | 语言特定审查标准 | mu-reviewer（review-code） |
-| templates/ | 产物模板 | mu-scope, mu-explore, mu-arch, mu-wiki |
+| templates/ | 产物模板 | mu-scope, mu-arch, mu-wiki |
 | principles/ | 决策点加载的思维原则 | mu-arch, mu-scope, mu-mrd, mu-prd 等（如 stance-detection.md 被每个 creative skill 的 Phase 0 消费） |
 | reviews/ | 特定关注点的审查清单 | mu-reviewer（review-security, review-design） |
-| schemas/ | 外部工具调用的结构化输出 schema | mu-review（codex cross-review） |
 
 每个文件以 **"When to use"** 开头注明消费它的 skill——目录本身即当前清单（本文不重复文件级列表；列表会漂移）。
 

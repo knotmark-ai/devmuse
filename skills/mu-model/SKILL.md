@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 # Domain Modeling
 
-> **Validation status — `create` is unproven.** The `update` and `sync` paths were derived from two real runs (aflaj restructure, devmuse rebuild). The `create` path is reasoned from Event Modeling and Four-Color archetypes and has **never been run on a project starting from zero**. Report what breaks: https://github.com/knotmark-ai/devmuse/issues/47
+> **Validation status — `create` is unproven.** The `update` paths, including `update(sync)`, were derived from two real runs (aflaj restructure, devmuse rebuild). The `create` path is reasoned from Event Modeling and Four-Color archetypes and has **never been run on a project starting from zero**. Report what breaks: https://github.com/knotmark-ai/devmuse/issues/47
 
 **Scope:** the concept structure a project is built on — what exists, what has a lifecycle, what depends on what, who produces and maintains each thing. Runs **before** PRD and design work. For product requirements use **mu-prd** after this; for technical architecture use **mu-arch**.
 
@@ -35,11 +35,14 @@ The symptom that this pass was skipped: the team is deep into feature specs and 
 | Stance | Action | Proven? |
 |---|---|---|
 | `create` | No `CONTEXT.md` — run the full Process below | ❌ **unproven** |
-| `update` | Model exists, new concepts or lifecycle changes to fold in — run steps 2–7 on the delta only | ✅ |
-| `sync` | Model exists but a downstream artifact holds domain facts (state machine in a PRD, invariant in a spec) — **move the fact up, leave a reference down**, one History row per move | ✅ |
-
-`sync` is also a **reflex, not only a stance**: any skill that notices a domain fact living downstream, or a model claim the code contradicts, raises it on the spot. The stance is for when the drift is large enough to warrant a pass of its own.
+| `extract` | Explicit request only: collect candidate concepts from source, then run the full Process; source suggests structure but the user still arbitrates ownership, invariants, and meanings | ❌ **unproven** |
+| `update(expand\|gap-fill)` | Model exists, new concepts or lifecycle changes need folding in — run steps 2–7 on the delta only | ✅ |
+| `update(sync)` | Model exists but a downstream artifact holds domain facts (state machine in a PRD, invariant in a spec) — **move the fact up, leave a reference down**, one History row per move | ✅ |
 | `skip` | Model exists and this task does not touch it — append a History pass-through row, hand off | — |
+
+`sync` is also a **reflex, not only a subtype**: any skill that notices a domain
+fact living downstream, or a model claim the code contradicts, raises it on the
+spot. `update(sync)` is for drift large enough to warrant a pass of its own.
 
 **Commit prefix:** `docs(context): <stance>: ...`
 
@@ -130,8 +133,8 @@ Wait for approval. Commit.
 |---|---|
 | New project, no shared vocabulary yet | `create` |
 | Model exists, a new subsystem introduces concepts | `update` |
-| A PRD or spec is carrying a state machine or an invariant | `sync` |
-| Someone asks "what do these words actually mean" mid-build | `create` or `sync` — check whether `CONTEXT.md` exists first |
+| A PRD or spec is carrying a state machine or an invariant | `update(sync)` |
+| Someone asks "what do these words actually mean" mid-build | `create` or `update(sync)` — check whether `CONTEXT.md` exists first |
 
 ## Common Mistakes
 
@@ -141,7 +144,7 @@ Wait for approval. Commit.
 | Skipping the worked example | Nothing to validate concepts against; abstract models accept anything | Step 1 is not optional |
 | Forcing a spine on a stateless domain | An invented centre misleads every downstream reader | Step 3's verification exists to fail |
 | Writing the conclusion without the derivation | The next person cannot tell whether the spine still holds | Step 3 writes the four lines |
-| Leaving a state machine in the PRD | Two homes, drift on the first correction | `sync` moves it up |
+| Leaving a state machine in the PRD | Two homes, drift on the first correction | `update(sync)` moves it up |
 | Filling §1 with "be user-friendly" | Rejects no concept | Step 6's rejection test |
 | Batching resolved terms until the end of the session | The qualification, the rejected alternative and the reason evaporate first; what lands is a bare definition | Capture as they resolve |
 | Splitting into multiple contexts before a term collision forces it | A guessed boundary is expensive to move once code sits on both sides | Split on the collision — see `domain-model.md` §The Artifact |

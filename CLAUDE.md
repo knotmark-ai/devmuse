@@ -25,7 +25,7 @@ Touch ALL of these in the same commit:
 
 ## Generated docs
 
-`docs/wiki/**` has two zones per page. The `<!-- mu-wiki:generated -->` block is rebuilt by `/mu-wiki` — never hand-edit it, edits there are lost on the next update. The `<!-- mu-wiki:curated -->` block is hand-maintained and survives every regeneration; it holds what the source cannot state — coverage gaps, doc-vs-code contradictions, decisions the code does not explain. Run `/mu-wiki update` after milestones. `docs/scope|specs|plans/**` are dated snapshots — historical records, never retro-edited.
+`docs/wiki/**` has two zones per page. The `<!-- mu-wiki:generated -->` block is rebuilt by `/mu-wiki` — never hand-edit it, edits there are lost on the next update. The `<!-- mu-wiki:curated -->` block is hand-maintained and survives every regeneration; it holds what the source cannot state — coverage gaps, doc-vs-code contradictions, decisions the code does not explain. When `docs/wiki/_index.md` exists, run `/mu-wiki update` after milestones; when it does not, `/mu-wiki generate` remains an explicit user choice rather than an automatic prerequisite. `docs/scope|specs|plans/**` are dated snapshots — historical records, never retro-edited.
 
 ## Skills are code
 

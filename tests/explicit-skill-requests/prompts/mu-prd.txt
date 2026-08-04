@@ -1,0 +1,1 @@
+Use `/mu-prd create` to define the product requirements for a small booking app.

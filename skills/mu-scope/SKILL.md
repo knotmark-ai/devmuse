@@ -1,98 +1,75 @@
 ---
 name: mu-scope
-description: "Use before mu-arch to scope work — enumerate use cases, detect conflicts, assess impact on existing code."
+description: Use when a feature, refactor, or bug reproduction fails bootstrap's Direct criteria
 ---
 
 # Scope
 
-Scope work by enumerating use cases, detecting conflicts, and assessing impact on existing code. Produces a Use Case Set that feeds into mu-arch.
+Scope behavior-changing work by probing impact, then spend ceremony in proportion to risk and uncertainty.
 
-Start by probing the codebase for impact, then work with the user to exhaust scenarios and resolve conflicts.
+**Core principle:** the probe chooses the process. A bounded change gets an inline acceptance contract and implementation; an architectural change gets exhaustive cases, an artifact, and explicit approval.
 
 <HARD-GATE>
-Do NOT invoke mu-arch or any implementation skill until you have a complete Use Case Set approved by the user. This applies to EVERY task regardless of perceived simplicity.
+Do not implement behavior-changing work until its expected behavior is stated as use cases and the probe has ruled on bounded versus architectural. Architectural work requires an approved scope artifact. Bounded work may use the user's sufficiently exact request as approval of a faithful inline contract.
 </HARD-GATE>
 
-Sequence substitutions (the evidence fast path, user-held overrides) are defined in the Pipeline Graph — the UC approval itself is never waivable by the agent.
+Sequence substitutions and handoffs are defined in the Pipeline Graph.
 
-## Anti-Pattern: "This Is Too Simple To Need Scoping"
+## Entry Boundary
 
-Every task goes through scoping. A bug fix, a config change, a one-liner — all of them. "Simple" tasks are where omissions cause the most wasted work. The scope can be a single use case (30 seconds), but you MUST produce it and get approval. The micro exit (Phase 2) is not an exception: the probe still runs and the UC is still stated and approved — it sheds the artifact file and the downstream phases, never the scoping itself.
+Bootstrap has already excluded Direct work. Do not pull mechanical,
+reversible, execution-only tasks back into this skill. Conversely, "one line"
+does not make a bug, contract, guard, security rule, migration, or dependency
+change Direct; probe its actual risk here.
 
 ## Checklist
 
-You MUST create a task for each of these items and complete them in order:
+Complete these in order:
 
-0. **Prior artifact check** — is there an earlier scope for this same work? One question, per @../../knowledge/principles/artifact-succession.md. Skip silently when `docs/scope/` is empty.
 1. **Quick Probe** — scan codebase for impact (skip for new/empty projects)
-2. **Depth decision** — present probe results, confirm depth with user; probe-qualified micro changes may take the micro exit here (see Phase 2)
-3. **Use case elicitation** — enumerate happy paths → edge cases → error cases
-4. **Conflict detection** — cross-check all use cases, resolve with user
-5. **Write scope artifact** — save to `docs/scope/YYYY-MM-DD-<name>.md`, user confirms
-6. **Hand off** — announce the artifact; the Pipeline Graph (bootstrap) names the next move
+2. **Path decision** — classify fix, bounded, architectural, or spike from evidence
+3. **Use cases** — inline 1–3 for bounded; exhaustive categories for architectural
+4. **Conflict detection** — account for overlaps and regression gaps
+5. **Output** — hand an inline contract to mu-code, a repro to mu-debug, or an approved artifact to mu-arch
 
 ## Process Flow
 
 ```dot
 digraph mu_scope {
     "Quick Probe\n(inline, automatic)" [shape=box];
-    "New/empty project?" [shape=diamond];
-    "Skip probe" [shape=box];
-    "Present probe results\n+ depth recommendation" [shape=box];
-    "User confirms depth" [shape=box];
-    "Enumerate happy paths" [shape=box];
-    "User confirms/supplements" [shape=diamond];
-    "Enumerate edge cases" [shape=box];
-    "Enumerate error cases" [shape=box];
-    "Cross-check all use cases\nfor conflicts" [shape=box];
-    "Conflicts found?" [shape=diamond];
-    "User resolves conflicts" [shape=box];
+    "Feasibility unknown?" [shape=diamond];
+    "Run spike" [shape=box];
+    "Fix request?" [shape=diamond];
+    "State 1-UC repro\n→ mu-debug" [shape=doublecircle];
+    "Bounded?" [shape=diamond];
+    "Inline 1–3 UCs\n→ mu-code bounded" [shape=doublecircle];
+    "Exhaustive UCs + conflicts" [shape=box];
     "Write scope artifact" [shape=box];
-    "User approves scope?" [shape=diamond];
+    "User approves artifact?" [shape=diamond];
     "Invoke mu-arch" [shape=doublecircle];
 
-    "Quick Probe\n(inline, automatic)" -> "New/empty project?";
-    "New/empty project?" -> "Skip probe" [label="yes"];
-    "New/empty project?" -> "Present probe results\n+ depth recommendation" [label="no"];
-    "Skip probe" -> "Enumerate happy paths";
-    "Present probe results\n+ depth recommendation" -> "User confirms depth";
-    "User confirms depth" -> "Probe-qualified micro\n+ fully specified?" ;
-    "Probe-qualified micro\n+ fully specified?" [shape=diamond];
-    "Micro exit: 1-UC inline,\nTDD in-session, run tests" [shape=doublecircle];
-    "Probe-qualified micro\n+ fully specified?" -> "Micro exit: 1-UC inline,\nTDD in-session, run tests" [label="offered + user picks micro"];
-    "Evidence already\nenumerates the cases?" [shape=diamond];
-    "Evidence fast path:\nprobe + conflict cross-check\n+ reverse UCs, 1 confirmation" [shape=box];
-    "Probe-qualified micro\n+ fully specified?" -> "Evidence already\nenumerates the cases?" [label="no / full"];
-    "Evidence already\nenumerates the cases?" -> "Evidence fast path:\nprobe + conflict cross-check\n+ reverse UCs, 1 confirmation" [label="yes"];
-    "Evidence already\nenumerates the cases?" -> "Enumerate happy paths" [label="no"];
-    "Evidence fast path:\nprobe + conflict cross-check\n+ reverse UCs, 1 confirmation" -> "Write scope artifact";
-    "Enumerate happy paths" -> "User confirms/supplements";
-    "User confirms/supplements" -> "Enumerate edge cases" [label="ok"];
-    "User confirms/supplements" -> "Enumerate happy paths" [label="revise"];
-    "Enumerate edge cases" -> "Enumerate error cases";
-    "Enumerate error cases" -> "Cross-check all use cases\nfor conflicts";
-    "Cross-check all use cases\nfor conflicts" -> "Conflicts found?";
-    "Conflicts found?" -> "User resolves conflicts" [label="yes"];
-    "Conflicts found?" -> "Write scope artifact" [label="no"];
-    "User resolves conflicts" -> "Write scope artifact";
-    "Write scope artifact" -> "User approves scope?";
-    "User approves scope?" -> "Write scope artifact" [label="changes requested"];
-    "User approves scope?" -> "Invoke mu-arch" [label="approved"];
+    "Quick Probe\n(inline, automatic)" -> "Feasibility unknown?";
+    "Feasibility unknown?" -> "Run spike" [label="yes"];
+    "Run spike" -> "Quick Probe\n(inline, automatic)" [label="verdict"];
+    "Feasibility unknown?" -> "Fix request?" [label="no"];
+    "Fix request?" -> "State 1-UC repro\n→ mu-debug" [label="yes"];
+    "Fix request?" -> "Bounded?" [label="no"];
+    "Bounded?" -> "Inline 1–3 UCs\n→ mu-code bounded" [label="yes"];
+    "Bounded?" -> "Exhaustive UCs + conflicts" [label="no"];
+    "Exhaustive UCs + conflicts" -> "Write scope artifact";
+    "Write scope artifact" -> "User approves artifact?";
+    "User approves artifact?" -> "Write scope artifact" [label="revise"];
+    "User approves artifact?" -> "Invoke mu-arch" [label="yes"];
 }
 ```
 
-**Done:** the UC set is approved — as a committed scope file, an inline 1-UC reproduction (fix route: `Given <broken state> When <action> Then <observed failure, vs expected>`), or a completed micro exit. The Pipeline Graph (bootstrap) names each next move. One intra-skill precedence rule stays here: on the fix route, the red test IS the reproduction — a stated edit that does not turn it green cancels the micro exit, and the repro hands to mu-debug.
+**Done:** every probed risk is accounted for and one terminal is reached: an
+inline bounded contract, an approved architectural scope, a 1-UC reproduction,
+or a spike verdict. On the fix route, the red test is the reproduction.
 
 ## Phase 1: Quick Probe
 
 Before asking the user anything, scan the codebase to understand what this change touches.
-
-**Premise check:** Before scanning the codebase, check if any of these artifacts exist (any one satisfies the gate):
-- `docs/premise/*.md` (legacy premise artifact)
-- `docs/mrd/*.md` (MRD from mu-mrd quick or full mode; legacy `docs/biz/*.md`)
-- `docs/prd/*.md` (PRD artifact from mu-prd)
-
-If any found, skip the premise check. If none found, run a lightweight premise check (3 questions from @../../knowledge/principles/premise-check.md — skip Q4). If the user provides strong evidence immediately, pass quickly. If the user says "just do it" after 3 rounds without substantive answers, flag "Premise not validated — proceeding at user's request" and continue.
 
 **Skip if:** The project is new (empty codebase) or user explicitly says "new project."
 
@@ -127,15 +104,13 @@ Regression gap:       [scenario B, scenario C]
   → scenario C: [intentionally allowed / must still block]
 ```
 
-**Architecture understanding, by probe risk** — an impact analysis run against an un-mapped codebase is a guess wearing a number:
-
-| Probe risk | Before impact analysis |
-|---|---|
-| micro / low | Nothing — the blast radius fits in one head |
-| medium | Read `docs/wiki/` if it exists; do not generate one for this |
-| **high · crosses ≥2 top-level modules · area unfamiliar per `git log --author --since="30 days ago"`** | **Generate or refresh the map first** (`/mu-wiki generate` \| `update`), then run the impact analysis against it |
-
-Non-blocking at every tier. When the user declines the top tier, the scope records "impact analysis run without an architecture map" — the analysis still happens, it just carries its own caveat.
+**Architecture understanding:** Existing wiki pages are a map, not evidence.
+Read relevant `docs/wiki/` pages when present, then verify every claim that
+affects the path decision against current source, tests, configuration, and git
+history. An unfamiliar or cross-module area increases probe depth; it does not
+create a separate workflow or automatically generate documentation. The probe
+is complete when every named dependent and crossed boundary has either been
+inspected or listed in the coverage boundary.
 
 **Output to user:**
 
@@ -148,30 +123,56 @@ Quick Probe Results:
 - Architecture impact: [components affected, boundaries crossed, new components needed]
 - Risk: [low/medium/high]
 
-Recommendation: [quick scope (2-3 use cases) / full enumeration]
-- Architecture map: [per the risk tiering above — none / read existing / generate first]
+Path: [fix / bounded / architectural / spike] — [evidence for the classification]
+- Architecture map: [none / existing pages consulted and source-verified]
+- Coverage boundary: [inspected dependents / deferred or inaccessible areas]
 ```
 
-## Phase 2: Depth Decision
+## Phase 2: Path Decision
 
-Present the probe results and recommend a depth level. The user confirms or overrides.
+Classify from probe evidence; do not add a confirmation turn just to approve
+the amount of ceremony.
 
-- **Low risk, small fan-out:** "This touches 1 file with no dependents. I'll list a couple of use cases to confirm, then proceed?"
-- **Medium/high risk:** "This touches shared-form, used by 12 pages. Recommend enumerating all affected scenarios. Agree?"
+- **Fix route:** the request describes broken behavior. State one reproduction
+  UC (`Given <broken state> When <action> Then <observed failure, vs expected>`)
+  and hand it to mu-debug. If the expected behavior is unclear, ask only that
+  question.
+- **Bounded path:** changes an existing flow inside one subsystem; blast radius
+  is limited; behavior is sufficiently specified; no material design decision,
+  public contract, security boundary, migration, or new component remains.
+- **Architectural path:** crosses subsystems or boundaries; changes a public
+  contract, guard policy, schema/migration, auth/security behavior, or
+  dependency topology; introduces a component; or leaves a material product or
+  technical decision unresolved.
+
+For an Architectural path that adds a new user-facing capability, check for
+`docs/premise/*.md`, `docs/mrd/*.md` (or legacy `docs/biz/*.md`), or
+`docs/prd/*.md`. If none exists, run the three lightweight questions from
+@../../knowledge/principles/premise-check.md. Maintenance, fixes, and Bounded
+changes never pay this premise-check cost.
 
 **Spike exit (feasibility, not size):** when the probe cannot establish whether a use case is *possible* — an unproven integration, an unmeasured performance budget, two approaches that only diverge under load — what is missing is knowledge, and enumerating cases on top of it produces fiction. Offer: "UC-`<n>`'s feasibility is unknown — `<what specifically>`. Spike it first? (**spike** / **proceed with it flagged**)". On `spike`: park the scope, run @../../knowledge/principles/spike-discipline.md, return here with the verdict as evidence. On `proceed`: the UC carries an explicit feasibility flag into the design, and mu-arch treats it as a fork to resolve rather than a given.
 
-**The two exits answer different questions** — micro is *small enough to skip the artifact*, spike is *unknown enough that the artifact would be fiction*. Neither is a route around the scope gate: micro still states its UC and takes a nod, spike still comes back here with its verdict.
+**Bounded path output:** state 1–3 inline UCs plus the affected files and test
+command. **The original request is approval** when this contract is a faithful
+restatement and introduces no new choice. Hand it directly to mu-code as
+`bounded execution`; do not ask the user to approve the same decision twice.
+If the contract adds scope or exposes a real fork, ask one targeted question.
 
-**Micro exit (condition-gated by the probe, never by feel):** offer it only when the probe shows ALL of — single file, zero or one dependent, no public interface or contract change, no guard/condition/filter semantics change, low risk — AND the user's request itself fully specifies the change (nothing left to design; the message contains the exact edit). Offer: "Micro change — probe shows <evidence>. Skip the artifact and design phases: 1-UC inline scope, implement test-first here, run the affected tests. (micro / full)"
-
-On confirmation: state the single UC in conversation, get a nod, implement test-first in this session, run the affected tests, present the diff. No scope file, no mu-arch, no mu-plan — mu-arch's design gate binds mu-arch executions and is not engaged here; the change lands on the current branch, with the micro confirmation as the consent. The probe and the UC approval still happen — micro sheds files and phases, not thinking.
-
-**Cancels the exit** (revert the partial edit, return here, run the full flow): hidden dependents surfacing, unrelated tests failing, the edit growing past the stated scope, or any design question appearing mid-change. **Never qualifies:** guard/condition/filter edits (one-line condition changes are exactly where Guard Semantic Analysis earns its keep), auth/security-adjacent code, schema or data migrations, dependency/lockfile changes.
+**Upgrade rule:** hidden dependents, a new design question, any Architectural
+signal, or growth beyond one subsystem upgrades the work before that risky
+surface changes. Preserve completed tests and observations as evidence; do not
+pretend the original Bounded classification still holds.
 
 ## Phase 3: Use Case Elicitation
 
-**Evidence fast path:** when the requirements evidence already enumerates the cases — a detailed PRD feature section plus the object's `CONTEXT.md` §6 machine, an approved spec from elsewhere — do not re-interview. Scope's non-duplicated work is the probe (already run), the conflict cross-check over the evidence's rules, and reverse UCs; deliver them as one report with UCs cited from the evidence, one confirmation, and a thin artifact referencing the source. Elicitation below is for requirements that exist only in the user's head.
+This phase is for the Architectural path. Bounded work already has its inline
+contract.
+
+**Evidence fast path:** when requirements evidence already enumerates the cases
+— a detailed PRD feature section plus the object's `CONTEXT.md` §6 machine, or
+an approved spec from elsewhere — do not re-interview. Run the conflict
+cross-check and reverse UCs, then write a thin scope artifact citing the source.
 
 Work through scenarios with the user, one category at a time.
 
@@ -187,7 +188,9 @@ Work through scenarios with the user, one category at a time.
 ```
 This catches regressions that positive use cases miss — especially when replacing conditions/guards.
 
-**Present each category, get user confirmation before moving to the next.** Quick scope (per the depth decision): collapse to one message — all categories together, one confirmation round.
+Present each category and resolve every material fork before writing the
+artifact. Combine categories when they contain no decision for the user; the
+completion criterion is coverage, not number of turns.
 
 **Use case format:**
 ```
@@ -224,7 +227,13 @@ After all use cases are enumerated, cross-check every pair for contradictions.
 
 ## Phase 5: Output
 
-Write the Use Case Set to `docs/scope/YYYY-MM-DD-<name>.md` using the template at @../../knowledge/templates/scope.md, drafted per @../../knowledge/principles/prose-discipline.md.
+**Bounded path:** emit the inline acceptance contract and hand it to mu-code.
+No scope, architecture, or plan file is created.
+
+**Architectural path:** first check for a prior scope for the same work per
+@../../knowledge/principles/artifact-succession.md. Write the Use Case Set to
+`docs/scope/YYYY-MM-DD-<name>.md` using @../../knowledge/templates/scope.md and
+@../../knowledge/principles/prose-discipline.md.
 
 Commit the file, then ask the user to review:
 
@@ -235,17 +244,18 @@ Wait for confirmation.
 ## Key Principles
 
 - **Every condition is a wall — look at both sides before removing it** — When replacing a guard/filter, enumerate what it blocks, not just what it enables
-- **Exhaustive over efficient** — Better to enumerate one extra use case than miss a real scenario
+- **Proportional ceremony** — Direct does not enter; Bounded stays inline; Architectural earns exhaustive artifacts
+- **Exhaustive where expensive** — Architectural gaps cost more than an extra use case
 - **Conflicts are valuable** — Finding a conflict now saves a rewrite later
 - **YAGNI applies to scope too** — Don't add use cases for scenarios the user explicitly puts out of scope
-- **Depth is probed, not preset** — Quick Probe data determines how thorough to be, not the user's word count
+- **Path is probed, not guessed** — Quick Probe facts determine ceremony; line count and user urgency do not
 - **One question at a time** — Don't overwhelm, especially during conflict resolution
 - **User is the authority** — AI enumerates and detects, user decides and resolves
 
 ## Integration
 
-- **Invoked by:** bootstrap rule (highest-priority process skill)
-- **Produces:** Use Case Set artifact at `docs/scope/YYYY-MM-DD-<name>.md`
-- **Consumed by:** mu-arch (reads scope, designs to cover all UCs)
+- **Invoked by:** bootstrap for non-Direct behavior changes and bug reproduction
+- **Produces:** inline bounded contract, 1-UC repro, or architectural Use Case Set artifact
+- **Consumed by:** mu-code (bounded), mu-debug (fix), or mu-arch (architectural)
 - **Terminal state:** per the Pipeline Graph (bootstrap)
 - **Template:** @../../knowledge/templates/scope.md

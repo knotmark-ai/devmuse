@@ -6,22 +6,30 @@ disable-model-invocation: true
 
 # Wiki
 
-Generate and maintain a **project-level architecture wiki** — structured markdown pages with Mermaid diagrams, tables, and mandatory source citations. Output lives in `docs/wiki/`. Distinct from mu-explore (orientation artifact for personal mental model) and mu-arch (design decisions for a specific change).
+Generate and maintain a **project-level architecture wiki** — structured,
+source-cited Markdown pages describing the current system. Output lives in
+`docs/wiki/`.
 
-**`docs/wiki/` is the single home of architecture state** — what the system *is* right now. A design spec describes what one change *does*; it cites wiki pages rather than redrawing the global picture, because a redrawn global diagram is a second copy that starts drifting the day it is written. What makes the wiki safe to treat as authoritative is that it is **rebuildable from source**: when it disagrees with the code, the wiki is wrong, and one regeneration settles it.
+**`docs/wiki/` is the single durable home of current architecture state** —
+what the system *is* right now. A design spec describes what one change *will
+do* and cites the wiki for surrounding context. The wiki is rebuildable from
+source: when it disagrees with current code, the code wins and the wiki is
+updated.
 
-## Anti-Pattern: "I'll just describe the architecture in chat"
+## Anti-Pattern: Leaving a requested durable deliverable in chat
 
-Chat descriptions are lost next session. mu-wiki exists to produce persistent, navigable, source-cited documentation that any team member (or future you) can read. Violations:
+When the user explicitly asks for lasting architecture documentation, a chat
+answer is not the deliverable. mu-wiki produces persistent, navigable,
+source-cited pages. Violations:
 
-- Writing architecture explanations in chat instead of `docs/wiki/` files
+- Ending an explicit wiki/documentation request with chat only
 - Generating pages without source citations — unverifiable claims rot faster than no documentation
 - Skipping the structure review — poor page decomposition wastes all Phase 2 work
 - Running generate when update suffices — unnecessary full rebuilds waste time and lose history
 
 ## What mu-wiki is NOT
 
-- **Not a mental model** — that's `mu-explore` (personal orientation artifact). Wiki is team-facing documentation.
+- **Not an ephemeral explanation** — read-only code questions are answered in chat. Wiki is the team-facing deliverable when the user explicitly wants durable architecture documentation.
 - **Not design decisions** — that's `mu-arch` (ADRs for a specific change). Wiki documents what IS, not what SHOULD BE.
 - **Not a README** — README is entry point. Wiki covers internal architecture depth.
 - **Not auto-generated API docs** — wiki explains WHY and HOW, not just WHAT.
@@ -48,7 +56,7 @@ digraph mu_wiki {
     "Size gate\n(LOC check)" [shape=diamond];
     "Limit to top-level\nmodules only" [shape=box];
     "Collect signals\n(file tree, README)" [shape=box];
-    "Dispatch Structure\nsubagent (Explore)" [shape=box];
+    "Dispatch read-only\nstructure analyst" [shape=box];
     "Present structure\nto user" [shape=box];
     "User approves?" [shape=diamond];
     "Dispatch Page\nsubagents (parallel)" [shape=box];
@@ -63,7 +71,7 @@ digraph mu_wiki {
     "Staleness check" [shape=diamond];
     "Warn: suggest\nfull regenerate" [shape=box];
     "Files still exist?" [shape=diamond];
-    "Degrade to\nfull regenerate" [shape=box];
+    "Reconcile structure\ndelta" [shape=box];
     "Present affected\npages to user" [shape=box];
     "User confirms?" [shape=diamond];
     "Dispatch Page subagents\n(affected only)" [shape=box];
@@ -80,10 +88,10 @@ digraph mu_wiki {
     "Size gate\n(LOC check)" -> "Collect signals\n(file tree, README)" [label="<50k LOC"];
     "Size gate\n(LOC check)" -> "Limit to top-level\nmodules only" [label="50k-200k LOC"];
     "Limit to top-level\nmodules only" -> "Collect signals\n(file tree, README)";
-    "Collect signals\n(file tree, README)" -> "Dispatch Structure\nsubagent (Explore)";
-    "Dispatch Structure\nsubagent (Explore)" -> "Present structure\nto user";
+    "Collect signals\n(file tree, README)" -> "Dispatch read-only\nstructure analyst";
+    "Dispatch read-only\nstructure analyst" -> "Present structure\nto user";
     "Present structure\nto user" -> "User approves?";
-    "User approves?" -> "Dispatch Structure\nsubagent (Explore)" [label="adjust"];
+    "User approves?" -> "Dispatch read-only\nstructure analyst" [label="adjust"];
     "User approves?" -> "Dispatch Page\nsubagents (parallel)" [label="approved"];
     "Dispatch Page\nsubagents (parallel)" -> "Check results\n(mark failures)";
     "Check results\n(mark failures)" -> "Assemble _index.md";
@@ -98,8 +106,8 @@ digraph mu_wiki {
     "Warn: suggest\nfull regenerate" -> "Size gate\n(LOC check)" [label="regenerate"];
     "Staleness check" -> "Files still exist?" [label="check files"];
     "Files still exist?" -> "Present affected\npages to user" [label="yes"];
-    "Files still exist?" -> "Degrade to\nfull regenerate" [label="no"];
-    "Degrade to\nfull regenerate" -> "Size gate\n(LOC check)";
+    "Files still exist?" -> "Reconcile structure\ndelta" [label="no / renamed"];
+    "Reconcile structure\ndelta" -> "Present affected\npages to user";
     "Present affected\npages to user" -> "User confirms?";
     "User confirms?" -> "Dispatch Page subagents\n(affected only)" [label="confirmed"];
     "User confirms?" -> "User review → commit" [label="cancel"];
@@ -112,7 +120,11 @@ digraph mu_wiki {
 
 Covers: UC-1, UC-E2, UC-E3, UC-ERR1
 
-1. **Check for existing wiki** — look for `docs/wiki/_index.md`. If it exists, prompt user: "Wiki 已存在。覆盖重建还是增量 update？" (UC-E3). If user chooses update, switch to Update Mode. If overwrite, continue.
+1. **Check for existing wiki** — look for `docs/wiki/_index.md`. If it exists,
+   prompt user: "Wiki 已存在。覆盖重建还是增量 update？" (UC-E3). If the
+   user chooses update, switch modes. For overwrite, read the current index and
+   pages first: **preserve existing curated blocks** and index History. Curated
+   content is human-owned and survives both update and full regeneration.
 
 2. **Size gate** — estimate project size:
    ```bash
@@ -131,16 +143,24 @@ Covers: UC-1, UC-E2, UC-E3, UC-ERR1
    - README.md content (read via Read tool)
    - CLAUDE.md content if it exists (read via Read tool)
 
-4. **Dispatch Structure subagent** — use Agent tool with type `Explore`. Pass the full prompt below (see Structure Subagent Prompt). Capture the returned JSON structure.
+4. **Dispatch Structure subagent** — use the platform's built-in read-only
+   codebase analysis agent. Pass the full prompt below and capture the returned
+   JSON structure. This is a subagent type, not another persistent workflow.
 
 5. **Present structure to user** — display the proposed sections, pages, and relevant_files mapping. Ask user to review:
    - "以下是建议的 wiki 结构，请确认或调整："
    - Show each section with its pages, each page with title + description + relevant_files
    - User may add/remove/reorder pages, adjust relevant_files
+   - On rebuild, identify old pages with non-empty curated blocks that no longer
+     map to a proposed page. The user maps each block to a new page or explicitly
+     approves its removal before generation.
 
 6. **User approval loop** — if user requests changes, adjust the structure JSON and re-present. Repeat until approved.
 
-7. **Dispatch Page subagents** — for each page in the approved structure, dispatch a general-purpose subagent using Agent tool. All page subagents run in parallel. Pass the Page Subagent Prompt (see below) with the specific page spec.
+7. **Dispatch Page subagents** — for each page in the approved structure,
+   dispatch a general-purpose subagent using the Page Subagent Prompt. Pass the
+   prior curated block for a matching/mapped page, or the empty scaffold for a
+   genuinely new page. All page subagents run in parallel.
 
 8. **Check subagent results** — inspect each subagent's result:
    - Success: page file written to `docs/wiki/<page-id>.md`
@@ -152,13 +172,15 @@ Covers: UC-1, UC-E2, UC-E3, UC-ERR1
    - Baseline commit: `git rev-parse HEAD`
    - Pages table: one row per page with title, link, status (✅ or ❌ failed), relevant files
    - Sections: from structure JSON sections
-   - History: initial entry with today's date, commit SHA, action "generate", pages "all (initial)"
+   - History: preserve prior rows on rebuild, then append today's `generate`
+     entry; use `all (initial)` only when no prior wiki existed
 
 10. **User review** — present the generated wiki for review. Show summary: N pages generated, M failed (if any). User approves → commit all files in `docs/wiki/`.
 
 ### Structure Subagent Prompt
 
-Dispatch with Agent tool, type: `Explore`. The prompt to pass:
+Dispatch with the platform's read-only codebase analysis subagent. The prompt
+to pass:
 
 ```
 You are analyzing a software project to design an architecture wiki structure.
@@ -216,8 +238,11 @@ Return a JSON object conforming to this schema — output ONLY the JSON, no othe
 
 ## Constraints
 
-- Produce {page_count_target: 8-12 pages | 4-6 pages if --concise} covering the project comprehensively
-- Every page MUST have at least 3 entries in relevant_files
+- Scale page count to real architecture boundaries: 1-3 pages for a small
+  cohesive project, 4-8 for a multi-module project, and top-level module pages
+  for a very large project. A page exists only when it owns a distinct concern.
+- Every page MUST list one or more relevant files, and the set must be sufficient
+  to support the page's substantive claims
 - relevant_files paths MUST be actual paths from the file tree — never fabricate paths
 - Section grouping should reflect logical architecture boundaries (e.g., "Core", "Infrastructure", "Integration")
 - Page IDs must be unique kebab-case strings (they become filenames like `data-flow.md`)
@@ -251,7 +276,15 @@ Write the wiki page to: docs/wiki/{page_id}.md — drafted per @../../knowledge/
 
 The page MUST follow this structure:
 
-1. **Source file listing** — start with a <details> block listing ALL source files you referenced:
+1. **H1 title** — the page title
+
+2. **Generated block** — everything derived from source, fenced by markers so
+`update` can replace it:
+
+<!-- mu-wiki:generated -->
+
+   2a. **Source file listing** — start the generated block with a `<details>`
+   block listing ALL source files you referenced. Source file listing lives inside the generated block so its mapping cannot drift after update:
 
 <details>
 <summary>Referenced source files ({N} files)</summary>
@@ -262,25 +295,22 @@ The page MUST follow this structure:
 
 </details>
 
-2. **H1 title** — the page title
+   2b. **Introduction** — 1-2 paragraphs summarizing what this page covers and why it matters
 
-3. **Generated block** — everything derived from source, fenced by markers so `update` can rewrite it without touching anything a human added:
-
-<!-- mu-wiki:generated -->
-
-   3a. **Introduction** — 1-2 paragraphs summarizing what this page covers and why it matters
-
-   3b. **H2/H3 sections** — organized coverage of the topic. Each section should:
+   2c. **H2/H3 sections** — organized coverage of the topic. Each section should:
    - Explain the WHAT and WHY, not just list code
-   - Include source citations inline: `Sources: [filename:start_line-end_line]()`
-   - Use Mermaid diagrams where relationships or flows exist (graph TD ONLY — never graph LR)
+   - Include source citations inline: `Source: [path/to/file](../../path/to/file), lines 10–20`
+   - Use Mermaid only when a relationship, hierarchy, or flow is materially clearer as a diagram (`graph TD` for graphs)
    - Use Markdown tables for structured comparisons or configuration details
 
-   3c. **Cross-references** — link to related wiki pages where relevant: `See also: [Related Page Title](related-page-id.md)`
+   2d. **Cross-references** — link to related wiki pages where relevant: `See also: [Related Page Title](related-page-id.md)`
 
 <!-- /mu-wiki:generated -->
 
-4. **Curated block** — emitted as an empty scaffold on generate, and **never rewritten by update**. This is where anything that cannot be derived from source lives: coverage gaps, doc-vs-code contradictions, decisions the code does not explain.
+3. **Curated block** — pass `{existing_curated_block}` through verbatim when
+provided; otherwise emit this empty scaffold. Generated content never rewrites
+it. This is where source gaps, doc-vs-code contradictions, and decisions the
+code cannot explain live.
 
 <!-- mu-wiki:curated -->
 ## 未验证 / Unverified
@@ -294,9 +324,12 @@ The page MUST follow this structure:
 
 ## Mandatory Constraints
 
-- **Source citations:** Every substantive claim MUST cite its source. Minimum 5 DISTINCT source files cited across the page. Format: `Sources: [filename:start_line-end_line]()`
+- **Source citations:** Every substantive claim MUST cite its source. Cite the
+  files needed by the claim; there is no arbitrary source-count quota. Format:
+  `Source: [path/to/file](../../path/to/file), lines 10–20`.
 - **No fabrication:** ALL information must come from the source files you read. Do not use external knowledge or make assumptions about code you haven't read.
-- **Mermaid diagrams:** Use `graph TD` only (never `graph LR`). For sequence diagrams, use `sequenceDiagram` with proper syntax. At least one diagram per page.
+- **Mermaid diagrams:** Add a diagram only when it materially improves the
+  explanation. Use `graph TD` for graphs and `sequenceDiagram` for sequences.
 - **Tables:** Use markdown tables for any structured data (configs, comparisons, parameter lists).
 - **Language:** Write content in the user's preferred language. Technical terms (file names, code identifiers) remain in English.
 - **Completeness:** Read ALL listed source files. If a file cannot be read, note it explicitly.
@@ -310,15 +343,25 @@ Covers: UC-2, UC-E1, UC-ERR2
 
 2. **Diff detection** — run:
    ```bash
-   git diff --name-only <baseline_commit>..HEAD
+   git diff --name-status <baseline_commit>..HEAD
    ```
-   Capture the list of changed files. If no changes, inform user: "No files changed since last wiki generation." and stop.
+   Capture added, modified, deleted, and renamed files. If no changes, inform
+   the user: "No files changed since last wiki generation." and stop.
 
-3. **Match changed files to pages** — for each page row in _index.md's Pages table, check if any of its Relevant Files appear in the changed files list. Build a list of affected pages.
+3. **Match changed files to pages** — for each page row in `_index.md`, match
+   changed paths to Relevant Files and build affected pages. Also build
+   **unmapped changed files** from source, test, build, deployment, and
+   configuration paths that match no page. When that set is non-empty, rerun
+   structure analysis for those files and their nearest module: update an
+   existing page's Relevant Files or propose a new page. Present that structure
+   delta with the affected-page list; a new file must not disappear merely
+   because it was absent from the previous index.
 
-4. **File existence check** (UC-ERR2) — verify that relevant_files for affected pages still exist. If files have been renamed or deleted and cannot be matched:
-   - Inform user: "部分源文件已不存在，建议 `/mu-wiki generate` 完整重建。"
-   - Degrade to full regenerate.
+4. **File existence check** (UC-ERR2) — verify Relevant Files for affected
+   pages. Apply detected renames to the mapping. A deleted source triggers a
+   structure delta: remove it, add its replacement when one exists, and retire
+   a page that no longer owns a live concern. Fall back to full generate only
+   when the index is unparseable or the current structure cannot be reconciled.
 
 5. **Staleness check** (UC-E1) — if affected pages > 60% of total pages OR changed files > 50:
    - Warn user: "变更范围较大（{N}个页面受影响，{M}个文件变更），建议执行 `/mu-wiki generate` 完整重建而非增量更新。继续增量更新？"
@@ -335,6 +378,7 @@ Covers: UC-2, UC-E1, UC-ERR2
 8. **Update _index.md** — modify `docs/wiki/_index.md`:
    - Update baseline commit to current `git rev-parse HEAD`
    - Update the Generated date
+   - Apply approved page, section, and Relevant Files changes from the structure delta
    - Update status for regenerated pages
    - Append history entry: date, commit SHA, action "update", pages affected (list page IDs)
 
@@ -371,7 +415,8 @@ For reference, the complete schema returned by the Structure subagent:
 ## Key Principles
 
 - **Two-phase is the architecture** — Structure first (Phase 1), then Pages (Phase 2). Never skip structure review. Poor decomposition wastes all downstream work.
-- **Source citations are non-negotiable** — every page must cite at least 5 distinct source files. Uncited claims are unverifiable and rot quickly.
+- **Source citations are non-negotiable** — every substantive claim cites the
+  source that supports it. Uncited claims are unverifiable and rot quickly.
 - **Update over regenerate** — when wiki exists and changes are incremental, prefer update mode. Full regenerate loses history and wastes time.
 - **User reviews structure before page generation** — the most impactful review point. Adjusting pages after generation is expensive.
 - **Parallel page generation** — pages are independent. Dispatch all page subagents in parallel for speed.
@@ -384,9 +429,9 @@ For reference, the complete schema returned by the Structure subagent:
 |--------|---------|
 | "I'll skip the structure review, the AI got it right" | Structure review is the highest-leverage checkpoint. Skipping it means fixing pages after they're generated. |
 | "Source citations slow things down" | Citations ARE the value. A wiki without citations is a hallucination document. |
-| "The project is small, I'll just generate one big page" | Even small projects benefit from decomposed pages. The structure subagent handles sizing. |
+| "The project is small, so it still needs the default page count" | Page count follows distinct concerns. A cohesive project may need only one page. |
 | "Update is close enough, skip the diff check" | Blind regeneration loses _index.md history and wastes time on unchanged pages. |
-| "I'll add the Mermaid diagrams later" | Diagrams generated alongside content are coherent. Retrofit diagrams are decoration. |
+| "Every page needs a diagram" | A diagram earns its place only when it clarifies a relationship, hierarchy, or flow better than prose or a small table. |
 
 ## Error Handling
 
@@ -396,14 +441,16 @@ For reference, the complete schema returned by the Structure subagent:
 | Page subagent fails | Check result for error | Mark `status: failed` in _index.md, other pages unaffected (UC-ERR1) |
 | _index.md missing for update | File not found | Inform user, suggest `/mu-wiki generate` |
 | _index.md unparseable | Regex parse fails on baseline commit | Inform user, suggest `/mu-wiki generate` to rebuild |
-| Relevant files deleted/renamed | File existence check in update flow | Degrade to full regenerate (UC-ERR2) |
+| Relevant files deleted/renamed | Name-status diff + existence check | Reconcile a structure delta; full generate only if the index cannot be reconciled (UC-ERR2) |
 | Project > 200k LOC | Size gate check | Limit to top-level modules, inform user (UC-E2) |
 | Diff too large | >60% pages or >50 files in update | Warn, suggest full regenerate (UC-E1) |
 | Wiki exists on generate | _index.md found | Prompt: overwrite or update? (UC-E3) |
 
 ## Integration
 
-- **Invoked by:** user directly (`/mu-wiki generate` or `/mu-wiki update`); suggestion from mu-scope (risk >= medium, no wiki exists); suggestion from mu-arch (architecture change, wiki exists). On-demand only — never auto-routed (bootstrap points to the slash command instead).
+- **Invoked by:** user directly (`/mu-wiki generate` or `/mu-wiki update`).
+  On-demand only — bootstrap points to the slash command when the requested
+  deliverable is durable current-state architecture documentation.
 - **Produces:** `docs/wiki/` directory containing `_index.md` + `<page-id>.md` files.
 - **Terminal state:** commit. mu-wiki is terminal — it does not invoke any downstream skill.
 - **Template:** `@../../knowledge/templates/wiki-index.md`

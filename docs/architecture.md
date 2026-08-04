@@ -78,22 +78,24 @@ Skills and agents reference knowledge via `@` relative paths within the plugin:
 
 ### skills/
 
-The **canonical skill inventory** (categories and roles) lives in the [README's Skills table](../README.md#skills) — this file does not repeat it. Recorded here is only what's architectural: which skills dispatch agents.
+The **canonical skill inventory** (categories and roles) lives in the [README's Skills table](../README.md#skills) — this file does not repeat it. Recorded here is only what's architectural: which skills dispatch DevMuse agent files.
 
 | Skill | Dispatches |
 |-------|-----------|
 | mu-arch | mu-reviewer (review-design) |
 | mu-plan | mu-reviewer (review-plan) |
-| mu-code | mu-coder; mu-reviewer (review-code + review-compliance) |
+| mu-code | mu-coder |
 | mu-review | mu-reviewer (review-code + review-coverage + review-security) |
 
-All other skills dispatch no agents.
+Other skills dispatch no DevMuse agent files. `mu-wiki` may use platform
+read-only/general subagents to partition wiki generation; those are execution
+mechanisms, not additional DevMuse roles.
 
 ### agents/
 
 | Name | Role | Dispatched by |
 |------|------|---------|
-| mu-reviewer | Six-mode reviewer: design doc (review-design), implementation plans (review-plan), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage), security (review-security) | mu-arch, mu-plan, mu-code, mu-review |
+| mu-reviewer | Five-mode reviewer: design doc (review-design), implementation plans (review-plan), code quality (review-code), requirements coverage (review-coverage), security (review-security) | mu-arch, mu-plan, mu-review |
 | mu-coder | Implementation specialist | mu-code |
 
 **Design decision:** 2 generic agents + knowledge injection, not N language-specific agents. Review logic is 80% universal; change once, effective globally. Adding a new language only requires a knowledge file.
@@ -103,10 +105,9 @@ All other skills dispatch no agents.
 | Category | Purpose | Referenced by |
 |---|---|---|
 | languages/ | Language-specific review criteria | mu-reviewer (review-code) |
-| templates/ | Artifact templates | mu-scope, mu-explore, mu-arch, mu-wiki |
+| templates/ | Artifact templates | mu-scope, mu-arch, mu-wiki |
 | principles/ | Thinking rubrics for decision points | mu-arch, mu-scope, mu-mrd, mu-prd (stance-detection.md consumed at Phase 0 of each creative skill) |
 | reviews/ | Review checklists for specific concerns | mu-reviewer (review-security, review-design) |
-| schemas/ | Structured output schemas for external tool invocation | mu-review (codex cross-review) |
 
 Each file opens with a **"When to use"** header naming its consuming skills — the directory itself is the current inventory (file-level lists are not repeated here; they drift).
 

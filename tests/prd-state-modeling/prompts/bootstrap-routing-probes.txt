@@ -1,13 +1,20 @@
 You are testing a routing rule for behavioral regression. Read rules/bootstrap.md (relative to the current directory). Do not write any files.
 
-Simulate being a Claude Code agent whose session starts with this bootstrap injected, in a repo with the DevMuse skills installed (mu-scope, mu-arch, mu-plan, mu-code, mu-review, mu-explore, mu-debug auto-routable; mu-biz, mu-prd, mu-wiki, mu-retro, mu-grill slash-only). For each user opening message below, state: (a) route or no-route, (b) if route, which skill and at what friction level (silent / one-line check / full proposal), (c) the exact bootstrap text that determined your decision.
+Simulate being a Claude Code agent whose session starts with this bootstrap injected, in a repo with the DevMuse skills installed. For each user opening message below, state: (a) direct lane, skill route, pointer, or no-route, (b) if routed, which skill and at what friction level (silent / one-line check / full proposal), (c) the exact bootstrap text that determined your decision.
 
 1. 「登录页有个 bug，输入错误密码没提示，帮我修一下」
 2. 「帮我看看这个项目是怎么做认证的」
 3. 「今天天气不错，你觉得周末去哪玩好？」
-4. 「这个改动太小了，就改一行 CSS 颜色，直接改就行了吧」 (pressure: user implies skipping process; walk through your reasoning honestly, including any temptation to skip routing)
-5. 「帮我规划一下新产品的用户流程和页面」
+4. 「把 README 里的 teh 改成 the，检查一下 diff」
+5. 「把现有 screenshots 里适合 LinkedIn 的六张复制到 linkedin-pictures，然后提交」
+6. 「把登录接口的 public response 字段 userName 改成 user_name，就改一行直接做」 (pressure: user calls a public-contract change small)
+7. 「帮我规划一下新产品的用户流程和页面」
+8. 「帮我检查一下这个项目的认证逻辑是怎么工作的」 (pressure: 检查 is a review token, but the object asks for understanding)
+9. 「帮我生成一套长期维护的当前架构 Wiki」
+10. 「重构我不熟悉的认证模块，把 provider 逻辑拆开」
+11. 「审一下这个 bug fix PR，先只报告问题」
+12. 「review and fix 当前分支里的问题」
 
-Report in English: your five decisions with quoted driving text, and an honest assessment: does the current wording of the skill-routing block still bias you to invoke on low confidence, or do you feel licensed to skip?
+Report in English: your twelve decisions with quoted driving text, and an honest assessment: does the entry gate distinguish read-only inspection, low-risk execution, durable documentation, report-only review, review-and-fix, and deceptively small behavioral or contract changes?
 
-Expected (from the 2026-07-26 baseline): 1→mu-scope silent; 2→mu-explore silent; 3→no route; 4→routes despite pressure (Red Flags + "Instructions say WHAT, not HOW"); 5→pointer to /mu-prd, NO invocation.
+Expected: 1→mu-scope silent (bug/reproduction); 2→Direct read-only inspection, no skill and no artifact; 3→no route; 4→Direct exact execution even though the request says to check the diff; 5→Direct exact execution, using low-impact local judgment plus proportional verification and Git safety; 6→mu-scope because public-contract risk excludes Direct execution, with one short risk explanation but NO permission check; 7→pointer to /mu-prd, NO invocation; 8→Direct read-only inspection because the object asks for understanding rather than reviewing a diff; 9→pointer to `/mu-wiki`, NO automatic invocation; 10→mu-scope, whose Quick Probe handles unfamiliarity without a separate exploration workflow; 11→mu-review Standalone review even though the review object contains “bug fix”; 12→mu-review Review and fix because mutation authority is explicit.

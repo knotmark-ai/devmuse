@@ -14,21 +14,25 @@
 
 The description should ONLY describe triggering conditions. Do NOT summarize the skill's process or workflow in the description.
 
-**Why this matters:** Testing revealed that when a description summarizes the skill's workflow, Claude may follow the description instead of reading the full skill content. A description saying "code review between tasks" caused Claude to do ONE review, even though the skill's flowchart clearly showed TWO reviews (spec compliance then code quality).
+**Why this matters:** Testing revealed that when a description summarizes a
+workflow, Claude may execute that summary instead of reading the skill body. A
+scoping description that listed “scan callers, write a few UCs, choose a path”
+caused the model to miss the body's risk boundaries and completion criteria.
 
-When the description was changed to just "Use when executing implementation plans with independent tasks" (no workflow summary), Claude correctly read the flowchart and followed the two-stage review process.
+When the description was reduced to the triggering condition, the model loaded
+the body and applied the full path decision.
 
 **The trap:** Descriptions that summarize workflow create a shortcut Claude will take. The skill body becomes documentation Claude skips.
 
 ```yaml
 # ❌ BAD: Summarizes workflow - Claude may follow this instead of reading skill
-description: Use when executing plans - dispatches subagent per task with code review between tasks
+description: Use for changes - scans callers, writes UCs, then chooses a path
 
 # ❌ BAD: Too much process detail
 description: Use for TDD - write test first, watch it fail, write minimal code, refactor
 
 # ✅ GOOD: Just triggering conditions, no workflow summary
-description: Use when executing implementation plans with independent tasks in the current session
+description: Use when a feature or refactor fails the Direct criteria
 
 # ✅ GOOD: Triggering conditions only
 description: Use when implementing any feature or bugfix, before writing implementation code

@@ -1,0 +1,1 @@
+Use devmuse:mu-code to execute the approved plan at docs/plans/auth-system.md.

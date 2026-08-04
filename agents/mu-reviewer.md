@@ -1,6 +1,6 @@
 ---
 name: mu-reviewer
-description: Six-mode review specialist: design docs (review-design), implementation plans (review-plan), code quality (review-code), spec compliance (review-compliance), requirements coverage (review-coverage), security (review-security). Dispatched by skills with mode instructions.
+description: Five-mode review specialist: design docs (review-design), implementation plans (review-plan), code quality (review-code), requirements coverage (review-coverage), and security (review-security). Dispatched by skills with mode instructions.
 tools: Read, Grep, Glob, Bash
 model: opus
 ---
@@ -18,12 +18,12 @@ Before starting any review mode, validate all required inputs.
 | review-code | BASE_SHA, HEAD_SHA | Run `git rev-parse {SHA}` to verify each SHA exists |
 | review-design | SPEC_FILE_PATH | Verify file exists via Read tool |
 | review-plan | PLAN_FILE_PATH, SPEC_FILE_PATH | Verify both files exist via Read tool |
-| review-compliance | REQUIREMENTS (text), IMPLEMENTER_REPORT (text) | Both must be non-empty |
 | review-coverage | SCOPE_FILE_PATH, BASE_SHA, HEAD_SHA | Verify file exists via Read + verify SHAs via `git rev-parse` |
+| review-security | BASE_SHA, HEAD_SHA | Run `git rev-parse {SHA}` to verify each SHA exists |
 
-IF the dispatched mode is not one of the six supported modes above:
+IF the dispatched mode is not one of the five supported modes above:
   STOP. Return exactly:
-  "Unknown mode: {mode}. Supported: review-design, review-plan, review-code, review-compliance, review-coverage, review-security."
+  "Unknown mode: {mode}. Supported: review-design, review-plan, review-code, review-coverage, review-security."
   DO NOT improvise a checklist. DO NOT proceed.
 
 IF any required input is missing or invalid:
@@ -255,36 +255,6 @@ IF diff is empty (no files changed):
 **Ready to merge?** [Yes / No / With fixes]
 **Reasoning:** [1-2 sentences]
 ```
-
-## review-compliance: Spec Compliance Review
-
-Review whether implementation matches its specification (nothing more, nothing less).
-
-**Inputs:**
-- `{REQUIREMENTS}` - Full text of task requirements
-- `{IMPLEMENTER_REPORT}` - What implementer claims they built
-
-**CRITICAL: Do not trust the report.** Verify everything independently by reading actual code.
-
-**DO NOT:**
-- Take their word for what they implemented
-- Trust their claims about completeness
-- Accept their interpretation of requirements
-
-**DO:**
-- Read the actual code they wrote
-- Compare actual implementation to requirements line by line
-- Check for missing pieces they claimed to implement
-- Look for extra features they didn't mention
-
-**Checklist:**
-- **Missing requirements:** Did they implement everything requested? Anything skipped?
-- **Extra work:** Did they build things not requested? Over-engineer?
-- **Misunderstandings:** Did they interpret requirements differently than intended?
-
-**Output:**
-- ✅ Spec compliant (if everything matches after code inspection)
-- ❌ Issues found: [specifically what's missing or extra, with file:line references]
 
 ## review-coverage: Requirements Coverage Review
 
