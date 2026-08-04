@@ -3,6 +3,10 @@
 # Actually runs spec/plan review and verifies reviewers catch issues
 set -euo pipefail
 
+# macOS ships no GNU timeout; degrade gracefully (coreutils installs gtimeout)
+if command -v timeout >/dev/null 2>&1; then TO="timeout"; elif command -v gtimeout >/dev/null 2>&1; then TO="gtimeout"; else TO=""; fi
+
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/test-helpers.sh"
 
@@ -90,7 +94,7 @@ Look for:
 Output your review in the format specified in the template."
 
 echo "================================================================================"
-cd "$SCRIPT_DIR/../.." && timeout 120 claude -p "$PROMPT" --permission-mode bypassPermissions 2>&1 | tee "$OUTPUT_FILE" || {
+cd "$SCRIPT_DIR/../.." && ${TO:+$TO 120} claude -p "$PROMPT" --permission-mode bypassPermissions 2>&1 | tee "$OUTPUT_FILE" || {
     echo ""
     echo "================================================================================"
     echo "EXECUTION FAILED (exit code: $?)"

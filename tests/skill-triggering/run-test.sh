@@ -7,13 +7,17 @@
 
 set -e
 
+# macOS ships no GNU timeout; degrade gracefully (coreutils installs gtimeout)
+if command -v timeout >/dev/null 2>&1; then TO="timeout"; elif command -v gtimeout >/dev/null 2>&1; then TO="gtimeout"; else TO=""; fi
+
+
 SKILL_NAME="$1"
 PROMPT_FILE="$2"
 MAX_TURNS="${3:-3}"
 
 if [ -z "$SKILL_NAME" ] || [ -z "$PROMPT_FILE" ]; then
     echo "Usage: $0 <skill-name> <prompt-file> [max-turns]"
-    echo "Example: $0 systematic-debugging ./test-prompts/debugging.txt"
+    echo "Example: $0 mu-debug ./prompts/mu-debug.txt"
     exit 1
 fi
 
@@ -45,7 +49,7 @@ cd "$OUTPUT_DIR"
 
 echo "Plugin dir: $PLUGIN_DIR"
 echo "Running claude -p with naive prompt..."
-timeout 300 claude -p "$PROMPT" \
+${TO:+$TO 300} claude -p "$PROMPT" \
     --plugin-dir "$PLUGIN_DIR" \
     --dangerously-skip-permissions \
     --max-turns "$MAX_TURNS" \

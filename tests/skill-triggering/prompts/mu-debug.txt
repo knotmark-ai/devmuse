@@ -1,4 +1,6 @@
-The tests are failing with this error:
+mu-scope has approved this 1-UC reproduction: Given a nested object fixture,
+when `parse` reads its child value, then the command below fails with
+`TypeError` instead of returning the nested value.
 
 ```
 FAIL src/utils/parser.test.ts
@@ -8,4 +10,4 @@ FAIL src/utils/parser.test.ts
       at Object.<anonymous> (src/utils/parser.test.ts:28:20)
 ```
 
-Can you figure out what's going wrong and fix it?
+Investigate the root cause and fix it.

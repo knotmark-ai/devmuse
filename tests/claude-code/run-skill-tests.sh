@@ -3,6 +3,22 @@
 # Tests skills by invoking Claude Code CLI and verifying behavior
 set -euo pipefail
 
+if command -v timeout >/dev/null 2>&1; then
+    TIMEOUT_BIN="timeout"
+elif command -v gtimeout >/dev/null 2>&1; then
+    TIMEOUT_BIN="gtimeout"
+else
+    TIMEOUT_BIN=""
+fi
+
+run_with_timeout() {
+    if [[ -n "$TIMEOUT_BIN" ]]; then
+        "$TIMEOUT_BIN" "$TIMEOUT" "$@"
+    else
+        "$@"
+    fi
+}
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
@@ -26,7 +42,6 @@ fi
 VERBOSE=false
 SPECIFIC_TEST=""
 TIMEOUT=300  # Default 5 minute timeout per test
-RUN_INTEGRATION=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -42,10 +57,6 @@ while [[ $# -gt 0 ]]; do
             TIMEOUT="$2"
             shift 2
             ;;
-        --integration|-i)
-            RUN_INTEGRATION=true
-            shift
-            ;;
         --help|-h)
             echo "Usage: $0 [options]"
             echo ""
@@ -53,14 +64,10 @@ while [[ $# -gt 0 ]]; do
             echo "  --verbose, -v        Show verbose output"
             echo "  --test, -t NAME      Run only the specified test"
             echo "  --timeout SECONDS    Set timeout per test (default: 300)"
-            echo "  --integration, -i    Run integration tests (slow, 10-30 min)"
             echo "  --help, -h           Show this help"
             echo ""
             echo "Tests:"
-            echo "  test-subagent-driven-development.sh  Test skill loading and requirements"
-            echo ""
-            echo "Integration Tests (use --integration):"
-            echo "  test-subagent-driven-development-integration.sh  Full workflow execution"
+            echo "  test-subagent-driven-development.sh  Test mu-code loading and proportional execution contract"
             exit 0
             ;;
         *)
@@ -75,16 +82,6 @@ done
 tests=(
     "test-subagent-driven-development.sh"
 )
-
-# Integration tests (slow, full execution)
-integration_tests=(
-    "test-subagent-driven-development-integration.sh"
-)
-
-# Add integration tests if requested
-if [ "$RUN_INTEGRATION" = true ]; then
-    tests+=("${integration_tests[@]}")
-fi
 
 # Filter to specific test if requested
 if [ -n "$SPECIFIC_TEST" ]; then
@@ -118,7 +115,7 @@ for test in "${tests[@]}"; do
     start_time=$(date +%s)
 
     if [ "$VERBOSE" = true ]; then
-        if timeout "$TIMEOUT" bash "$test_path"; then
+        if run_with_timeout bash "$test_path"; then
             end_time=$(date +%s)
             duration=$((end_time - start_time))
             echo ""
@@ -138,7 +135,7 @@ for test in "${tests[@]}"; do
         fi
     else
         # Capture output for non-verbose mode
-        if output=$(timeout "$TIMEOUT" bash "$test_path" 2>&1); then
+        if output=$(run_with_timeout bash "$test_path" 2>&1); then
             end_time=$(date +%s)
             duration=$((end_time - start_time))
             echo "  [PASS] (${duration}s)"
@@ -171,12 +168,6 @@ echo "  Passed:  $passed"
 echo "  Failed:  $failed"
 echo "  Skipped: $skipped"
 echo ""
-
-if [ "$RUN_INTEGRATION" = false ] && [ ${#integration_tests[@]} -gt 0 ]; then
-    echo "Note: Integration tests were not run (they take 10-30 minutes)."
-    echo "Use --integration flag to run full workflow execution tests."
-    echo ""
-fi
 
 if [ $failed -gt 0 ]; then
     echo "STATUS: FAILED"

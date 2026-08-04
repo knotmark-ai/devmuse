@@ -1,0 +1,1 @@
+Use devmuse:mu-debug on the approved reproduction: `npm test -- parser` fails with a TypeError for nested objects.

@@ -1,6 +1,6 @@
 ---
 name: mu-arch
-description: "Use before any creative engineering work to design technical architecture — components, interfaces, data flow, error handling. For product/UX requirements (user flows, feature specs), use mu-prd first."
+description: Use when approved requirements evidence needs a technical design before implementation
 ---
 
 # Technical Architecture
@@ -15,15 +15,13 @@ Start by understanding the current project context, then ask questions one at a 
 Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
 </HARD-GATE>
 
-<HARD-GATE>
-mu-arch requires a scope artifact (docs/scope/*.md) as input. If no scope artifact exists, invoke mu-scope first. Do NOT proceed with design without a scope artifact.
-</HARD-GATE>
-
-**HARD-GATEs evaluated BEFORE Phase 0.** A `skip` stance does not bypass them.
+**Input evidence (guided, per the Pipeline Graph):** design needs requirements evidence before any approach talk — an approved scope artifact (default), or an equivalent that already enumerates the feature's cases (e.g., a detailed PRD feature section plus the object's `CONTEXT.md` §6 machine). With an equivalent, record it under Requirements Reference and run mu-scope's evidence fast path first — its non-duplicated trio (Quick Probe, conflict cross-check, reverse UCs) as one report, one confirmation — then design. With no evidence at all, recommend mu-scope and offer the alternatives; the user decides, and an override is flagged in the spec.
 
 ## Phase 0: Stance Detection
 
 Before engaging the design process, detect the current state of any existing arch artifact and pick an entry stance.
+
+**Succession runs first** (@../../knowledge/principles/artifact-succession.md): a spec is a dated snapshot, so the prior question is whether this round writes a *new* file at all. An unconsumed spec (no plan cites it) is revised in place — filename and date unchanged. A consumed one gets a new file with `Supersedes:` / `Extends:` in both directions. Stance detection below then governs how the same file is entered.
 
 1. Read `@../../knowledge/principles/stance-detection.md`
 2. Run the detection algorithm with:
@@ -32,11 +30,7 @@ Before engaging the design process, detect the current state of any existing arc
    - **Watched source dirs**: `src/`, `lib/`, `internal/`, `pkg/`, `cmd/` (whichever exist; else H3 returns `insufficient-signal`)
    - **Legacy locations**: root `ARCHITECTURE.md`, `DESIGN.md`
    - **General rule**: artifact dir (`docs/specs/`) is never in its own watched set — prevents circular staleness.
-3. Act based on confidence:
-   - **High confidence** → proceed silently, no confirmation dialog
-   - **Ambiguous** → present recommendation and ask: "Detected: stance=`<stance>`, confidence=`ambiguous`. Reason: `<one-line>`. Override? (`create` / `update` / `extract` / `skip`)"
-   - Slash-command hints (`/mu-arch <stance>`) are treated as **pre-confirmed** — no dialog, proceed directly.
-4. Record approved stance. Route to matching branch below.
+3. Apply the Shared Consumption Protocol in that file (confidence handling, slash pre-confirmation, stance metadata), then route below.
 
 **Branch routing**:
 
@@ -44,10 +38,11 @@ Before engaging the design process, detect the current state of any existing arc
 |--------|--------|
 | `create` | Run the full Process (checklist steps 1-13). |
 | `update` | Load existing design artifact → apply sub-type logic (`expand` fills stub sections; `gap-fill` appends a new section titled "Gap-fill: `<task>`"; `sync` diffs against current code and proposes paragraph updates) → merge via the existing section-approval loop. |
-| `extract` | If target code region is unfamiliar, optionally delegate to `mu-explore` first (pre-change variant) for a mental model. Then read source dirs section-by-section and populate the arch artifact from current code, with each section approved by the user. Commit prefix: `extract:`. |
+| `extract` | Current-state architecture documentation belongs to `/mu-wiki`, the single durable home. Point the user there and end. If the real intent is a future change, use `create`/`update`; source informs that design but cannot reconstruct missing decision rationale. |
 | `skip` | Append a pass-through entry to the existing artifact's History section (`| <date> | <sha> | skip | — | passthrough for <task> |`); commit only if header/History needed initialization; invoke `mu-plan` per existing Integration. |
 
-**Stance → artifact metadata**: update the artifact's header with `> **Stance:** <stance>`, `> **Sub-type:** <sub-type or —>`, `> **Detected at:** YYYY-MM-DD (commit <short-sha>)`. Commit message prefix uses `docs(specs): <stance>[(sub-type)]: ...` pattern. Users who want to opt out of stance metadata this invocation pass `--no-stance-meta`.
+**Commit prefix:** `docs(specs): <stance>[(sub-type)]: ...`
+
 
 ## Anti-Pattern: "This Is Too Simple To Need A Design"
 
@@ -57,21 +52,21 @@ Every project goes through this process. A todo list, a single-function utility,
 
 You MUST create a task for each of these items and complete them in order:
 
-0. **Phase 0: Stance Detection** — see §Phase 0 above; establishes entry stance before any other work. Branch routing below assumes stance is already picked and confirmed.
-1. **Read scope artifact** — read the Use Case Set, understand all use cases, conflicts, and constraints
+0. **Succession, then stance** — first @../../knowledge/principles/artifact-succession.md: new file, or the same one? Then §Phase 0 decides how the same one is entered. Branch routing below assumes both are picked and confirmed.
+1. **Read the requirements evidence** — the scope artifact, or the recorded equivalent (PRD section + `CONTEXT.md` §6 machine); understand all cases, conflicts, and constraints
 2. **Explore project context** — check files, docs, recent commits
 3. **Find architecture doc** — look for existing architecture/design docs in the project (README, docs/, ARCHITECTURE.md, DESIGN.md, docs/wiki/_index.md, or similar). If found, read it. If not found or unclear, ask the user.
 4. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
 5. **Grill for technical direction** — apply @../../knowledge/principles/grilling.md (one question per message with a recommendation, facts self-served, decisions to the user, converge every fork); **technical direction only** (not "what to build" — that's in the scope)
 6. **Propose 2-3 approaches** — with trade-offs, your recommendation, impact on existing architecture, and **UC coverage per approach**. Apply inversion test per approach. **Record ADR** for the selected approach (see §Architecture Decision Records).
-7. **C4 positioning** — using the approved approach, identify which C4 levels are involved per @../../knowledge/principles/architecture-assessment.md. Produce an architecture diagram showing current state + proposed changes (➕/✏️/➖ overlay). This establishes the structural map before detailed design.
+7. **C4 positioning** — identify which C4 levels the approved approach touches per @../../knowledge/principles/architecture-assessment.md. **Draw only the neighbourhood this change touches**, with the ➕/✏️/➖ overlay; cite `docs/wiki/` pages for the surrounding picture instead of redrawing it. No wiki present → draw what the change needs and record that no architecture map exists.
 8. **Functional design** — based on C4 components identified in step 7, design the details:
    - **Within components:** data model (schema changes), state machine (if entity has lifecycle — see §Conditional Design Tools)
    - **Between components:** interface contracts (API endpoints, message formats), sequence diagrams per scenario (if multi-party interaction — see §Conditional Design Tools)
    - **Name with the project's language:** consult repo-root `CONTEXT.md` before naming components or concepts; reuse its terms. Record newly coined names per §Domain Language.
    - Present in sections scaled to complexity, get user approval after each section. **Record ADRs** for any decisions with meaningful trade-offs.
 9. **NFR scan** — scan @../../knowledge/principles/nfr-checklist.md trigger conditions against the current feature. Elaborate only on categories where triggers fire. Skip categories with no triggers — no need to list them as "N/A".
-10. **Write design doc** — save to the project's docs directory (default: `docs/specs/YYYY-MM-DD-<topic>-design.md`), **include Requirements Reference field**, and commit
+10. **Write design doc** — save to the project's docs directory (default: `docs/specs/YYYY-MM-DD-<topic>-design.md`), **include Requirements Reference field**, and commit. Draft per @../../knowledge/principles/prose-discipline.md
 11. **Spec review loop** — dispatch mu-reviewer subagent (review-design mode) with precisely crafted review context; fix issues and re-dispatch until approved (max 3 iterations, then surface to human)
 12. **User reviews written spec** — ask user to review the spec file before proceeding
 13. **Transition to implementation** — invoke mu-plan skill to create implementation plan
@@ -83,7 +78,7 @@ digraph mu_design {
     "Phase 0: Detect stance\n(create|update|extract|skip)" [shape=box];
     "User confirms stance" [shape=diamond];
     "skip branch\n(append history, handoff)" [shape=doublecircle];
-    "Read scope artifact\n(docs/scope/*.md)" [shape=box];
+    "Read requirements evidence\n(scope artifact or recorded equivalent)" [shape=box];
     "Explore project context" [shape=box];
     "Find architecture doc\n(README, docs/, or ask user)" [shape=box];
     "Visual questions ahead?" [shape=diamond];
@@ -102,9 +97,9 @@ digraph mu_design {
 
     "Phase 0: Detect stance\n(create|update|extract|skip)" -> "User confirms stance";
     "User confirms stance" -> "skip branch\n(append history, handoff)" [label="skip"];
-    "User confirms stance" -> "Read scope artifact\n(docs/scope/*.md)" [label="create / update / extract"];
+    "User confirms stance" -> "Read requirements evidence\n(scope artifact or recorded equivalent)" [label="create / update"];
     "skip branch\n(append history, handoff)" -> "Invoke mu-plan skill";
-    "Read scope artifact\n(docs/scope/*.md)" -> "Explore project context";
+    "Read requirements evidence\n(scope artifact or recorded equivalent)" -> "Explore project context";
     "Explore project context" -> "Find architecture doc\n(README, docs/, or ask user)";
     "Find architecture doc\n(README, docs/, or ask user)" -> "Visual questions ahead?";
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
@@ -126,7 +121,7 @@ digraph mu_design {
 }
 ```
 
-**The terminal state is invoking mu-plan.** Do NOT invoke any other implementation skill. The ONLY skill you invoke after mu-arch is mu-plan.
+**Done:** design approved and committed. The Pipeline Graph (bootstrap) names the next move — mu-plan.
 
 ## The Process
 
@@ -158,7 +153,7 @@ digraph mu_design {
 
 **Inversion test:** Before presenting approaches, apply the inversion reflex from @../../knowledge/principles/inversion.md. For each approach, document "what would make this approach fail?" alongside trade-offs. Present failure modes as a column in the comparison, not as a separate section.
 
-**C4 positioning (structural map):** After the user approves the approach, produce a C4 architecture diagram before detailed design. This establishes the structural map — which containers and components are involved. Follow @../../knowledge/principles/architecture-assessment.md:
+**C4 positioning (structural map):** After the user approves the approach, produce a C4 diagram before detailed design — **scoped to the neighbourhood this change touches**, not the whole system. The surrounding structure is cited from `docs/wiki/`, which is its single home; a spec that redraws the global picture creates a second copy that drifts from the day it ships, and specs are frozen while the system keeps moving. Follow @../../knowledge/principles/architecture-assessment.md:
 
 - Choose the right diagram type for this project (C1/C2/C3/DFD — see the "Diagram Type by Project Type" table)
 - Show the **current** relevant architecture, then overlay the **proposed changes** (mark additions ➕, modifications ✏️, removals ➖)
@@ -210,7 +205,7 @@ These tools are used during functional design (step 8) when their trigger condit
 **Trigger:** The design involves entities with lifecycle states (order status, subscription state, approval workflow, account status, content publishing state).
 
 **How to use:**
-0. If a PRD object model exists (`docs/prd/*.objects.md`, or state tables in the PRD body), start from its states and transitions — inherit the names verbatim (they are CONTEXT.md vocabulary) and design only the technical realization: idempotency, transactions, compensation states, timers. Implementation-only states the product layer doesn't see (e.g., "refund-in-flight") extend the model; flag them back to the PRD rather than renaming product states.
+0. If `CONTEXT.md` §6 carries a machine for the object, start from its states and transitions — inherit the names verbatim and design only the technical realization: idempotency, transactions, compensation states, timers. Implementation-only states the product layer never sees (e.g., "refund-in-flight") extend the domain model: add them to `CONTEXT.md` rather than renaming domain states or keeping a private list (see @../../knowledge/principles/state-modeling.md Layer Boundaries).
 1. Enumerate all states the entity can be in
 2. Draw all valid transitions with their trigger actions
 3. Check for missing transitions (e.g., can a "shipped" order be "cancelled"?)
@@ -221,17 +216,18 @@ These tools are used during functional design (step 8) when their trigger condit
 
 ADRs are a **cross-cutting concern** throughout the design process, not a single step. Whenever you make a decision with meaningful trade-offs (step 6 approach selection, step 8 functional design choices, step 9 NFR trade-offs), record an ADR.
 
-**Format in the design doc:**
+**Home, numbering, format and the earns-one test: @../../knowledge/principles/adr.md.** In short: `docs/adr/NNNN-<slug>.md`, one global sequence, never inside the spec. A decision outlives the change that produced it — and a spec freezes, so an ADR embedded in one becomes unfindable the moment the next spec is written.
+
+**The spec cites, never restates:**
 
 ```markdown
 ## Architecture Decision Records
 
-### ADR-1: <title>
-- **Context:** What situation or constraint led to this decision
-- **Decision:** What was decided
-- **Alternatives:** What was considered and rejected (brief)
-- **Consequences:** What follows from this decision (both positive and negative)
+- [ADR-0007](../adr/0007-out-of-band-control.md) — control signals travel out-of-band, not via function-calling
+- [ADR-0008](../adr/0008-single-pg-both-planes.md) — management and call-handling planes share one Postgres
 ```
+
+Pre-existing specs with inline ADR bodies stay as they are — moving them retro-edits a frozen artifact. New ADRs go to `docs/adr/`.
 
 **What warrants an ADR:**
 - Choosing between 2+ viable approaches (step 6)
@@ -246,7 +242,7 @@ ADRs are a **cross-cutting concern** throughout the design process, not a single
 
 ## Domain Language
 
-Naming is a cross-cutting concern like ADRs. Before coining any component or concept name, read the repo-root `CONTEXT.md` (if present) and reuse its terms — including respecting `_Avoid_` lists. When the design coins a new name and the user approves it, add the entry (definition + `_Avoid_` synonyms) to `CONTEXT.md` in the same commit as the design doc, per the qualification test in `@../../knowledge/principles/domain-glossary.md`.
+Naming is a cross-cutting concern like ADRs. **If `CONTEXT.md` does not exist and this design introduces domain concepts rather than only technical components, recommend `/mu-model` first — non-blocking, the user may decline.** Before coining any component or concept name, read the repo-root `CONTEXT.md` (if present) and reuse its terms — including respecting `_Avoid_` lists. When the design coins a new name and the user approves it, add the entry (definition + `_Avoid_` synonyms) to `CONTEXT.md` in the same commit as the design doc, per the qualification test in `@../../knowledge/principles/domain-model.md`.
 
 ## After the Design
 
@@ -262,8 +258,8 @@ Naming is a cross-cutting concern like ADRs. Before coining any component or con
 
 ```markdown
 ## Requirements Reference
-- Scope: docs/scope/YYYY-MM-DD-<name>.md
-- Covers: UC-1, UC-2, UC-3, ...
+- Requirements evidence: docs/scope/YYYY-MM-DD-<name>.md (or the recorded equivalent — e.g., docs/prd/YYYY-MM-DD-<product>.md §<feature> + its CONTEXT.md §6 machines, per the Pipeline Graph's evidence rule)
+- Covers: UC-1, UC-2, UC-3, ... (or the evidence's case identifiers)
 - NFRs: NFR-1, NFR-2, ...
 ```
 
@@ -294,8 +290,7 @@ If `docs/wiki/_index.md` exists AND the design introduces new components, change
 
 **Implementation:**
 
-- Invoke the mu-plan skill to create a detailed implementation plan
-- Do NOT invoke any other skill. mu-plan is the next step.
+- Hand off per the Pipeline Graph (bootstrap) — mu-plan turns the approved spec into an implementation plan.
 
 ## Key Principles
 
@@ -330,6 +325,6 @@ If they agree to the companion, read the detailed guide before proceeding:
 - **Invoked by:** mu-scope (terminal state); or directly when a scope artifact already exists (e.g., the user's design-tech override)
 - **Produces:** Architecture spec at `docs/specs/YYYY-MM-DD-<name>.md`
 - **Consumed by:** mu-plan (reads spec, breaks into tasks)
-- **Terminal state:** invoke mu-plan
+- **Terminal state:** per the Pipeline Graph (bootstrap)
 - **Template:** @../../knowledge/templates/architecture.md
 - **Principle references:** stance-detection.md, inversion.md, architecture-assessment.md, nfr-checklist.md, sign-off-gate.md

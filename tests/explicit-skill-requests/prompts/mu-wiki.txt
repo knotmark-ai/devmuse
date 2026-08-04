@@ -1,0 +1,1 @@
+Use `/mu-wiki generate` to create durable current-state architecture documentation for this repository.

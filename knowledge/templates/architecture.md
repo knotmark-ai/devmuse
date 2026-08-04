@@ -1,12 +1,13 @@
 # Architecture: <feature-name>
 
 > **Date:** YYYY-MM-DD
-> **Scope reference:** docs/scope/YYYY-MM-DD-<name>.md
+> **Requirements evidence:** docs/scope/YYYY-MM-DD-<name>.md (or the recorded equivalent, e.g., docs/prd/...#<feature> + CONTEXT.md §6 machine)
 > **Stance:** <create | update | extract | skip>
+> **Supersedes / Extends:** <path to the prior spec> — omit when this is the first artifact for this work; the target file carries the matching reverse field
 
 ## Requirements Reference
-- Scope: [link to scope artifact]
-- Use cases covered: UC-1, UC-2, ...
+- Requirements evidence: [link to scope artifact or recorded equivalent]
+- Use cases covered: UC-1, UC-2, ... (or the evidence's case identifiers)
 
 ## Alternatives Considered
 
@@ -68,11 +69,10 @@ stateDiagram-v2
 
 ## Architecture Decision Records
 
-### ADR-1: <title>
-- **Context:** what led to this decision
-- **Decision:** what was decided
-- **Alternatives:** what was rejected
-- **Consequences:** what follows (positive and negative)
+Cited, not restated — the records live in `docs/adr/` under one global sequence.
+
+- [ADR-NNNN](../adr/NNNN-slug.md) — <the decision in one line>
+- [ADR-NNNN](../adr/NNNN-slug.md) — <the decision in one line>
 
 ## Error Handling
 - Failure modes and recovery strategies
@@ -90,4 +90,4 @@ stateDiagram-v2
 
 | Date | Commit | Change |
 |------|--------|--------|
-| YYYY-MM-DD | `<sha>` | Initial creation |
+| YYYY-MM-DD | `<sha>` | Initial creation: <the create round's key decisions — never leave this bare> |

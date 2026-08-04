@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run a subagent-driven-development test
+# Run an architectural mu-code execution scenario
 # Usage: ./run-test.sh <test-name> [--plugin-dir <path>]
 #
 # Example:
@@ -43,11 +43,11 @@ fi
 
 # Create timestamped output directory
 TIMESTAMP=$(date +%s)
-OUTPUT_BASE="/tmp/devmuse-tests/$TIMESTAMP/subagent-driven-development"
+OUTPUT_BASE="/tmp/devmuse-tests/$TIMESTAMP/mu-code-architectural"
 OUTPUT_DIR="$OUTPUT_BASE/$TEST_NAME"
 mkdir -p "$OUTPUT_DIR"
 
-echo "=== Subagent-Driven Development Test ==="
+echo "=== mu-code Architectural Execution Test ==="
 echo "Test: $TEST_NAME"
 echo "Output: $OUTPUT_DIR"
 echo "Plugin: $PLUGIN_DIR"

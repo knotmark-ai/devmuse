@@ -1,108 +1,97 @@
-# Testing DevMuse Skills
+# Testing DevMuse
 
-Testing skills that involve subagents, workflows, and complex interactions requires running actual Claude Code sessions in headless mode and verifying behavior through session transcripts.
+DevMuse tests separate deterministic contract checks from live-model behavior.
+Run the cheap layer on every routing or skill edit; run live Claude scenarios
+when changing descriptions, trigger boundaries, or model versions.
 
 ## Test Structure
 
 ```
 tests/
-├── claude-code/
-│   ├── test-helpers.sh                    # Shared test utilities
-│   ├── test-subagent-driven-development-integration.sh  # mu-code integration
-│   └── run-skill-tests.sh                 # Test runner
-├── brainstorm-server/                     # Visual companion server tests
-├── explicit-skill-requests/               # Skill invocation tests
-├── skill-triggering/                      # Auto-trigger tests
-└── subagent-driven-dev/                   # E2E test projects
+├── routing-policy/          Static routing, duplication, and artifact-owner contract
+├── hooks/                   Deterministic hook tests
+├── skill-triggering/        Live automatic-invocation probes
+├── explicit-skill-requests/ Live explicit-invocation probes for current skills
+├── claude-code/             Live mu-code behavior/documentation checks
+├── prd-state-modeling/      Stateful product and bootstrap pressure scenarios
+├── subagent-driven-dev/     Manual architectural mu-code E2E projects
+└── brainstorm-server/       Visual companion server tests
 ```
 
-## Running Tests
-
-### Integration Tests
+## Fast Deterministic Checks
 
 ```bash
-cd tests/claude-code
-./test-subagent-driven-development-integration.sh
+bash tests/routing-policy/test-routing-policy.sh
+bash tests/hooks/test-destructive-guard.sh
+git diff --check
 ```
 
-**Note:** Integration tests take 10-30 minutes (real implementation with multiple subagents).
+The routing-policy test is the regression contract for Direct, bounded, and
+architectural ceremony; read-only inspection; review modes; retired artifacts;
+and single-owner rules such as `docs/wiki/`.
 
-### Requirements
+## Live Trigger Checks
 
-- Run from the **devmuse plugin directory** (not temp directories)
-- `claude` command available
-- Local dev marketplace enabled: `"devmuse@devmuse-dev": true` in `~/.claude/settings.json`
-
-## Integration Test: mu-code (subagent-driven mode)
-
-### What It Tests
-
-Verifies `mu-code` skill (subagent-driven mode) correctly:
-
-1. **Plan Loading** — Reads plan once at beginning
-2. **Full Task Text** — Provides complete descriptions to subagents
-3. **Self-Review** — Subagents self-review before reporting
-4. **Review Order** — Spec compliance before code quality
-5. **Review Loops** — Re-reviews when issues found
-6. **Independent Verification** — Reviewer reads code independently
-
-### How It Works
-
-1. **Setup**: Creates temporary project with minimal implementation plan
-2. **Execution**: Runs Claude Code in headless mode with skill
-3. **Verification**: Parses session transcript (`.jsonl`) to verify:
-   - Skill tool invoked
-   - Subagents dispatched (Task tool)
-   - TodoWrite used for tracking
-   - Implementation files created
-   - Tests pass
-   - Git commits show proper workflow
-4. **Token Analysis**: Shows per-subagent token breakdown
-
-## Token Analysis Tool
+Requires the `claude` CLI and the local plugin directory.
 
 ```bash
-python3 tests/claude-code/analyze-token-usage.py ~/.claude/projects/<project-dir>/<session-id>.jsonl
+tests/skill-triggering/run-all.sh
+tests/explicit-skill-requests/run-all.sh
+tests/claude-code/run-skill-tests.sh
 ```
 
-### Finding Session Files
+- `skill-triggering` uses natural prompts and expects the model-invoked skill.
+- `explicit-skill-requests` verifies named current skills load before action.
+- `claude-code` asks the model to apply mu-code's proportional execution
+  contract: bounded versus architectural input, task self-checks, one review
+  boundary, subagent threshold, and proportional isolation.
+
+Live trigger results are model-dependent. Save the transcript and judge both
+the invoked skill and the reason; a lucky invocation with the wrong boundary is
+still a regression.
+
+## Pressure Scenarios
 
 ```bash
-find ~/.claude/projects -name "*.jsonl" -mmin -60
+bash tests/prd-state-modeling/run-test.sh \
+  tests/prd-state-modeling/prompts/bootstrap-routing-probes.txt
 ```
 
-## Writing New Tests
+The bootstrap prompt covers read-only understanding, exact execution,
+deceptively small contract changes, durable wiki requests, unfamiliar refactors,
+report-only review, and review-and-fix.
+
+## Architectural Execution E2E
+
+The projects under `tests/subagent-driven-dev/` are manual, potentially costly
+end-to-end scenarios:
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-source "$SCRIPT_DIR/test-helpers.sh"
-
-TEST_PROJECT=$(create_test_project)
-trap "cleanup_test_project $TEST_PROJECT" EXIT
-
-cd "$TEST_PROJECT"
-# Set up test files...
-
-PROMPT="Your test prompt here"
-cd "$SCRIPT_DIR/../.." && timeout 1800 claude -p "$PROMPT" \
-  --allowed-tools=all \
-  --add-dir "$TEST_PROJECT" \
-  --permission-mode bypassPermissions \
-  2>&1 | tee output.txt
-
-# Parse session transcript to verify behavior
-SESSION_FILE=$(find "$HOME/.claude/projects" -name "*.jsonl" -mmin -60 | sort -r | head -1)
-grep -q '"name":"Skill".*"skill":"mu-code"' "$SESSION_FILE" && echo "[PASS]"
+tests/subagent-driven-dev/run-test.sh go-fractals
+tests/subagent-driven-dev/run-test.sh svelte-todo
 ```
 
-### Best Practices
+They produce a temporary project and a stream-json transcript. Judge plan
+loading, write-set isolation, TDD evidence, task self-checks, integrated
+verification, and the single final review. They intentionally do not enforce
+the retired per-task reviewer fan-out.
 
-- Always cleanup temp directories (use `trap`)
-- Parse `.jsonl` transcripts, not user-facing output
-- Use `--permission-mode bypassPermissions` and `--add-dir`
-- Run from plugin directory (skills only load from there)
-- Include token analysis for cost visibility
-- Verify actual artifacts: files created, tests passing, commits made
+## Token Analysis
+
+```bash
+python3 tests/claude-code/analyze-token-usage.py \
+  ~/.claude/projects/<project-dir>/<session-id>.jsonl
+```
+
+Record fixed startup/context cost separately from task execution cost. A routing
+change regresses when it loads a workflow or creates an artifact without a
+trigger, even if the final code is correct.
+
+## Test Authoring Rules
+
+- Keep deterministic shell tests free of model calls.
+- For trigger tests, include a positive case and the nearest confusing negative
+  case (for example code understanding versus diff review).
+- Parse stream-json tool calls, not prose alone.
+- Preserve transcripts for failed live runs.
+- Verify final artifacts and commands rather than trusting agent summaries.

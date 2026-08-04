@@ -1,7 +1,6 @@
-I need to add a new feature to validate email addresses. It should:
-- Check that there's an @ symbol
-- Check that there's at least one character before the @
-- Check that there's a dot in the domain part
-- Return true/false
+mu-scope has classified this as bounded execution. Implement the approved inline contract:
 
-Can you implement this?
+- Affected files: `src/validate-email.ts`, `src/validate-email.test.ts`
+- UC-1: a valid address returns true
+- UC-2: missing local part, @, or domain dot returns false
+- Verification: `npm test -- validate-email`

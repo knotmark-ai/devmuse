@@ -1,6 +1,6 @@
 ---
 name: mu-plan
-description: Use when you have a spec or requirements for a multi-step task, before touching code
+description: Use when an approved technical design needs a multi-step implementation plan
 ---
 
 # Writing Plans
@@ -17,7 +17,7 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Context:** The plan is written in the main checkout; worktree isolation happens later, at mu-code Step 1.
 
-**Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md`
+**Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md` — drafted per @../../knowledge/principles/prose-discipline.md
 - (User preferences for plan location override this default)
 
 ## Process Flow
@@ -48,6 +48,12 @@ digraph mu_plan {
     "Fix issues" -> "Plan review loop\n(dispatch reviewer)";
 }
 ```
+
+## Prior Plan Check
+
+Before writing: is there an earlier plan for this same work? One question, per @../../knowledge/principles/artifact-succession.md. An **unconsumed** plan — no `[x]` checkboxes, no commits referencing its tasks — is revised **in place**, filename and date unchanged. A consumed one gets a new file with `Supersedes:` / `Extends:` written in **both** directions.
+
+Skip silently when `docs/plans/` is empty.
 
 ## Scope Check
 
@@ -81,6 +87,7 @@ This structure informs the task decomposition. Each task should produce self-con
 # [Feature Name] Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use devmuse:mu-code to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Supersedes / Extends:** [path to the prior plan] — omit when this is the first plan for this work; the target file carries the matching reverse field
 
 **Goal:** [One sentence describing what this builds]
 
@@ -163,21 +170,15 @@ After writing the complete plan:
 
 ## Execution Handoff
 
-After saving the plan, offer execution choice:
-
-**"Plan complete and saved to `docs/plans/<filename>.md`. Two execution options:**
-
-**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
-
-**2. Inline Execution** - Execute tasks in this session, batch execution with checkpoints
-
-**Which approach?"**
-
-**Invoke devmuse:mu-code** to execute the plan. mu-code supports both modes.
+After saving and reviewing the plan, announce its path and hand it to mu-code
+per the Pipeline Graph. **mu-code selects the execution mode** from task count,
+coupling, write-set overlap, and subagent availability; a user preference already
+stated in the conversation overrides that default. Do not add a mode-selection
+question solely because two implementations are available.
 
 ## Integration
 
-- **Invoked by:** mu-arch (terminal state)
+- **Invoked by:** the Pipeline Graph (after mu-arch), or directly when a design spec exists
 - **Produces:** Implementation plan at `docs/plans/<name>.md`
 - **Consumed by:** mu-code (reads plan, executes tasks)
-- **Terminal state:** invoke mu-code
+- **Terminal state:** per the Pipeline Graph (bootstrap)

@@ -1,6 +1,6 @@
 ---
 name: mu-debug
-description: Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes
+description: Use when an approved reproduction or failing test needs root-cause investigation before a fix
 ---
 
 # Systematic Debugging
@@ -77,6 +77,11 @@ You MUST complete each phase before proceeding to the next.
 ### Phase 1: Root Cause Investigation
 
 **BEFORE attempting ANY fix:**
+
+Use relevant `docs/wiki/` pages as a navigation map when they exist, then
+verify the bug-adjacent path against current source and runtime evidence. An
+unfamiliar area widens this investigation; it does not require a separate
+orientation artifact.
 
 1. **Read Error Messages Carefully**
    - Don't skip past errors or warnings
@@ -322,11 +327,3 @@ These techniques are part of systematic debugging and available in this director
 **Related skills:**
 - **devmuse:mu-code** - TDD Discipline section for creating failing test case (Phase 4, Step 1)
 - **devmuse:mu-review** - Verification section for verifying fix before claiming success
-
-## Real-World Impact
-
-From debugging sessions:
-- Systematic approach: 15-30 minutes to fix
-- Random fixes approach: 2-3 hours of thrashing
-- First-time fix rate: 95% vs 40%
-- New bugs introduced: Near zero vs common

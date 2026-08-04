@@ -82,7 +82,7 @@ Sign-off gate is independent of the artifact stance:
 
 ## Relationship to HARD-GATEs
 
-Sign-off gate is **NOT** a HARD-GATE. HARD-GATEs are structural ("no design without scope"; "no implementation without design"). Sign-off is **collaborative** ("stakeholders agree before proceeding"). It runs later and can be explicitly skipped by the user.
+Sign-off gate is **NOT** a HARD-GATE. HARD-GATEs are control gates — user approval of a deliverable before what depends on it ("no downstream handoff before the artifact is approved"; "no implementation without an approved design"). Sign-off is **collaborative** ("stakeholders agree before proceeding"). It runs later and can be explicitly skipped by the user.
 
 ## Worked Example
 

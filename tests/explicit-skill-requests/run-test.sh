@@ -9,13 +9,17 @@
 
 set -e
 
+# macOS ships no GNU timeout; degrade gracefully (coreutils installs gtimeout)
+if command -v timeout >/dev/null 2>&1; then TO="timeout"; elif command -v gtimeout >/dev/null 2>&1; then TO="gtimeout"; else TO=""; fi
+
+
 SKILL_NAME="$1"
 PROMPT_FILE="$2"
 MAX_TURNS="${3:-3}"
 
 if [ -z "$SKILL_NAME" ] || [ -z "$PROMPT_FILE" ]; then
     echo "Usage: $0 <skill-name> <prompt-file> [max-turns]"
-    echo "Example: $0 subagent-driven-development ./prompts/subagent-driven-development-please.txt"
+    echo "Example: $0 mu-code ./prompts/mu-code.txt"
     exit 1
 fi
 
@@ -43,10 +47,10 @@ cp "$PROMPT_FILE" "$OUTPUT_DIR/prompt.txt"
 
 # Create a minimal project directory for the test
 PROJECT_DIR="$OUTPUT_DIR/project"
-mkdir -p "$PROJECT_DIR/docs/devmuse/plans"
+mkdir -p "$PROJECT_DIR/docs/plans"
 
 # Create a dummy plan file for mid-conversation tests
-cat > "$PROJECT_DIR/docs/devmuse/plans/auth-system.md" << 'EOF'
+cat > "$PROJECT_DIR/docs/plans/auth-system.md" << 'EOF'
 # Auth System Implementation Plan
 
 ## Task 1: Add User Model
@@ -68,7 +72,7 @@ echo "Running claude -p with explicit skill request..."
 echo "Prompt: $PROMPT"
 echo ""
 
-timeout 300 claude -p "$PROMPT" \
+${TO:+$TO 300} claude -p "$PROMPT" \
     --plugin-dir "$PLUGIN_DIR" \
     --dangerously-skip-permissions \
     --max-turns "$MAX_TURNS" \

@@ -14,16 +14,6 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/pre-tool-use/pipeline-gate.sh\"",
-            "async": false
-          }
-        ]
-      },
-      {
         "matcher": "Bash",
         "hooks": [
           {

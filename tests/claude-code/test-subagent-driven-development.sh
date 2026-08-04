@@ -1,165 +1,49 @@
 #!/usr/bin/env bash
-# Test: subagent-driven-development skill
-# Verifies that the skill is loaded and follows correct workflow
+# Behavioral documentation test for the current mu-code contract.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "$SCRIPT_DIR/test-helpers.sh"
+MODEL_TIMEOUT="${DEVMUSE_MODEL_TEST_TIMEOUT:-120}"
 
-echo "=== Test: subagent-driven-development skill ==="
+echo "=== Test: mu-code proportional execution ==="
 echo ""
 
-# Test 1: Verify skill can be loaded
-echo "Test 1: Skill loading..."
-
-output=$(run_claude "What is the subagent-driven-development skill? Describe its key steps briefly." 30)
-
-if assert_contains "$output" "subagent-driven-development\|Subagent-Driven Development\|Subagent Driven" "Skill is recognized"; then
-    : # pass
-else
-    exit 1
-fi
-
-if assert_contains "$output" "Load Plan\|read.*plan\|extract.*tasks" "Mentions loading plan"; then
-    : # pass
-else
-    exit 1
-fi
-
+echo "Test 1: Skill loading and inputs..."
+output=$(run_claude "Answer briefly in English. What evidence can the devmuse:mu-code skill execute? Describe the two paths." "$MODEL_TIMEOUT")
+assert_contains "$output" "bounded\|inline contract" "Mentions bounded contract"
+assert_contains "$output" "architectural\|approved.*plan\|implementation plan" "Mentions architectural plan"
 echo ""
 
-# Test 2: Verify skill describes correct workflow order
-echo "Test 2: Workflow ordering..."
-
-output=$(run_claude "In the subagent-driven-development skill, what comes first: spec compliance review or code quality review? Be specific about the order." 30)
-
-if assert_order "$output" "spec.*compliance" "code.*quality" "Spec compliance before code quality"; then
-    : # pass
-else
-    exit 1
-fi
-
+echo "Test 2: Review budget..."
+output=$(run_claude "Answer briefly in English. According to devmuse:mu-code, compare review timing for bounded execution and architectural execution. Does it review after every task?" "$MODEL_TIMEOUT")
+assert_contains "$output" "combined review\|one.*review" "Bounded has one combined review"
+assert_contains "$output" "final.*mu-review\|mu-review.*final" "Architectural has one final review"
 echo ""
 
-# Test 3: Verify self-review is mentioned
-echo "Test 3: Self-review requirement..."
-
-output=$(run_claude "Does the subagent-driven-development skill require implementers to do self-review? What should they check?" 30)
-
-if assert_contains "$output" "self-review\|self review" "Mentions self-review"; then
-    : # pass
-else
-    exit 1
-fi
-
-if assert_contains "$output" "completeness\|Completeness" "Checks completeness"; then
-    : # pass
-else
-    exit 1
-fi
-
+echo "Test 3: Implementation self-check..."
+output=$(run_claude "Answer briefly in English. What does devmuse:mu-code require at the end of each implementation task before marking it complete?" "$MODEL_TIMEOUT")
+assert_contains "$output" "self-check\|self check" "Mentions self-check"
+assert_contains "$output" "requirement\|UC\|task text" "Checks contract completeness"
+assert_contains "$output" "verification\|test" "Runs task verification"
 echo ""
 
-# Test 4: Verify plan is read once
 echo "Test 4: Plan reading efficiency..."
-
-output=$(run_claude "In subagent-driven-development, how many times should the controller read the plan file? When does this happen?" 30)
-
-if assert_contains "$output" "once\|one time\|single" "Read plan once"; then
-    : # pass
-else
-    exit 1
-fi
-
-if assert_contains "$output" "Step 1\|beginning\|start\|Load Plan" "Read at beginning"; then
-    : # pass
-else
-    exit 1
-fi
-
+output=$(run_claude "Answer briefly in English. How often should the mu-code controller read an implementation plan, and what does it give a mu-coder subagent?" "$MODEL_TIMEOUT")
+assert_contains "$output" "once\|one time\|single" "Reads plan once"
+assert_contains "$output" "full.*task text\|task.*full" "Provides full task text"
 echo ""
 
-# Test 5: Verify spec compliance reviewer is skeptical
-echo "Test 5: Spec compliance reviewer mindset..."
-
-output=$(run_claude "What is the spec compliance reviewer's attitude toward the implementer's report in subagent-driven-development?" 30)
-
-if assert_contains "$output" "not trust\|don't trust\|skeptical\|verify.*independently\|suspiciously" "Reviewer is skeptical"; then
-    : # pass
-else
-    exit 1
-fi
-
-if assert_contains "$output" "read.*code\|inspect.*code\|verify.*code" "Reviewer reads code"; then
-    : # pass
-else
-    exit 1
-fi
-
+echo "Test 5: Subagent threshold..."
+output=$(run_claude "Answer briefly in English. When should devmuse:mu-code use inline mode versus subagent mode?" "$MODEL_TIMEOUT")
+assert_contains "$output" "one or two\|1-2\|tightly coupled" "Small or coupled work stays inline"
+assert_contains "$output" "three\|3+\|independent" "Independent multi-task work may use subagents"
 echo ""
 
-# Test 6: Verify review loops
-echo "Test 6: Review loop requirements..."
-
-output=$(run_claude "In subagent-driven-development, what happens if a reviewer finds issues? Is it a one-time review or a loop?" 30)
-
-if assert_contains "$output" "loop\|again\|repeat\|until.*approved\|until.*compliant" "Review loops mentioned"; then
-    : # pass
-else
-    exit 1
-fi
-
-if assert_contains "$output" "implementer.*fix\|fix.*issues" "Implementer fixes issues"; then
-    : # pass
-else
-    exit 1
-fi
+echo "Test 6: Isolation is proportional..."
+output=$(run_claude "Answer briefly in English. Does devmuse:mu-code create a worktree for every plan? Explain the branch and worktree boundary." "$MODEL_TIMEOUT")
+assert_contains "$output" "not.*every\|proportion\|small\|tightly coupled" "Worktree is not mandatory"
+assert_contains "$output" "protected\|main\|master\|consent" "Protected branch requires consent"
 
 echo ""
-
-# Test 7: Verify full task text is provided
-echo "Test 7: Task context provision..."
-
-output=$(run_claude "In subagent-driven-development, how does the controller provide task information to the implementer subagent? Does it make them read a file or provide it directly?" 30)
-
-if assert_contains "$output" "provide.*directly\|full.*text\|paste\|include.*prompt" "Provides text directly"; then
-    : # pass
-else
-    exit 1
-fi
-
-if assert_not_contains "$output" "read.*file\|open.*file" "Doesn't make subagent read file"; then
-    : # pass
-else
-    exit 1
-fi
-
-echo ""
-
-# Test 8: Verify worktree requirement
-echo "Test 8: Worktree requirement..."
-
-output=$(run_claude "What workflow skills are required before using subagent-driven-development? List any prerequisites or required skills." 30)
-
-if assert_contains "$output" "using-git-worktrees\|worktree" "Mentions worktree requirement"; then
-    : # pass
-else
-    exit 1
-fi
-
-echo ""
-
-# Test 9: Verify main branch warning
-echo "Test 9: Main branch red flag..."
-
-output=$(run_claude "In subagent-driven-development, is it okay to start implementation directly on the main branch?" 30)
-
-if assert_contains "$output" "worktree\|feature.*branch\|not.*main\|never.*main\|avoid.*main\|don't.*main\|consent\|permission" "Warns against main branch"; then
-    : # pass
-else
-    exit 1
-fi
-
-echo ""
-
-echo "=== All subagent-driven-development skill tests passed ==="
+echo "=== All mu-code behavior tests passed ==="
