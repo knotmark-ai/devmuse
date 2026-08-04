@@ -44,7 +44,7 @@ Archetypes: **Role** · **Thing** · **Moment** (has a lifecycle) · **Descripti
 | **Direct lane** | Description | The no-skill route for exact, low-risk, mechanical/reversible/execution-only work | routing rules | — |
 | **Opening move** | Description | The first skill routing selects when work is not Direct | routing rules | — |
 | **Scope path** | Description | The bounded or architectural ceremony selected by mu-scope from Quick Probe evidence | mu-scope | — |
-| **Pipeline Graph** | Description | The single declaration of cross-skill handoffs | `rules/bootstrap.md` | — |
+| **Pipeline Graph** | Description | The single declaration of cross-skill handoffs | `plugin/rules/bootstrap.md` | — |
 | **Core pipeline** | Description | The proportional routes: Direct; bounded mu-scope → mu-code; architectural mu-scope → mu-arch → mu-plan → mu-code → mu-review | — | — |
 | **Orthogonal skill** | Description | An auto-routed skill running outside the pipeline's order | — | — |
 | **On-demand skill** | Description | A skill never auto-routed; slash invocation only | — | — |
@@ -75,7 +75,7 @@ Archetypes: **Role** · **Thing** · **Moment** (has a lifecycle) · **Descripti
 ∴ spine = Artifact
 ```
 
-> This derivation found a hole: **`Artifact` had no entry at all** before 2026-07-31 — the model carried eight concepts *about* artifacts (stance, gates, evidence, living-artifact) without the object they are about. So did `Evidence`, `Control gate`, and `Safety gate`, all three load-bearing in `rules/bootstrap.md`.
+> This derivation found a hole: **`Artifact` had no entry at all** before 2026-07-31 — the model carried eight concepts *about* artifacts (stance, gates, evidence, living-artifact) without the object they are about. So did `Evidence`, `Control gate`, and `Safety gate`, all three load-bearing in `plugin/rules/bootstrap.md`.
 
 **The shape.** Everything DevMuse does is one loop: *a skill authors an artifact, a user approves it, the graph hands it to the next skill as evidence.* Skills are the verbs; the artifact is the noun that persists.
 
@@ -164,9 +164,9 @@ no artifact. TDD inside mu-code remains a safety gate.
 
 A durable work product a skill authors, a user approves, and a downstream skill consumes. Three forms: **dated snapshots** (`docs/scope|specs|plans/YYYY-MM-DD-*.md`) freeze on approval and are never retro-edited; **living artifacts** (`CONTEXT.md`, `docs/wiki/`, spike READMEs) carry no date, update in place, and append a History row per revision. A spike README is the thinnest living artifact: no reviewer loop, since it records an observation rather than a decision — but still approved, because its verdict is what a scope will be built on.
 
-The third form is the **decision record** (`docs/adr/NNNN-*.md`): one global sequence, only ever appended to. Its states map onto this machine exactly — `Proposed` is Drafted, `Accepted` is Approved, and superseding produces a *new* record rather than an edit. What makes it a separate form is that it is **not rebuildable**: the wiki can be regenerated from source, but a rejected alternative leaves no trace in source. See `knowledge/principles/adr.md`.
+The third form is the **decision record** (`docs/adr/NNNN-*.md`): one global sequence, only ever appended to. Its states map onto this machine exactly — `Proposed` is Drafted, `Accepted` is Approved, and superseding produces a *new* record rather than an edit. What makes it a separate form is that it is **not rebuildable**: the wiki can be regenerated from source, but a rejected alternative leaves no trace in source. See `plugin/knowledge/principles/adr.md`.
 
-**Succession** — dated snapshots relate to each other explicitly, since a feature worked twice leaves two of them. An **unconsumed** artifact is revised in place, filename and date unchanged. A **consumed** one is either *superseded* (its decisions replaced) or *extended* (added to without invalidating), with the link written in **both** directions. Which applies is checkable, not a judgment call: a scope is consumed once a spec's Requirements Reference cites it, a plan once any checkbox reads `[x]`. See `knowledge/principles/artifact-succession.md`.
+**Succession** — dated snapshots relate to each other explicitly, since a feature worked twice leaves two of them. An **unconsumed** artifact is revised in place, filename and date unchanged. A **consumed** one is either *superseded* (its decisions replaced) or *extended* (added to without invalidating), with the link written in **both** directions. Which applies is checkable, not a judgment call: a scope is consumed once a spec's Requirements Reference cites it, a plan once any checkbox reads `[x]`. See `plugin/knowledge/principles/artifact-succession.md`.
 
 _Avoid_: document, deliverable, output file
 
@@ -202,7 +202,7 @@ _Avoid_: approval gate, RFC gate
 
 ### Stance
 
-The entry mode a creative skill picks at Phase 0 — `create`, `update` (sub-types expand > gap-fill > sync), `extract`, or `skip` — produced by the deterministic detection algorithm in `knowledge/principles/stance-detection.md` and overridable in one word. It is a **function of the artifact's state**, not of the task's phrasing (see §4).
+The entry mode a creative skill picks at Phase 0 — `create`, `update` (sub-types expand > gap-fill > sync), `extract`, or `skip` — produced by the deterministic detection algorithm in `plugin/knowledge/principles/stance-detection.md` and overridable in one word. It is a **function of the artifact's state**, not of the task's phrasing (see §4).
 
 _Avoid_: mode, entry state
 
@@ -240,7 +240,7 @@ _Avoid_: depth level, task size
 
 ### Pipeline Graph
 
-The single declaration of cross-skill handoffs, in `rules/bootstrap.md`: skills announce completion, the graph names the successor; edges consume evidence, not file paths.
+The single declaration of cross-skill handoffs, in `plugin/rules/bootstrap.md`: skills announce completion, the graph names the successor; edges consume evidence, not file paths.
 
 _Avoid_: terminal chain, hardwired terminal
 
@@ -336,4 +336,4 @@ _Avoid_: skill SEO, discoverability tuning
 | 2026-04-14 | `108f3f6` | mu-design renamed **mu-arch** (hook straggler fixed in `304043d`). Dated plan snapshots keep the old name as history. |
 | 2026-08-01 | — (uncommitted) | **Decision record** added as the Artifact's third form (`docs/adr/`) — states map onto the existing machine, but it is not rebuildable from source, which is what separates it from the wiki. Spike READMEs added to the living form. |
 | 2026-08-01 | — (uncommitted) | **Succession** added to the Artifact entry, and `Superseded` added to its machine as a state reachable from `Frozen`. Frozen was previously terminal, which left no way to say "this snapshot is still immutable but no longer the one to read". Driven by measurement: one feature in a real repo carried four spec files with zero links between them. |
-| 2026-07-31 | `c6a4a60` | Restructured from glossary to domain model (7 sections). Spine derived: **Artifact**. Added four load-bearing concepts the glossary had never carried — `Artifact`, `Evidence`, `Control gate`, `Safety gate` — all three of the latter already load-bearing in `rules/bootstrap.md`. Stance re-stated as a function of artifact state rather than of task phrasing. |
+| 2026-07-31 | `c6a4a60` | Restructured from glossary to domain model (7 sections). Spine derived: **Artifact**. Added four load-bearing concepts the glossary had never carried — `Artifact`, `Evidence`, `Control gate`, `Safety gate` — all three of the latter already load-bearing in `plugin/rules/bootstrap.md`. Stance re-stated as a function of artifact state rather than of task phrasing. |

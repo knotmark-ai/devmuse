@@ -4,11 +4,15 @@
 
 ```
 devmuse/
-├── rules/        "What must be followed" — always-on principles
-├── skills/       "What to do" — user-triggered workflows (/mu-xxx)
-├── agents/       "Who does it" — independent roles dispatched by skills
-└── knowledge/    "How to do it" — domain knowledge injected on demand
+└── plugin/       Runtime distribution boundary
+    ├── rules/        "What must be followed" — always-on principles
+    ├── skills/       "What to do" — user-triggered workflows (/mu-xxx)
+    ├── agents/       "Who does it" — independent roles dispatched by skills
+    └── knowledge/    "How to do it" — domain knowledge injected on demand
 ```
+
+Layer paths below are relative to `plugin/`. Repository-only documentation and
+tests stay outside this boundary and are not copied into the installed plugin.
 
 ## Layer Classification
 
@@ -37,8 +41,8 @@ All four layers work through plugin installation (`claude plugin add`), no manua
 
 | Directory | Plugin auto-discovery | Mechanism |
 |-----------|-------------|------|
-| skills/ | ✅ | plugin.json declares, Claude Code discovers SKILL.md |
-| agents/ | ✅ | plugin.json lists each agent file explicitly |
+| skills/ | ✅ | Standard plugin-root directory; Claude Code discovers SKILL.md |
+| agents/ | ✅ | Standard plugin-root directory; Claude Code discovers agent files |
 | hooks/hooks.json | ✅ | Convention-based auto-load (not declared in plugin.json) |
 | knowledge/ | ❌ | Not auto-discovered; referenced via `@` relative paths |
 | rules/ | ❌ | Not natively supported; loaded via SessionStart hook |
@@ -153,14 +157,12 @@ rules ──constrain──→ all layers
 
 ```json
 {
-  "agents": [
-    "./agents/mu-reviewer.md",
-    "./agents/mu-coder.md"
-  ],
-  "skills": ["./skills/"]
+  "name": "devmuse"
 }
 ```
 
-(Version field omitted here — see `.claude-plugin/plugin.json` for the current release.)
+(Version field omitted here — see `plugin/.claude-plugin/plugin.json` for the current release.)
 
-`hooks/hooks.json` is auto-loaded by convention (Claude Code v2.1+), not declared in plugin.json.
+Skills, agents, and `hooks/hooks.json` are auto-loaded from their standard
+plugin-root locations, so the manifest contains metadata rather than a second
+component inventory that can drift.

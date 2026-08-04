@@ -9,7 +9,7 @@ This test suite verifies that skills are loaded correctly and Claude follows the
 ## Requirements
 
 - Claude Code CLI installed and in PATH (`claude --version` should work)
-- Local devmuse plugin installed (see main README for installation)
+- The repository's local `plugin/` directory (loaded automatically by the test helper)
 
 ## Running Tests
 

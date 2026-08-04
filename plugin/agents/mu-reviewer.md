@@ -1,6 +1,6 @@
 ---
 name: mu-reviewer
-description: Five-mode review specialist: design docs (review-design), implementation plans (review-plan), code quality (review-code), requirements coverage (review-coverage), and security (review-security). Dispatched by skills with mode instructions.
+description: "Five-mode review specialist: design docs (review-design), implementation plans (review-plan), code quality (review-code), requirements coverage (review-coverage), and security (review-security). Dispatched by skills with mode instructions."
 tools: Read, Grep, Glob, Bash
 model: opus
 ---

@@ -89,10 +89,13 @@ DevMuse 是一个软件工程工作流工具。它按风险与未知程度路由
 
 ```
 devmuse/
-├── rules/        始终生效的原则（通过 SessionStart hook 加载）
-├── skills/       用户触发的工作流（/mu-xxx）
-├── agents/       独立角色（被 skill 派遣）
-└── knowledge/    领域知识（按需注入）
+├── plugin/       安装时复制进 Claude Code 缓存的运行时内容
+│   ├── rules/        始终生效的原则（通过 SessionStart hook 加载）
+│   ├── skills/       用户触发的工作流（/mu-xxx）
+│   ├── agents/       独立角色（被 skill 派遣）
+│   └── knowledge/    领域知识（按需注入）
+├── docs/         仓库文档，不进入已安装插件
+└── tests/        开发测试，不进入已安装插件
 ```
 
 ### 技能
@@ -153,7 +156,7 @@ devmuse/
 无需安装，直接从本地目录加载插件：
 
 ```bash
-claude --plugin-dir /path/to/devmuse
+claude --plugin-dir /path/to/devmuse/plugin
 ```
 
 修改代码后无需重启，在会话中刷新：
@@ -165,7 +168,7 @@ claude --plugin-dir /path/to/devmuse
 可选：添加 shell alias 方便日常使用：
 
 ```bash
-alias claude-dev='claude --plugin-dir /path/to/devmuse'
+alias claude-dev='claude --plugin-dir /path/to/devmuse/plugin'
 ```
 
 ## 更新

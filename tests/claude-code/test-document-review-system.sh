@@ -82,7 +82,7 @@ OUTPUT_FILE="$TEST_PROJECT/claude-output.txt"
 
 PROMPT="You are testing the spec document reviewer.
 
-Read the spec-document-reviewer-prompt.md template in skills/mu-arch/ to understand the review format.
+Read the spec-document-reviewer-prompt.md template in plugin/skills/mu-arch/ to understand the review format.
 
 Then review the spec at $TEST_PROJECT/docs/devmuse/specs/test-feature-design.md using the criteria from that template.
 
@@ -94,7 +94,7 @@ Look for:
 Output your review in the format specified in the template."
 
 echo "================================================================================"
-cd "$SCRIPT_DIR/../.." && ${TO:+$TO 120} claude -p "$PROMPT" --permission-mode bypassPermissions 2>&1 | tee "$OUTPUT_FILE" || {
+cd "$SCRIPT_DIR/../.." && ${TO:+$TO 120} claude -p "$PROMPT" --plugin-dir "$SCRIPT_DIR/../../plugin" --permission-mode bypassPermissions 2>&1 | tee "$OUTPUT_FILE" || {
     echo ""
     echo "================================================================================"
     echo "EXECUTION FAILED (exit code: $?)"

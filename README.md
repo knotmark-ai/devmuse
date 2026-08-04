@@ -89,10 +89,13 @@ Routing lives in the always-on bootstrap rule. It first excludes out-of-domain m
 
 ```
 devmuse/
-├── rules/        Always-on principles (loaded via SessionStart hook)
-├── skills/       User-triggered workflows (/mu-xxx)
-├── agents/       Independent roles (dispatched by skills)
-└── knowledge/    Domain knowledge (injected on demand)
+├── plugin/       Runtime copied into Claude Code's plugin cache
+│   ├── rules/        Always-on principles (loaded via SessionStart hook)
+│   ├── skills/       User-triggered workflows (/mu-xxx)
+│   ├── agents/       Independent roles (dispatched by skills)
+│   └── knowledge/    Domain knowledge (injected on demand)
+├── docs/         Repository documentation; not part of the installed plugin
+└── tests/        Development tests; not part of the installed plugin
 ```
 
 ### Skills
@@ -163,7 +166,7 @@ Skills marked 🧪 carry a path that has not been exercised on real projects yet
 Load the plugin directly from a local directory without installation:
 
 ```bash
-claude --plugin-dir /path/to/devmuse
+claude --plugin-dir /path/to/devmuse/plugin
 ```
 
 After making changes, reload without restarting:
@@ -175,7 +178,7 @@ After making changes, reload without restarting:
 Optionally add a shell alias for convenience:
 
 ```bash
-alias claude-dev='claude --plugin-dir /path/to/devmuse'
+alias claude-dev='claude --plugin-dir /path/to/devmuse/plugin'
 ```
 
 ## Updating

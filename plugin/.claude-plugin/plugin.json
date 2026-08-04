@@ -1,17 +1,12 @@
 {
   "name": "devmuse",
   "description": "Core workflow plugin for Claude Code: scope, design, plan, code, review, debug",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "author": {
     "name": "KnotMark AI"
   },
   "homepage": "https://github.com/knotmark-ai/devmuse",
   "repository": "https://github.com/knotmark-ai/devmuse",
   "license": "MIT",
-  "keywords": ["skills", "tdd", "debugging", "collaboration", "best-practices", "workflows"],
-  "agents": [
-    "./agents/mu-reviewer.md",
-    "./agents/mu-coder.md"
-  ],
-  "skills": ["./skills/"]
+  "keywords": ["skills", "tdd", "debugging", "collaboration", "best-practices", "workflows"]
 }

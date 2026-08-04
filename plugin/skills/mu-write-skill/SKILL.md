@@ -29,7 +29,7 @@ Skill type determines test strategy (see Testing below): **technique** (concrete
 
 ## Structure
 
-DevMuse skills live under `skills/<name>/` in this repo; personal (non-plugin) skills go in `~/.claude/skills`. Each skill is one folder: `SKILL.md` plus supporting files only for reusable tools (scripts, templates) or reference disclosed per the branch test (see Skill Quality Review).
+DevMuse skills live under `plugin/skills/<name>/` in this repo; personal (non-plugin) skills go in `~/.claude/skills`. Each skill is one folder: `SKILL.md` plus supporting files only for reusable tools (scripts, templates) or reference disclosed per the branch test (see Skill Quality Review).
 
 **Frontmatter (YAML), max 1024 characters:**
 - Fields: `name`, `description`, and optionally `disable-model-invocation: true` (user-invoked skills — see the invocation-match test in Skill Quality Review)

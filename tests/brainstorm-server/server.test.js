@@ -15,7 +15,7 @@ const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
 
-const SERVER_PATH = path.join(__dirname, '../../skills/mu-arch/scripts/server.cjs');
+const SERVER_PATH = path.join(__dirname, '../../plugin/skills/mu-arch/scripts/server.cjs');
 const TEST_PORT = 3334;
 const TEST_DIR = '/tmp/brainstorm-test';
 
@@ -118,7 +118,7 @@ async function runTests() {
     await test('serves waiting page when no screens exist', async () => {
       const res = await fetch(`http://localhost:${TEST_PORT}/`);
       assert.strictEqual(res.status, 200);
-      assert(res.body.includes('Waiting for Claude'), 'Should show waiting message');
+      assert(res.body.includes('Waiting for the agent'), 'Should show waiting message');
     });
 
     await test('injects helper.js into waiting page', async () => {
@@ -384,7 +384,7 @@ async function runTests() {
 
     await test('helper.js defines required APIs', () => {
       const helperContent = fs.readFileSync(
-        path.join(__dirname, '../../skills/mu-arch/scripts/helper.js'), 'utf-8'
+        path.join(__dirname, '../../plugin/skills/mu-arch/scripts/helper.js'), 'utf-8'
       );
       assert(helperContent.includes('toggleSelect'), 'Should define toggleSelect');
       assert(helperContent.includes('sendEvent'), 'Should define sendEvent');
@@ -398,7 +398,7 @@ async function runTests() {
 
     await test('frame template has required structure', () => {
       const template = fs.readFileSync(
-        path.join(__dirname, '../../skills/mu-arch/scripts/frame-template.html'), 'utf-8'
+        path.join(__dirname, '../../plugin/skills/mu-arch/scripts/frame-template.html'), 'utf-8'
       );
       assert(template.includes('indicator-bar'), 'Should have indicator bar');
       assert(template.includes('indicator-text'), 'Should have indicator text');

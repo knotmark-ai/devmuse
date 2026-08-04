@@ -5,11 +5,25 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
+resolve_path() {
+    local file="$1"
+    case "$file" in
+        rules/*|skills/*|agents/*|knowledge/*|hooks/*)
+            printf '%s/plugin/%s\n' "$ROOT_DIR" "$file"
+            ;;
+        *)
+            printf '%s/%s\n' "$ROOT_DIR" "$file"
+            ;;
+    esac
+}
+
 assert_contains() {
     local file="$1"
     local pattern="$2"
+    local path
+    path="$(resolve_path "$file")"
 
-    if ! grep -Fq "$pattern" "$ROOT_DIR/$file"; then
+    if ! grep -Fq "$pattern" "$path"; then
         echo "FAIL: $file is missing: $pattern"
         return 1
     fi
@@ -18,8 +32,10 @@ assert_contains() {
 assert_absent() {
     local file="$1"
     local pattern="$2"
+    local path
+    path="$(resolve_path "$file")"
 
-    if grep -Fq "$pattern" "$ROOT_DIR/$file"; then
+    if grep -Fq "$pattern" "$path"; then
         echo "FAIL: $file still contains: $pattern"
         return 1
     fi
@@ -27,12 +43,33 @@ assert_absent() {
 
 assert_file_absent() {
     local file="$1"
+    local path
+    path="$(resolve_path "$file")"
 
-    if [[ -e "$ROOT_DIR/$file" ]]; then
+    if [[ -e "$path" ]]; then
         echo "FAIL: retired file still exists: $file"
         return 1
     fi
 }
+
+assert_repo_file_absent() {
+    local file="$1"
+
+    if [[ -e "$ROOT_DIR/$file" ]]; then
+        echo "FAIL: runtime path escaped plugin boundary: $file"
+        return 1
+    fi
+}
+
+# Distribution boundary: marketplace metadata stays at repository root while
+# Claude Code copies only plugin/ into its installed plugin cache.
+assert_contains ".claude-plugin/marketplace.json" '"source": "./plugin"'
+assert_contains "plugin/.claude-plugin/plugin.json" '"name": "devmuse"'
+assert_repo_file_absent "rules"
+assert_repo_file_absent "skills"
+assert_repo_file_absent "agents"
+assert_repo_file_absent "knowledge"
+assert_repo_file_absent "hooks"
 
 # Entry eligibility: execution-only work must be able to avoid the skill pipeline.
 assert_contains "rules/bootstrap.md" "Direct lane"

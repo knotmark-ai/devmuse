@@ -25,8 +25,9 @@ fi
 
 # Get the directory where this script lives
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Get the devmuse plugin root (two levels up)
-PLUGIN_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# The repository keeps runtime plugin files under plugin/.
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PLUGIN_DIR="$REPO_ROOT/plugin"
 
 TIMESTAMP=$(date +%s)
 OUTPUT_DIR="/tmp/devmuse-tests/${TIMESTAMP}/explicit-skill-requests/${SKILL_NAME}"

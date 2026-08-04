@@ -9,8 +9,8 @@
     {
       "name": "devmuse",
       "description": "Core workflow plugin for Claude Code: scope, design, plan, code, review, debug",
-      "version": "2.0.0",
-      "source": "./",
+      "version": "2.1.0",
+      "source": "./plugin",
       "author": {
         "name": "KnotMark AI"
       },

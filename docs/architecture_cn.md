@@ -4,11 +4,15 @@
 
 ```
 devmuse/
-├── rules/        "必须遵守什么" — 始终生效的原则
-├── skills/       "做什么" — 用户触发的工作流（/mu-xxx）
-├── agents/       "谁来做" — 独立角色，被 skill 派遣
-└── knowledge/    "怎么做/参考什么" — 按需注入的领域知识
+└── plugin/       运行时分发边界
+    ├── rules/        "必须遵守什么" — 始终生效的原则
+    ├── skills/       "做什么" — 用户触发的工作流（/mu-xxx）
+    ├── agents/       "谁来做" — 独立角色，被 skill 派遣
+    └── knowledge/    "怎么做/参考什么" — 按需注入的领域知识
 ```
+
+下文的分层路径均相对于 `plugin/`。仓库文档和测试留在该边界之外，安装时
+不会复制进插件缓存。
 
 ## 分层判断标准
 
@@ -37,8 +41,8 @@ devmuse/
 
 | 目录 | 插件自动发现 | 机制 |
 |-----------|-------------|------|
-| skills/ | ✅ | plugin.json 声明，Claude Code 自动发现 SKILL.md |
-| agents/ | ✅ | plugin.json 显式列出每个 agent 文件 |
+| skills/ | ✅ | 插件根目录标准路径，Claude Code 自动发现 SKILL.md |
+| agents/ | ✅ | 插件根目录标准路径，Claude Code 自动发现 agent 文件 |
 | hooks/hooks.json | ✅ | 约定自动加载（不需要在 plugin.json 声明） |
 | knowledge/ | ❌ | 不自动发现，被 skill/agent 通过 `@` 相对路径引用 |
 | rules/ | ❌ | 插件不原生支持，通过 SessionStart hook 加载 |
@@ -151,14 +155,11 @@ rules ──约束──→ 所有层
 
 ```json
 {
-  "agents": [
-    "./agents/mu-reviewer.md",
-    "./agents/mu-coder.md"
-  ],
-  "skills": ["./skills/"]
+  "name": "devmuse"
 }
 ```
 
-（此处省略版本号字段——当前版本见 `.claude-plugin/plugin.json`。）
+（此处省略版本号字段——当前版本见 `plugin/.claude-plugin/plugin.json`。）
 
-`hooks/hooks.json` 由 Claude Code v2.1+ 约定自动加载，不需要在 plugin.json 中声明。
+Skills、agents 与 `hooks/hooks.json` 都从插件根目录的标准路径自动加载，
+因此 manifest 只保存元数据，不再维护一份容易漂移的组件清单。
