@@ -25,7 +25,28 @@ DevMuse adds value where a host needs product framing, risk classification, trac
 - Hermes keeps plugin skills out of its startup index by default. This preserves its progressive-disclosure and learning model instead of loading a second global workflow.
 - Claude keeps the full bootstrap because it is the only adapter whose routing, subagents, and guard hook are currently behavior-tested in this repository.
 
-These defaults are intentionally conservative. The remaining product decision is tracked in [#50](https://github.com/knotmark-ai/devmuse/issues/50).
+These defaults are intentionally conservative. Automatic `mu-code` takeover is
+contract-gated; explicit invocation remains available for users who want to
+resume or override routing deliberately.
+
+## Safety boundary
+
+DevMuse does not promise cross-host parity for its Claude destructive-command
+guard. Tool hooks are guardrails, while the host's sandbox, approval policy,
+tool permissions, and administrator policy remain the enforcement boundary.
+
+| Host | DevMuse default | Reason |
+|---|---|---|
+| Claude Code | Ships the tested `PreToolUse` warning guard | Claude can turn the guard's `ask` decision into a user prompt; native permissions still apply afterward |
+| Codex | Ships no duplicate guard | Native sandbox and approvals are authoritative; `PreToolUse` can deny a call but cannot currently request approval, so copying the Claude response would fail open |
+| Gemini CLI | Ships no policy override | Its native policy engine already supports `allow`, `deny`, and `ask_user`; an extension should not silently install user or administrator policy |
+| OpenClaw | Ships no native hook pack | `before_tool_call` can request approval, but existing sandbox, execution approval, owner, and channel policies still apply |
+| Hermes Agent | Ships no guard hook | `pre_tool_call` can block but cannot reproduce a warning-and-confirm flow |
+
+A future safety pack must be separately opted into, use the host's native policy
+format, never grant past host policy, and include behavior tests for safe,
+warning, denial, malformed-input, and non-interactive cases. It must also state
+its actual coverage instead of implying that every tool path is intercepted.
 
 ## Install
 
@@ -75,7 +96,7 @@ For local development, link the runtime directory:
 openclaw plugins install --link /absolute/path/to/devmuse/plugin
 ```
 
-OpenClaw maps skills, but it only detects Claude `agents/` and `hooks/hooks.json`; it does not execute them. DevMuse therefore relies on OpenClaw's native safety and agent facilities. Cross-host guard parity is tracked in [#48](https://github.com/knotmark-ai/devmuse/issues/48).
+OpenClaw maps skills, but it only detects Claude `agents/` and `hooks/hooks.json`; it does not execute them. DevMuse therefore relies on OpenClaw's native safety and agent facilities, as defined in the safety boundary above.
 
 ### Hermes Agent CLI and Desktop
 
@@ -150,8 +171,12 @@ Claude and Codex marketplace installs can select only the runtime subtree. Herme
 
 - [Agent Skills specification](https://agentskills.io/specification)
 - [Codex and ChatGPT plugin packaging](https://developers.openai.com/plugins/build/plugins)
+- [Codex hooks](https://developers.openai.com/codex/config-advanced/#hooks)
 - [OpenClaw compatible plugin bundles](https://docs.openclaw.ai/plugins/bundles)
+- [OpenClaw plugin hooks](https://docs.openclaw.ai/plugins/hooks)
 - [Hermes Agent skills](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills/)
 - [Hermes Agent plugins](https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins/)
+- [Hermes Agent event hooks](https://hermes-agent.nousresearch.com/docs/user-guide/features/hooks/)
 - [Gemini CLI extension format](https://github.com/google-gemini/gemini-cli/blob/main/docs/extensions/reference.md)
+- [Gemini CLI policy engine](https://geminicli.com/docs/reference/policy-engine/)
 - [GitHub Copilot Agent Skills](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills)

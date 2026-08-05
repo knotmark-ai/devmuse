@@ -142,7 +142,7 @@ devmuse/
 
 | Hook | Trigger | Role |
 |------|---------|------|
-| **destructive-guard** | Bash | Warns before destructive commands (rm -rf, git push -f, DROP TABLE, git reset --hard). Allows known-safe patterns. |
+| **destructive-guard** | Bash (Claude Code only) | Warns before destructive commands (rm -rf, git push -f, DROP TABLE, git reset --hard). Other hosts keep their native safety policy authoritative. |
 
 ### Knowledge
 

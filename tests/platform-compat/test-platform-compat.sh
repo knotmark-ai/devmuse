@@ -129,7 +129,17 @@ rg -q 'generic specification.*is not enough' "$CODEX_ROOT/skills/mu-code/SKILL.m
 
 rg -q 'native `/plan`' "$CODEX_ROOT/HOST_POLICY.md" || fail "Codex policy must prefer native /plan"
 rg -q 'native `/review`' "$CODEX_ROOT/HOST_POLICY.md" || fail "Codex policy must prefer native /review"
+rg -q 'sandbox, approval, and administrator policy authoritative' "$CODEX_ROOT/HOST_POLICY.md" \
+  || fail "Codex policy must keep native safety authoritative"
+[[ ! -e "$CODEX_ROOT/hooks" ]] || fail "Codex adapter must not bundle a duplicate safety hook"
 rg -q 'native Plan Mode' "$CLAUDE_ROOT/GEMINI.md" || fail "Gemini policy must prefer native Plan Mode"
+rg -q "policy engine and approval mode authoritative" "$CLAUDE_ROOT/GEMINI.md" \
+  || fail "Gemini policy must keep native safety authoritative"
+rg -q 'does not promise cross-host parity' "$ROOT/docs/platform-support.md" \
+  || fail "platform docs must define the cross-host safety boundary"
+if rg -q 'register_hook' "$ROOT/__init__.py"; then
+  fail "Hermes adapter must not register an implicit safety hook"
+fi
 
 python3 - "$ROOT/__init__.py" <<'PY'
 import importlib.util

@@ -142,7 +142,7 @@ devmuse/
 
 | 钩子 | 触发时机 | 角色 |
 |------|----------|------|
-| **destructive-guard** | Bash | 在执行破坏性命令（rm -rf、git push -f、DROP TABLE、git reset --hard）前发出警告。允许已知安全模式。 |
+| **destructive-guard** | Bash（仅 Claude Code） | 在执行破坏性命令（rm -rf、git push -f、DROP TABLE、git reset --hard）前发出警告；其他宿主以各自原生安全策略为权威。 |
 
 ### 知识
 

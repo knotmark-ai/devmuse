@@ -25,7 +25,22 @@ DevMuse 的价值在于产品澄清、风险分类、可追溯架构、系统化
 - Hermes 默认不把插件技能塞进启动索引，保留其渐进加载和学习模型。
 - Claude 保留完整 bootstrap，因为目前只有该适配层的路由、子 Agent 和防破坏 hook 在本仓库中经过行为测试。
 
-后续是否调整这些默认值，记录在 [#50](https://github.com/knotmark-ai/devmuse/issues/50)。
+这些默认值刻意保持保守。`mu-code` 的自动接棒受 contract 门控；需要恢复流程或主动覆盖路由时，用户仍可显式调用。
+
+## 安全边界
+
+DevMuse 不承诺让 Claude 的防破坏命令 guard 在所有宿主上行为一致。Tool hook
+只是辅助护栏；真正的强制边界仍是宿主的 sandbox、审批策略、工具权限和管理员策略。
+
+| 宿主 | DevMuse 默认行为 | 原因 |
+|---|---|---|
+| Claude Code | 随包提供经过测试的 `PreToolUse` 警告 guard | Claude 可把 guard 的 `ask` 决策转换为用户确认；确认后仍受原生权限约束 |
+| Codex | 不附加重复 guard | 原生 sandbox 与审批保持权威；`PreToolUse` 可以拒绝调用，但目前不能请求审批，直接复制 Claude 返回值会失败后继续执行 |
+| Gemini CLI | 不覆盖原生策略 | 原生 policy engine 已支持 `allow`、`deny`、`ask_user`；extension 不应静默安装用户或管理员策略 |
+| OpenClaw | 不附加原生 hook pack | `before_tool_call` 可以请求审批，但现有 sandbox、执行审批、owner 与 channel 策略仍会继续生效 |
+| Hermes Agent | 不附加 guard hook | `pre_tool_call` 可以阻止工具，但不能复现“警告后确认”的交互 |
+
+未来若提供安全包，必须由用户独立选择安装、采用宿主原生策略格式、绝不越过宿主策略授权，并覆盖安全命令、警告、拒绝、畸形输入和非交互模式的行为测试。文档还必须准确说明覆盖范围，不能暗示所有工具路径都能被拦截。
 
 ## 安装
 
@@ -75,7 +90,7 @@ openclaw gateway restart
 openclaw plugins install --link /absolute/path/to/devmuse/plugin
 ```
 
-OpenClaw 会映射 skills，但只检测 Claude `agents/` 和 `hooks/hooks.json`，不会执行它们。因此 DevMuse 依赖 OpenClaw 原生安全与 agent 能力。跨宿主 guard 设计记录在 [#48](https://github.com/knotmark-ai/devmuse/issues/48)。
+OpenClaw 会映射 skills，但只检测 Claude `agents/` 和 `hooks/hooks.json`，不会执行它们。因此 DevMuse 依赖上文安全边界中定义的 OpenClaw 原生安全与 agent 能力。
 
 ### Hermes Agent CLI 与 Desktop
 
@@ -149,8 +164,12 @@ Claude 与 Codex marketplace 可以只获取运行时子树；Hermes 的 Git 安
 
 - [Agent Skills 规范](https://agentskills.io/specification)
 - [Codex 与 ChatGPT 插件打包](https://developers.openai.com/plugins/build/plugins)
+- [Codex hooks](https://developers.openai.com/codex/config-advanced/#hooks)
 - [OpenClaw compatible bundles](https://docs.openclaw.ai/plugins/bundles)
+- [OpenClaw plugin hooks](https://docs.openclaw.ai/plugins/hooks)
 - [Hermes Agent skills](https://hermes-agent.nousresearch.com/docs/user-guide/features/skills/)
 - [Hermes Agent plugins](https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins/)
+- [Hermes Agent event hooks](https://hermes-agent.nousresearch.com/docs/user-guide/features/hooks/)
 - [Gemini CLI extension 格式](https://github.com/google-gemini/gemini-cli/blob/main/docs/extensions/reference.md)
+- [Gemini CLI policy engine](https://geminicli.com/docs/reference/policy-engine/)
 - [GitHub Copilot Agent Skills](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/add-skills)
