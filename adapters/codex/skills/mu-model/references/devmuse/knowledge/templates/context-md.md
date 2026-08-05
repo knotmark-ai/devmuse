@@ -77,7 +77,7 @@ One diagram — who connects to whom, what flows where — then the §2 example 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> <State>: <trigger>
+    [*] --> ExampleState: exampleEvent
 ```
 
 **Domain guarantees** — constraints that must hold beyond the transitions themselves:

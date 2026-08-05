@@ -5,7 +5,13 @@
   "main": "plugin/hooks/session-start",
   "scripts": {
     "build:adapters": "node scripts/build-platform-adapters.mjs",
-    "test:platforms": "bash tests/platform-compat/test-platform-compat.sh"
+    "test:generated": "node scripts/check-generated-drift.mjs",
+    "test:platforms": "bash tests/platform-compat/test-platform-compat.sh",
+    "test:skills": "node tests/skill-validation/run-test.mjs && node scripts/validate-skills.mjs",
+    "test:routing": "bash tests/routing-policy/test-routing-policy.sh",
+    "test:hooks": "bash tests/hooks/test-destructive-guard.sh && bash tests/hooks/test-user-prompt-submit.sh",
+    "test:mermaid": "node tests/mermaid-compat/run-test.mjs && node scripts/check-mermaid-compat.mjs plugin adapters/codex",
+    "test:token-benchmark": "node tests/token-benchmark/run-test.mjs"
   },
   "files": ["plugin/", "adapters/codex/", "plugin.yaml", "__init__.py"]
 }

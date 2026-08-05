@@ -144,7 +144,7 @@ When triggered, build the model per references/devmuse/knowledge/principles/stat
 
 ### 4. Visual Companion
 
-For screen/layout questions, offer the Visual Companion (same pattern as mu-arch). Accept → browser-based wireframing. Decline → mermaid/ASCII in the doc.
+For screen/layout questions, offer the Visual Companion (same pattern as mu-arch). Accept → browser-based wireframing. Decline → Mermaid/ASCII in the doc. Before writing Mermaid, read references/devmuse/knowledge/principles/mermaid-compat.md and use ASCII when that subset is insufficient.
 
 ### 5. Write artifact
 

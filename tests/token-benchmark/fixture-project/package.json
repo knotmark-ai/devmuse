@@ -1,0 +1,8 @@
+{
+  "name": "devmuse-token-fixture",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}

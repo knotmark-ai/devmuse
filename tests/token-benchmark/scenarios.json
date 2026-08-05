@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "scenarios": [
+    {
+      "id": "fixed-vanilla",
+      "kind": "baseline",
+      "plugin": false,
+      "turns": [
+        "Reply exactly READY. Do not inspect files or use tools."
+      ]
+    },
+    {
+      "id": "fixed-devmuse",
+      "kind": "baseline",
+      "plugin": true,
+      "compareTo": "fixed-vanilla",
+      "turns": [
+        "Reply exactly READY. Do not inspect files or use tools."
+      ]
+    },
+    {
+      "id": "task-vanilla",
+      "kind": "bounded-task",
+      "plugin": false,
+      "baseline": "fixed-vanilla",
+      "turns": [
+        "Implement this approved bounded contract: normalizeLabel must trim leading and trailing whitespace, lowercase the result, throw TypeError for non-string input, add node:test coverage, add no dependencies, and verify with node --test. Complete it end to end."
+      ]
+    },
+    {
+      "id": "task-devmuse",
+      "kind": "bounded-task",
+      "plugin": true,
+      "baseline": "fixed-devmuse",
+      "compareTo": "task-vanilla",
+      "turns": [
+        "Implement this approved bounded contract: normalizeLabel must trim leading and trailing whitespace, lowercase the result, throw TypeError for non-string input, add node:test coverage, add no dependencies, and verify with node --test. Complete it end to end."
+      ]
+    },
+    {
+      "id": "pipeline-devmuse",
+      "kind": "architectural-pipeline",
+      "plugin": true,
+      "baseline": "fixed-devmuse",
+      "turns": [
+        "/mu-scope Add off, shadow, and enforce operation modes. Shadow is the default, evaluates the same rule without blocking, and records would-block events through a replaceable asynchronous observer. Preserve the public boolean return type, add no dependencies, and keep observer failure from changing the decision. These decisions are settled; create the scope evidence and stop for approval.",
+        "I approve the scope. Invoke mu-arch, design the smallest architecture that satisfies it, and stop for approval.",
+        "I approve the architecture. Invoke mu-plan, write the implementation plan, and stop for approval.",
+        "I approve the plan. Invoke mu-code, implement it fully, run verification, and complete the final mu-review."
+      ]
+    }
+  ]
+}

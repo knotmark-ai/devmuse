@@ -20,7 +20,7 @@
 
 ### Container Level
 - Which services, databases, message queues are involved?
-- Architecture diagram (Mermaid) with change overlay (➕/✏️/➖)
+- Architecture diagram (Mermaid compatibility subset or ASCII) with change overlay (➕/✏️/➖)
 
 ### Component Level
 - Within each affected container, which modules/classes are touched?

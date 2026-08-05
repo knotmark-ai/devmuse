@@ -11,6 +11,10 @@ tests/
 ├── routing-policy/          Static routing, duplication, and artifact-owner contract
 ├── hooks/                   Deterministic hook tests
 ├── platform-compat/         Generated adapter, manifest, and host-policy contracts
+├── mermaid-compat/          Strict Mermaid authoring subset checks
+├── skill-validation/        Skill metadata and description-budget checks
+├── task-transition/         Live inspect-to-design routing regression
+├── token-benchmark/         Repeatable vanilla/DevMuse usage measurement
 ├── skill-triggering/        Live automatic-invocation probes
 ├── explicit-skill-requests/ Live explicit-invocation probes for current skills
 ├── claude-code/             Live mu-code behavior/documentation checks
@@ -24,8 +28,11 @@ tests/
 ```bash
 npm run build:adapters
 npm run test:platforms
-bash tests/routing-policy/test-routing-policy.sh
-bash tests/hooks/test-destructive-guard.sh
+npm run test:skills
+npm run test:routing
+npm run test:hooks
+npm run test:mermaid
+npm run test:token-benchmark
 git diff --check
 ```
 
@@ -88,13 +95,19 @@ the retired per-task reviewer fan-out.
 ## Token Analysis
 
 ```bash
-python3 tests/claude-code/analyze-token-usage.py \
-  ~/.claude/projects/<project-dir>/<session-id>.jsonl
+bash tests/token-benchmark/run-benchmark.sh
 ```
 
-Record fixed startup/context cost separately from task execution cost. A routing
-change regresses when it loads a workflow or creates an artifact without a
-trigger, even if the final code is correct.
+The benchmark pairs vanilla and DevMuse fixed baselines, runs the same bounded
+task with and without the plugin, and includes a manual-cost architectural
+pipeline from scope through review. It reports provider result-event tokens and
+baseline-subtracted task traffic without hard-coding prices. See
+`tests/token-benchmark/README.md` for repetitions, filters, and interpretation.
+
+`tests/claude-code/analyze-token-usage.py` remains available for legacy Claude
+session files. Use the benchmark for comparisons: a routing change regresses
+when it loads a workflow or creates an artifact without a trigger, even if the
+final code is correct.
 
 ## Test Authoring Rules
 

@@ -157,7 +157,7 @@ digraph mu_design {
 
 - Choose the right diagram type for this project (C1/C2/C3/DFD — see the "Diagram Type by Project Type" table)
 - Show the **current** relevant architecture, then overlay the **proposed changes** (mark additions ➕, modifications ✏️, removals ➖)
-- Use Mermaid format (renders on GitHub); fall back to ASCII if Mermaid isn't practical
+- Before writing Mermaid, read references/devmuse/knowledge/principles/mermaid-compat.md and use its compatibility subset; fall back to ASCII when the subset is insufficient
 - **Skip if** the Quick Probe showed "1 component affected, no boundaries crossed, no new components" — a brief text description suffices for small changes
 
 **Functional design (detail by C4 component):**

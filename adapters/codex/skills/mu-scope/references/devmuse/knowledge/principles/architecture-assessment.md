@@ -25,7 +25,7 @@ Use only the levels that add clarity. Most projects need 1-2 levels, not all 4.
 
 ```mermaid
 graph TB
-    User["👤 User"] --> System["🔷 Our System"]
+    User["👤 User"] -->|"uses"| System["🔷 Our System"]
     System --> ExtA["📦 External System A"]
     System --> ExtB["📦 External System B"]
 ```
@@ -38,10 +38,10 @@ graph TB
 ```mermaid
 graph TB
     subgraph System
-        WebApp["🌐 Web App<br/>React"]
-        API["⚙️ API Server<br/>Node.js"]
-        DB["🗄️ Database<br/>PostgreSQL"]
-        Queue["📨 Message Queue<br/>Redis"]
+        WebApp["🌐 Web App - React"]
+        API["⚙️ API Server - Node.js"]
+        DB["🗄️ Database - PostgreSQL"]
+        Queue["📨 Message Queue - Redis"]
     end
     WebApp --> API
     API --> DB
@@ -130,7 +130,10 @@ When showing proposed changes on an existing architecture diagram:
 
 ## Diagram Format
 
-- **Preferred:** Mermaid (renders natively on GitHub, in IDEs, and in design docs)
+- **Preferred:** Mermaid compatibility subset: quote every flowchart node and
+  edge label, use ASCII punctuation in labels, and do not use raw `<` or HTML.
+  Diagram-producing skills load `mermaid-compat.md` for examples and the
+  mechanical self-check.
 - **Fallback:** ASCII art (when working in contexts without Mermaid rendering)
 - **Rule:** Diagrams live in the design spec, not in a separate file. They are part of the design, not standalone artifacts.
 

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Consume the hook payload so a closed stdin or malformed optional fields never
+# affect routing. The checkpoint is intentionally constant and tiny.
+cat >/dev/null || true
+
+printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"DevMuse routing checkpoint: classify this in-domain message by verb plus object without conversation history before responding. A question that proposes desired or future behavior is not read-only inspection; when the route changes, invoke the selected skill before work. Same topic does not make it a continuation."}}'

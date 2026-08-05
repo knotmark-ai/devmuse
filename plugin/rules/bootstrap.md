@@ -9,6 +9,10 @@ If you were dispatched as a subagent for a specific task, skip this rule.
 
 <SKILL-ROUTING>
 For every unprefixed in-domain message, classify before responding or acting.
+Classify the current message as if conversation history were absent; use history
+only after selecting its route. In particular, desired or future behavior after
+a read-only answer selects mu-scope before any design discussion, even when the
+message is a question about the same file or topic.
 Invoke the selected skill before work. Direct is a routing result, not a
 loophole around an applicable skill. Explicit `/mu-*` invocations bypass
 classification.
@@ -147,6 +151,13 @@ A follow-up inside the active process is a continuation. A message that would
 select a different route without conversation history is a transition and is
 reclassified — for example inspect→implement, debug→redesign, or anything→review.
 
+Read-only Direct ends after each answer. Its follow-up is a continuation only
+when it still asks about existing behavior. A follow-up that proposes, compares,
+or selects desired behavior, configuration, or implementation is a transition
+even when it concerns the same file, is phrased as a question, or uses words
+such as “should” or “could.” Reclassify and invoke the selected skill before
+evaluating those design options.
+
 ## Red Flags
 
 | Thought | Routing correction |
@@ -156,3 +167,4 @@ reclassified — for example inspect→implement, debug→redesign, or anything�
 | “The user said direct, so risk is gone” | Exact instructions can settle design, not hidden dependents or safety signals |
 | “I remember this skill” | Read the installed version |
 | “This is still the same task” | Apply the transition test |
+| “They are only asking whether the existing code should support an option” | Desired behavior is not read-only inspection; reclassify before discussing it |

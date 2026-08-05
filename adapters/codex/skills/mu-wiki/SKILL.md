@@ -299,7 +299,7 @@ The page MUST follow this structure:
    2c. **H2/H3 sections** — organized coverage of the topic. Each section should:
    - Explain the WHAT and WHY, not just list code
    - Include source citations inline: `Source: [path/to/file](../../path/to/file), lines 10–20`
-   - Use Mermaid only when a relationship, hierarchy, or flow is materially clearer as a diagram (`graph TD` for graphs)
+   - Use Mermaid only when a relationship, hierarchy, or flow is materially clearer as a diagram (`graph TD` for graphs). Before writing it, read references/devmuse/knowledge/principles/mermaid-compat.md; use ASCII when that subset is insufficient.
    - Use Markdown tables for structured comparisons or configuration details
 
    2d. **Cross-references** — link to related wiki pages where relevant: `See also: [Related Page Title](related-page-id.md)`
@@ -328,7 +328,8 @@ code cannot explain live.
   `Source: [path/to/file](../../path/to/file), lines 10–20`.
 - **No fabrication:** ALL information must come from the source files you read. Do not use external knowledge or make assumptions about code you haven't read.
 - **Mermaid diagrams:** Add a diagram only when it materially improves the
-  explanation. Use `graph TD` for graphs and `sequenceDiagram` for sequences.
+  explanation. Follow references/devmuse/knowledge/principles/mermaid-compat.md. Use
+  `graph TD` for graphs and `sequenceDiagram` for sequences.
 - **Tables:** Use markdown tables for any structured data (configs, comparisons, parameter lists).
 - **Language:** Write content in the user's preferred language. Technical terms (file names, code identifiers) remain in English.
 - **Completeness:** Read ALL listed source files. If a file cannot be read, note it explicitly.
