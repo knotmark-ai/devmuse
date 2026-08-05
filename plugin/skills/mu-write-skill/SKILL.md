@@ -15,7 +15,7 @@ You write test cases (pressure scenarios with subagents), watch them fail (basel
 
 **REQUIRED BACKGROUND:** You MUST understand devmuse:mu-code — it defines the RED-GREEN-REFACTOR cycle this skill adapts to documentation.
 
-**Official guidance:** For Anthropic's official skill authoring best practices, see anthropic-best-practices.md.
+**Official guidance:** Use the [Agent Skills specification](https://agentskills.io/specification) as the portable baseline. When targeting Claude, also see anthropic-best-practices.md.
 
 ## What is a Skill?
 
@@ -23,16 +23,17 @@ A **skill** is a reference guide for proven techniques, patterns, or tools — r
 
 **Create when:** the technique wasn't intuitively obvious to you, you'd reference it again, and it applies beyond one project.
 
-**Don't create for:** one-off solutions, standard practices well-documented elsewhere, project-specific conventions (put those in CLAUDE.md), or mechanical constraints (if regex/validation can enforce it, automate it — save documentation for judgment calls).
+**Don't create for:** one-off solutions, standard practices well-documented elsewhere, project-specific conventions (put those in the host's repository instructions, such as `AGENTS.md` or `CLAUDE.md`), or mechanical constraints (if regex/validation can enforce it, automate it — save documentation for judgment calls).
 
 Skill type determines test strategy (see Testing below): **technique** (concrete steps), **pattern** (way of thinking), **reference** (API docs, syntax guides).
 
 ## Structure
 
-DevMuse skills live under `plugin/skills/<name>/` in this repo; personal (non-plugin) skills go in `~/.claude/skills`. Each skill is one folder: `SKILL.md` plus supporting files only for reusable tools (scripts, templates) or reference disclosed per the branch test (see Skill Quality Review).
+DevMuse source skills live under `plugin/skills/<name>/` in this repo. Personal skill locations are host-specific (`~/.agents/skills`, `~/.claude/skills`, `~/.gemini/skills`, and others). Each skill is one folder: `SKILL.md` plus supporting files only for reusable tools (scripts, templates) or reference disclosed per the branch test (see Skill Quality Review).
 
 **Frontmatter (YAML), max 1024 characters:**
-- Fields: `name`, `description`, and optionally `disable-model-invocation: true` (user-invoked skills — see the invocation-match test in Skill Quality Review)
+- Portable fields come from the Agent Skills specification: required `name` and `description`; optional `license`, `compatibility`, `metadata`, and `allowed-tools`
+- Host-only invocation fields belong only in that host's source or generated adapter. Claude Code supports `disable-model-invocation: true`; Codex uses `agents/openai.yaml` with `policy.allow_implicit_invocation: false`
 - `name`: letters, numbers, hyphens only; verb-first, active voice
 - `description`: third person, triggering conditions ONLY — see CSO below
 
@@ -48,9 +49,9 @@ DevMuse skills live under `plugin/skills/<name>/` in this repo; personal (non-pl
 ## Common Mistakes — what goes wrong + fixes
 ```
 
-## Claude Search Optimization (CSO)
+## Skill Discovery Optimization (SDO)
 
-**Critical for discovery:** Future Claude needs to FIND your skill. Description + keywords + naming determine whether the skill surfaces when needed.
+**Critical for discovery:** Future host agents need to FIND your skill. Description + keywords + naming determine whether it surfaces when needed.
 
 For detailed guidance on writing discoverable descriptions, keyword coverage, naming conventions, token efficiency, and cross-referencing:
 
@@ -73,7 +74,7 @@ For the full lexicon (invocation economics, leading words, completion criteria, 
 
 Key tests to keep in mind while writing:
 
-- **Invocation match:** manual-only skill with a rich trigger description = wasted context load; set `disable-model-invocation: true` and shrink the description to one human-facing line
+- **Invocation match:** manual-only skill with a rich trigger description wastes discovery context. Encode explicit-only policy with the target host's mechanism and shrink the description to one human-facing line
 - **No-op test:** does the line change behaviour versus the model's default? "Be thorough/careful/diligent" is paid noise — delete the sentence
 - **Negation test:** "don't/never" steering names the banned behaviour and makes it more available; state the positive target instead (keep prohibitions only as hard guardrails, paired with the positive)
 - **Completion criteria:** every step ends on a checkable, demanding bound — "every X accounted for", not "until you understand"
@@ -162,7 +163,7 @@ Create a task for EACH checklist item. Complete the full checklist for each skil
 
 **GREEN Phase - Write Minimal Skill:**
 - [ ] Name uses only letters, numbers, hyphens (no parentheses/special chars)
-- [ ] YAML frontmatter: `name`, `description`, optional `disable-model-invocation` (max 1024 chars)
+- [ ] YAML frontmatter is Agent Skills-compatible; any host-only invocation policy is isolated to that host's adapter (max 1024 chars)
 - [ ] Description starts with "Use when..." and includes specific triggers/symptoms
 - [ ] Description written in third person
 - [ ] Keywords throughout for search (errors, symptoms, tools)

@@ -1,0 +1,6 @@
+interface:
+  display_name: "DevMuse Scope"
+  short_description: "Classify impact and define use cases"
+  default_prompt: "Use $mu-scope to probe this behavior-changing request and define its scope."
+policy:
+  allow_implicit_invocation: true

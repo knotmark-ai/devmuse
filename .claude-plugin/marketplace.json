@@ -1,15 +1,15 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "devmuse",
-  "description": "Core workflow plugin for Claude Code: scope, design, plan, code, review, debug",
+  "description": "Risk-proportional software delivery skills for Claude Code",
   "owner": {
     "name": "KnotMark AI"
   },
   "plugins": [
     {
       "name": "devmuse",
-      "description": "Core workflow plugin for Claude Code: scope, design, plan, code, review, debug",
-      "version": "2.1.0",
+      "description": "Risk-proportional software delivery skills for Claude Code",
+      "version": "2.2.0",
       "source": "./plugin",
       "author": {
         "name": "KnotMark AI"

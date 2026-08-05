@@ -1,0 +1,6 @@
+interface:
+  display_name: "DevMuse Architecture"
+  short_description: "Design bounded technical architecture"
+  default_prompt: "Use $mu-arch to design the architecture for an approved scope."
+policy:
+  allow_implicit_invocation: true

@@ -1,12 +1,12 @@
 ---
 name: mu-retro
-description: "Weekly or periodic retrospective — gather git metrics, review patterns, capture learnings to Claude Code memory."
+description: "Weekly or periodic retrospective — gather git metrics, review patterns, and preserve durable learnings."
 disable-model-invocation: true
 ---
 
 # Retrospective
 
-Gather quantitative git metrics and qualitative reflections for a time period. Capture non-obvious learnings to Claude Code memory for future sessions.
+Gather quantitative git metrics and qualitative reflections for a time period. Preserve non-obvious learnings in the host's durable project memory when that capability exists; otherwise keep them in the retrospective artifact.
 
 Independent of the main pipeline. Invoke with `/mu-retro` or `/mu-retro 14d`.
 
@@ -21,7 +21,7 @@ digraph mu_retro {
     "Generate metrics table\n+ per-author breakdown" [shape=box];
     "Qualitative reflection\n(dialogue with user)" [shape=box];
     "Write retro artifact\n+ commit" [shape=box];
-    "Write to Claude Code memory\n(non-obvious findings only)" [shape=doublecircle];
+    "Preserve durable learnings\n(host memory when supported)" [shape=doublecircle];
 
     "Parse time window\n(default: 7d)" -> "Gather git data\n(parallel)";
     "Gather git data\n(parallel)" -> "Zero commits?";
@@ -30,7 +30,7 @@ digraph mu_retro {
     "Report: No activity" -> "Qualitative reflection\n(dialogue with user)";
     "Generate metrics table\n+ per-author breakdown" -> "Qualitative reflection\n(dialogue with user)";
     "Qualitative reflection\n(dialogue with user)" -> "Write retro artifact\n+ commit";
-    "Write retro artifact\n+ commit" -> "Write to Claude Code memory\n(non-obvious findings only)";
+    "Write retro artifact\n+ commit" -> "Preserve durable learnings\n(host memory when supported)";
 }
 ```
 
@@ -84,15 +84,16 @@ git log -1 --format=%as -- docs/wiki/ && git rev-list --count "$(git log -1 --fo
    - "What would you change next period?"
 8. **Write retro artifact** to `docs/retro/YYYY-MM-DD-retro.md`, drafted per @../../knowledge/principles/prose-discipline.md
 9. **Commit artifact**
-10. **Write to Claude Code memory** (project type):
-   - Only non-obvious findings worth remembering across sessions
-   - Examples: "module X is a change hotspot", "test coverage thin in Y area"
-   - **Check existing memory first** — update if similar memory exists, create new if not
+10. **Preserve durable learnings**:
+   - Only non-obvious findings worth remembering across sessions; never copy raw metrics or verbose summaries
+   - If the host exposes project memory, use it only within that host's normal permission and review rules
+   - Do not invent a memory file or edit `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, or other host configuration merely to simulate memory
+   - If host memory is unavailable, the retrospective artifact remains the source of truth; if nothing is worth remembering, skip
 
 ## Key Principles
 
 - **Data first, then reflection** — show the numbers before asking opinion
 - **One reflection question at a time** — don't overwhelm
-- **Memory is selective** — only write non-obvious, durable findings. Don't dump metrics.
+- **Durable learning is selective** — preserve only non-obvious findings. Don't dump metrics or invent a host memory mechanism.
 - **Handle edge cases gracefully** — zero commits, shallow clones, monorepos
 - **Standalone, no chaining** — does NOT invoke other skills

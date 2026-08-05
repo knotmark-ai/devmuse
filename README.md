@@ -2,7 +2,7 @@
 
 [中文文档](README_CN.md)
 
-DevMuse is a complete software development workflow for Claude Code, built on a four-layer architecture of rules, skills, agents, and knowledge.
+DevMuse is a risk-proportional software development workflow for Claude Code, Codex, OpenClaw, Hermes Agent, Gemini CLI, and other Agent Skills hosts. It uses a four-layer architecture of rules, skills, agents, and knowledge without forcing every host through the same ceremony.
 
 Based on [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent.
 
@@ -18,6 +18,8 @@ If a bounded task grows, DevMuse upgrades it before the risky surface changes. T
 
 ## Installation
 
+### Claude Code
+
 ```bash
 # Register marketplace
 /plugin marketplace add knotmark-ai/devmuse
@@ -26,9 +28,13 @@ If a bounded task grows, DevMuse upgrades it before the risky surface changes. T
 /plugin install devmuse@devmuse
 ```
 
-### Verify Installation
+### Other hosts
 
-Start a new session and ask for something that should trigger a skill (for example, "help me plan this feature" or "let's debug this issue"). The agent should automatically invoke the relevant skill.
+Codex, OpenClaw, Hermes Agent, Gemini CLI, Cursor, GitHub Copilot CLI, OpenCode, and other Agent Skills hosts use native or generated adapters. See the [platform support and installation guide](docs/platform-support.md) for exact commands and capability differences.
+
+### Verify installation
+
+Start a new session and ask for something that should trigger a skill (for example, "scope this behavior change" or "let's debug this issue"). Automatic activation is intentionally host-specific: Codex and Gemini only auto-activate scope, architecture, and debug; planning and review normally stay with their native host capabilities.
 
 ## Pipeline
 
@@ -66,7 +72,7 @@ architectural → scope → arch → plan → code → review → end
 - **mu-model** 🧪 — Domain model: concepts, archetypes, the spine, who produces and maintains what. Runs before PRD and design, writes repo-root `CONTEXT.md`. Invoke with `/mu-model`. **Its `create` path has not been validated on a from-zero project — see [Validation status](#validation-status).**
 - **mu-prd** — Product requirements: user flows, object lifecycle models, wireframes, per-feature specs, tiering rules. Invoke with `/mu-prd`.
 - **mu-wiki** — The single durable home for current architecture documentation, generated from source with citations. Invoke with `/mu-wiki generate` or `/mu-wiki update`.
-- **mu-retro** — Periodic retrospective: git metrics, review patterns, learnings captured to memory. Invoke with `/mu-retro`.
+- **mu-retro** — Periodic retrospective: git metrics, review patterns, and durable learnings. Invoke with `/mu-retro`.
 - **mu-grill** — Relentless plan/design interview until every rework-forcing fork is resolved. Invoke with `/mu-grill`.
 
 These are NOT auto-routed. The user explicitly invokes them when needed.
@@ -89,13 +95,16 @@ Routing lives in the always-on bootstrap rule. It first excludes out-of-domain m
 
 ```
 devmuse/
-├── plugin/       Runtime copied into Claude Code's plugin cache
-│   ├── rules/        Always-on principles (loaded via SessionStart hook)
-│   ├── skills/       User-triggered workflows (/mu-xxx)
-│   ├── agents/       Independent roles (dispatched by skills)
-│   └── knowledge/    Domain knowledge (injected on demand)
-├── docs/         Repository documentation; not part of the installed plugin
-└── tests/        Development tests; not part of the installed plugin
+├── plugin/           Claude/OpenClaw/Gemini runtime
+│   ├── rules/            Claude always-on routing (SessionStart)
+│   ├── skills/           Canonical workflow source
+│   ├── agents/           Claude independent roles
+│   └── knowledge/        Shared domain knowledge
+├── adapters/codex/   Generated Codex plugin and self-contained Agent Skills
+├── plugin.yaml       Hermes plugin manifest
+├── __init__.py       Hermes namespaced skill registration
+├── docs/             Repository documentation; excluded by subtree installs
+└── tests/            Development and compatibility tests
 ```
 
 ### Skills
@@ -112,7 +121,7 @@ devmuse/
 | On-demand | **mu-model** 🧪 | Domain model — concepts, archetypes, the spine, ownership; written to `CONTEXT.md` before PRD or design. **`create` path unproven — see Validation** |
 | On-demand | **mu-prd** | Product requirements — user flows, object lifecycle models, wireframes, feature specs, tiering rules |
 | On-demand | **mu-wiki** | Architecture wiki — generates and maintains project-level architecture documentation |
-| On-demand | **mu-retro** | Periodic retrospective with git metrics and memory capture |
+| On-demand | **mu-retro** | Periodic retrospective with git metrics and durable learning capture |
 | On-demand | **mu-grill** | Relentless plan/design interview — resolves every rework-forcing fork before work begins |
 | Meta | **mu-write-skill** | Create/edit skills using TDD methodology |
 
@@ -163,7 +172,14 @@ Skills marked 🧪 carry a path that has not been exercised on real projects yet
 
 ## Local Development
 
-Load the plugin directly from a local directory without installation:
+Rebuild and validate the generated host adapter first:
+
+```bash
+npm run build:adapters
+npm run test:platforms
+```
+
+Load the Claude plugin directly from a local directory without installation:
 
 ```bash
 claude --plugin-dir /path/to/devmuse/plugin
@@ -180,6 +196,8 @@ Optionally add a shell alias for convenience:
 ```bash
 alias claude-dev='claude --plugin-dir /path/to/devmuse/plugin'
 ```
+
+For Codex, OpenClaw, Hermes, Gemini, and generic Agent Skills local loading, see [Platform support](docs/platform-support.md#install).
 
 ## Updating
 

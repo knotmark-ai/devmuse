@@ -4,15 +4,20 @@
 
 ```
 devmuse/
-└── plugin/       运行时分发边界
-    ├── rules/        "必须遵守什么" — 始终生效的原则
-    ├── skills/       "做什么" — 用户触发的工作流（/mu-xxx）
-    ├── agents/       "谁来做" — 独立角色，被 skill 派遣
-    └── knowledge/    "怎么做/参考什么" — 按需注入的领域知识
+├── plugin/           Claude/OpenClaw/Gemini 权威运行时
+│   ├── rules/            "必须遵守什么" — 始终生效的原则
+│   ├── skills/           "做什么" — 权威工作流（/mu-xxx）
+│   ├── agents/           "谁来做" — 独立角色，被 skill 派遣
+│   └── knowledge/        "怎么做/参考什么" — 按需注入的领域知识
+├── adapters/codex/   生成的 Codex + 可移植 Agent Skills bundle
+├── plugin.yaml       Hermes manifest
+└── __init__.py       Hermes 命名空间技能注册
 ```
 
-下文的分层路径均相对于 `plugin/`。仓库文档和测试留在该边界之外，安装时
-不会复制进插件缓存。
+下文的分层路径均相对于 `plugin/`。`plugin/skills/` 是工作流唯一源文件。
+Codex 适配器会把每个技能依赖的 knowledge 与 agent 文件复制进技能目录，
+确保单独复制 Agent Skill 后引用仍然有效。各平台安装边界以及是否会拉取仓库
+文档，见[平台支持](platform-support_cn.md)。
 
 ## 分层判断标准
 
@@ -35,9 +40,9 @@ devmuse/
 
 ---
 
-## 加载机制
+## Claude 加载机制
 
-四层全部通过插件安装（`claude plugin add`）生效，无需手动配置。
+四层全部通过 Claude marketplace 安装生效，无需手动配置。
 
 | 目录 | 插件自动发现 | 机制 |
 |-----------|-------------|------|
@@ -67,6 +72,19 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 ```
 
 `@` 相对路径在插件内部跨目录有效（安装时整个插件被复制到缓存）。
+
+## 其他宿主适配器
+
+| 宿主 | 适配行为 |
+|---|---|
+| Codex / ChatGPT Work | `scripts/build-platform-adapters.mjs` 生成严格的 `.codex-plugin` 包、自包含引用以及逐技能 `agents/openai.yaml`；只有 scope、architecture、debug 可隐式触发。 |
+| OpenClaw | 把 Claude 或 Codex 目录作为 compatible content bundle 安装。skills 可运行；Claude agents 与 `hooks/hooks.json` 仅检测不执行。 |
+| Hermes Agent | 根目录 `plugin.yaml` + `__init__.py` 把源技能注册到显式 `devmuse:` 命名空间。 |
+| Gemini CLI | `plugin/gemini-extension.json` 发现源技能；小型 `GEMINI.md` 负责与原生 Plan Mode 和验证能力协调。 |
+| 通用 Agent Skills 宿主 | 从 `adapters/codex/skills/` 安装生成技能；每个技能都自带所需支持文件。 |
+
+适配层边界是刻意的：共享工作流内容，而调用、子 Agent、hook、记忆和安全语义
+仍以宿主原生能力为准。
 
 ---
 

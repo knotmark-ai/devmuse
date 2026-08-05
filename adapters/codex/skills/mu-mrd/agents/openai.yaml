@@ -1,0 +1,6 @@
+interface:
+  display_name: "DevMuse MRD"
+  short_description: "Validate a product or market premise"
+  default_prompt: "Use $mu-mrd to evaluate this product premise and draft an MRD."
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,6 @@
+interface:
+  display_name: "DevMuse Review"
+  short_description: "Review coverage, security, and quality"
+  default_prompt: "Use $mu-review to run the specialized DevMuse review requested here."
+policy:
+  allow_implicit_invocation: false

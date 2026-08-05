@@ -10,6 +10,7 @@ DevMuse 将确定性的契约检查与真实模型行为测试分开。修改路
 tests/
 ├── routing-policy/          路由、去重与制品归属的静态契约
 ├── hooks/                   确定性的 Hook 测试
+├── platform-compat/         生成式适配器、清单与宿主策略契约
 ├── skill-triggering/        自动调用的真实模型探针
 ├── explicit-skill-requests/ 当前 Skill 的显式调用探针
 ├── claude-code/             mu-code 行为/文档检查
@@ -21,10 +22,16 @@ tests/
 ## 快速确定性检查
 
 ```bash
+npm run build:adapters
+npm run test:platforms
 bash tests/routing-policy/test-routing-policy.sh
 bash tests/hooks/test-destructive-guard.sh
 git diff --check
 ```
+
+平台契约会比对规范源与生成结果的 Skill 清单，检查每个随包引用，验证宿主
+manifest 和版本一致性，并落实 Codex/Gemini 的原生能力策略。发布验证还会在
+系统 Skill 可用时，对 `adapters/codex/` 运行 Codex `plugin-creator` 验证器。
 
 `routing-policy` 是 Direct、有界、架构三种流程，只读检查、review 模式、
 已退休制品以及 `docs/wiki/` 单一归属的回归契约。
@@ -83,6 +90,8 @@ python3 tests/claude-code/analyze-token-usage.py \
 ## 测试编写规则
 
 - 确定性 shell 测试不调用模型。
+- 修改 `plugin/skills/` 后重新生成适配器，不要直接编辑
+  `adapters/codex/skills/`。
 - 触发测试同时覆盖正例和最接近的混淆负例，例如“理解代码”与“审 diff”。
 - 解析 stream-json 的工具调用，不能只看自然语言。
 - 保存失败的真实运行 transcript。

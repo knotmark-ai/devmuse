@@ -1,0 +1,6 @@
+interface:
+  display_name: "DevMuse Debug"
+  short_description: "Trace defects to a verified root cause"
+  default_prompt: "Use $mu-debug to diagnose and fix this reproducible defect."
+policy:
+  allow_implicit_invocation: true

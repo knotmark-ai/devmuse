@@ -132,7 +132,7 @@ Use when: greenfield product, team project, investor-facing analysis, major pivo
 4. Commit
 5. User reviews and approves the assembled MRD — this is the HARD-GATE; section approvals alone don't clear it
 
-**Terminal:** mu-prd is slash-only (`disable-model-invocation`), so hand the baton to the user: "MRD approved — run `/mu-prd create` to define the product." That slash hint arrives pre-confirmed per spec §2.5, so mu-prd's Phase 0 presents no dialog. (Greenfield products typically need PRD next.)
+**Terminal:** mu-prd is explicit-only, so hand the baton to the user: "MRD approved — run `/mu-prd create` to define the product." That invocation hint arrives pre-confirmed per spec §2.5, so mu-prd's Phase 0 presents no dialog. (Greenfield products typically need PRD next.)
 
 ## Artifact Format
 
@@ -209,4 +209,4 @@ Before terminal (user-decides in Quick mode, invoke mu-prd in Full mode), consul
 - **Produces:** `docs/mrd/YYYY-MM-DD-<name>[-quick].md`
 - **Terminal state:**
   - Quick mode → user decides (no chaining)
-  - Full mode → prompt the user to run `/mu-prd create` (slash hint arrives pre-confirmed per spec §2.5; mu-prd is slash-only, so the baton passes through the user's hand)
+  - Full mode → prompt the user to run `/mu-prd create` (the invocation hint arrives pre-confirmed per spec §2.5; mu-prd is explicit-only, so the baton passes through the user's hand)

@@ -1,0 +1,33 @@
+{
+  "name": "devmuse",
+  "version": "2.2.0",
+  "description": "Risk-proportional software delivery skills for Codex and ChatGPT Work",
+  "skills": "./skills/",
+  "author": {
+    "name": "KnotMark AI",
+    "url": "https://github.com/knotmark-ai"
+  },
+  "homepage": "https://github.com/knotmark-ai/devmuse",
+  "repository": "https://github.com/knotmark-ai/devmuse",
+  "license": "MIT",
+  "keywords": [
+    "agent-skills",
+    "architecture",
+    "debugging",
+    "tdd",
+    "workflow"
+  ],
+  "interface": {
+    "displayName": "DevMuse",
+    "shortDescription": "Risk-proportional software delivery workflows",
+    "longDescription": "Scope, architecture, debugging, product, and delivery skills that add ceremony only when risk or uncertainty justifies it.",
+    "developerName": "KnotMark AI",
+    "category": "Developer Tools",
+    "capabilities": [
+      "skills"
+    ],
+    "websiteURL": "https://github.com/knotmark-ai/devmuse",
+    "brandColor": "#6366F1",
+    "defaultPrompt": "Use DevMuse to classify this development request and apply only the workflow depth its risk requires."
+  }
+}

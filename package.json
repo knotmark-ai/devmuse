@@ -1,7 +1,11 @@
 {
   "name": "devmuse",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "type": "module",
   "main": "plugin/hooks/session-start",
-  "files": ["plugin/"]
+  "scripts": {
+    "build:adapters": "node scripts/build-platform-adapters.mjs",
+    "test:platforms": "bash tests/platform-compat/test-platform-compat.sh"
+  },
+  "files": ["plugin/", "adapters/codex/", "plugin.yaml", "__init__.py"]
 }

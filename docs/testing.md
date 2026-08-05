@@ -10,6 +10,7 @@ when changing descriptions, trigger boundaries, or model versions.
 tests/
 ├── routing-policy/          Static routing, duplication, and artifact-owner contract
 ├── hooks/                   Deterministic hook tests
+├── platform-compat/         Generated adapter, manifest, and host-policy contracts
 ├── skill-triggering/        Live automatic-invocation probes
 ├── explicit-skill-requests/ Live explicit-invocation probes for current skills
 ├── claude-code/             Live mu-code behavior/documentation checks
@@ -21,10 +22,18 @@ tests/
 ## Fast Deterministic Checks
 
 ```bash
+npm run build:adapters
+npm run test:platforms
 bash tests/routing-policy/test-routing-policy.sh
 bash tests/hooks/test-destructive-guard.sh
 git diff --check
 ```
+
+The platform contract compares the canonical and generated skill inventories,
+checks every vendored reference, validates host manifests and version alignment,
+and enforces the Codex/Gemini native-capability policy. Release validation also
+runs Codex's `plugin-creator` validator against `adapters/codex/` when that
+system skill is available.
 
 The routing-policy test is the regression contract for Direct, bounded, and
 architectural ceremony; read-only inspection; review modes; retired artifacts;
@@ -90,6 +99,8 @@ trigger, even if the final code is correct.
 ## Test Authoring Rules
 
 - Keep deterministic shell tests free of model calls.
+- Edit `plugin/skills/`, then regenerate adapters; do not hand-edit
+  `adapters/codex/skills/`.
 - For trigger tests, include a positive case and the nearest confusing negative
   case (for example code understanding versus diff review).
 - Parse stream-json tool calls, not prose alone.
