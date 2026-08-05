@@ -98,6 +98,24 @@ This structure informs the task decomposition. Each task should produce self-con
 ---
 ```
 
+## Cross-Task Contract (conditional)
+
+After drafting the task boundaries, scan for facts a fresh task worker cannot
+recover safely from its task alone. Add this contract only when at least one
+trigger fires:
+
+1. an exact approved-spec requirement applies across the whole implementation
+   and affects at least two implementation tasks;
+   or
+2. one task produces an exact function, type, schema, command, file format, or
+   other named output that another task consumes.
+
+If neither trigger fires, omit the Global Constraints section and every
+Interfaces block. Self-contained plans pay no cross-task template cost.
+When either trigger fires, read `cross-task-contract.md` before
+finalizing the tasks and apply every rule there. The branch is complete when
+every shared spec rule and task dependency edge passes its Completion Check.
+
 ## Task Structure
 
 ````markdown
@@ -109,6 +127,8 @@ This structure informs the task decomposition. Each task should produce self-con
 - Create: `exact/path/to/file.py`
 - Modify: `exact/path/to/existing.py:123-145`
 - Test: `tests/exact/path/to/test.py`
+
+<!-- Add Interfaces here only when this task crosses a task boundary. -->
 
 - [ ] **Step 1: Write the failing test**
 
@@ -160,6 +180,8 @@ After writing the complete plan:
 1. Dispatch the **mu-reviewer subagent in `review-plan` mode** with precisely crafted review context — never your session history. This keeps the reviewer focused on the plan, not your thought process.
    - Provide: `PLAN_FILE_PATH` (path to the plan document), `SPEC_FILE_PATH` (path to spec document)
    - The reviewer will validate inputs, build an anchor list (UC-IDs, task numbers, file paths) from the documents, and only emit findings tied to those anchors — preventing hallucinated UCs / class names / file paths.
+   - When the Cross-Task Contract is present, the reviewer also verifies every
+     shared spec constraint and producer/consumer edge closes exactly.
 2. If ❌ Issues Found: fix the issues, re-dispatch reviewer for the whole plan
 3. If ✅ Approved: proceed to execution handoff
 

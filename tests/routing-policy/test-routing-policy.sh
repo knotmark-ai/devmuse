@@ -141,6 +141,22 @@ assert_file_absent "skills/mu-write-skill/graphviz-conventions.dot"
 assert_contains "skills/mu-plan/SKILL.md" "mu-code selects the execution mode"
 assert_absent "skills/mu-plan/SKILL.md" "review between tasks"
 
+# Cross-task contracts are explicit only when the plan actually has shared
+# constraints or task-to-task interfaces; self-contained plans pay no template cost.
+assert_contains "skills/mu-plan/SKILL.md" "Cross-Task Contract (conditional)"
+assert_contains "skills/mu-plan/SKILL.md" "affects at least two implementation tasks"
+assert_contains "skills/mu-plan/SKILL.md" "other named output that another task consumes"
+assert_contains "skills/mu-plan/SKILL.md" "If neither trigger fires, omit"
+assert_contains "skills/mu-plan/SKILL.md" "skills/mu-plan/cross-task-contract.md"
+assert_contains "skills/mu-plan/cross-task-contract.md" "copied verbatim"
+assert_contains "skills/mu-plan/cross-task-contract.md" '**Interfaces:**'
+assert_contains "skills/mu-plan/cross-task-contract.md" "Every task-to-task dependency"
+assert_contains "skills/mu-code/SKILL.md" "Global Constraints"
+assert_contains "skills/mu-code/SKILL.md" "Interfaces"
+assert_contains "agents/mu-reviewer.md" "Cross-Task Contract"
+assert_contains "agents/mu-coder.md" "Global Constraints"
+assert_contains "agents/mu-coder.md" "Interfaces"
+
 # Standalone review is read-only unless the user explicitly asks for fixes;
 # pipeline-final review may fix findings within the implementation scope.
 assert_contains "skills/mu-review/SKILL.md" "Standalone review"

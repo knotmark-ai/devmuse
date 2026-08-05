@@ -69,14 +69,17 @@ material design decision appears.
 ### 1. Validate the plan
 
 Read the plan once and extract every task, its full instructions, dependencies,
-UC IDs, files, and verification commands into task tracking.
+UC IDs, files, verification commands, any plan-level `Global Constraints`, and
+each task's `Interfaces` into task tracking.
 
 A design spec alone is not an implementation plan. Recommend mu-plan. If the
 user explicitly waives that step, derive a task list from the approved evidence,
 present it once, execute inline, and record the waiver in the final report.
 
-The step is complete when every plan task has one tracking item and every UC is
-owned by at least one task.
+The step is complete when every plan task has one tracking item, every UC is
+owned by at least one task, every task carries all Global Constraints, and each
+producer/consumer pair carries the same interface definition. Plans without a
+Cross-Task Contract add no contract context.
 
 ### 2. Select isolation
 
@@ -110,7 +113,8 @@ intermediate state. Before parallel dispatch, read
 
 For each task:
 
-1. Mark it in progress and load only the context needed for that task.
+1. Mark it in progress and load the full task, every Global Constraint, and
+   only the Interfaces entries that task consumes or produces.
 2. Run red-green-refactor for behavior changes.
 3. Run the task's verification command.
 4. Self-check the actual diff against the full task text: every requirement and
@@ -123,8 +127,9 @@ When a task receives input from or sends output to an external system, apply
 boundary.
 
 In Subagent Mode, dispatch a fresh `references/devmuse/agents/mu-coder.md` with the full task
-text, architectural context, write set, UC IDs, and verification commands. The
-subagent receives that content directly rather than being told to read the plan.
+text, architectural context, write set, UC IDs, verification commands, every
+Global Constraint, and that task's exact Interfaces entries. The subagent
+receives that content directly rather than being told to read the plan.
 Handle its status as follows:
 
 | Status | Controller action |
@@ -143,7 +148,9 @@ reviewer after every task.
 After all tasks complete:
 
 1. Run the plan-level verification commands and inspect the integrated diff.
-2. Confirm every task and UC has implementation and test evidence.
+2. Confirm every task and UC has implementation and test evidence. When the
+   plan has a Cross-Task Contract, confirm the integrated code preserves every
+   global constraint and both sides of every interface definition.
 3. Invoke **one final mu-review** over the complete architectural change.
 4. Resolve its findings under mu-review's invocation mode and rerun the relevant
    verification.
@@ -190,6 +197,7 @@ the blocker is resolved or the user chooses an explicit alternative.
 | Mistake | Correction |
 |---|---|
 | Reading the plan again in every task | Extract it once; pass each task's full text directly |
+| Passing task text without its cross-task contract | Add every Global Constraint and only that task's Interfaces entries |
 | Dispatching reviewers after each task and again at the end | Keep task self-checks; use one final mu-review |
 | Treating self-review as independent review | Self-check during implementation; review once at the path boundary |
 | Choosing subagents because they are available | Use them when task independence justifies fresh context |

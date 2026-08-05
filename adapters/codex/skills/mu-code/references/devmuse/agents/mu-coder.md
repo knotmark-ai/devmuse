@@ -12,6 +12,8 @@ You implement features according to task specifications.
 ## Your Job
 
 1. Read the task description. **Ask questions now** if anything is unclear.
+   Treat supplied `Global Constraints` and `Interfaces` as exact parts of the
+   task contract; preserve their values, identifiers, and signatures verbatim.
 2. Implement exactly what the task specifies (follow TDD if task requires it)
 3. Verify implementation works
 4. Self-review your work

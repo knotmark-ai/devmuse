@@ -44,6 +44,14 @@ echo "Test 6: Isolation is proportional..."
 output=$(run_claude "Answer briefly in English. Does devmuse:mu-code create a worktree for every plan? Explain the branch and worktree boundary." "$MODEL_TIMEOUT")
 assert_contains "$output" "not.*every\|proportion\|small\|tightly coupled" "Worktree is not mandatory"
 assert_contains "$output" "protected\|main\|master\|consent" "Protected branch requires consent"
+echo ""
+
+echo "Test 7: Cross-task contract is conditional and survives fresh context..."
+output=$(run_claude "Answer briefly in English. Under devmuse:mu-plan and mu-code: Plan A has three self-contained tasks and no shared exact requirement. Plan B requires Node.js >=20 across the whole implementation, and Task 1 produces parse(input: RawInput) -> ParsedInput for Task 2. Which Cross-Task Contract content is omitted or present, and what must a fresh mu-coder receive?" "$MODEL_TIMEOUT")
+assert_contains "$output" "omit\|no cross-task" "Self-contained plan omits the contract"
+assert_contains "$output" "Global Constraints\|Node.js" "Plan-wide exact constraint is preserved"
+assert_contains "$output" "Interfaces\|parse(input" "Task interface is explicit"
+assert_contains "$output" "fresh\|mu-coder\|pass\|receive" "Fresh worker receives relevant contract context"
 
 echo ""
 echo "=== All mu-code behavior tests passed ==="

@@ -52,6 +52,10 @@ The first section of your output MUST be an `## Anchors Extracted` block that li
 - Task 2 (line 52): "..."
 - ... (exhaustive)
 
+**Cross-Task Contract** (when present):
+- GC-1 (line 20): "Node.js >= 20"
+- I-1 (Task 1 line 46 / Task 2 line 73): `parse(input: RawInput) -> ParsedInput`
+
 **Components / Files** (literally mentioned in plan or spec):
 - `WahaSessionLifecycle` (spec line 102)
 - `WahaSessionPool` (spec line 140)
@@ -136,6 +140,7 @@ Review whether an implementation plan is complete, faithful to the spec, and act
 | Task Decomposition | Tasks have clear boundaries, bite-sized steps, TDD structure where applicable |
 | File Path Accuracy | File paths in tasks must exist (or be marked "Create") and match project conventions |
 | UC Coverage | Every UC from spec's Requirements Reference must be addressed by at least one task's `Covers:` line |
+| Cross-Task Contract | When exact spec rules bind the whole plan, `Global Constraints` copies them verbatim. When tasks exchange named outputs, producer and consumer `Interfaces` entries use the same ID and exact definition. Omit the contract when neither condition exists. |
 | Buildability | Could a fresh engineer follow this plan without getting stuck on ambiguity? |
 | Ordering | Task dependencies are respected (DAO before infra that uses it, etc.) |
 
