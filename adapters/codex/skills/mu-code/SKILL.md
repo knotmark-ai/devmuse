@@ -1,6 +1,6 @@
 ---
 name: mu-code
-description: Use when implementing an inline bounded acceptance contract or an approved implementation plan
+description: Use when the user asks to implement a mu-scope bounded execution contract or an approved DevMuse implementation plan
 ---
 
 # Code
@@ -21,6 +21,19 @@ review; architectural work gets one final mu-review after all tasks integrate.
 **Core principle:** tight implementation loop, one review boundary.
 
 Announce the selected path at the start.
+
+## Entry Gate
+
+Automatic invocation requires both conditions:
+
+1. The user has asked to implement, execute, or continue the change.
+2. The conversation contains either a mu-scope inline contract explicitly
+   labeled `bounded execution`, or an approved DevMuse implementation plan.
+
+A code-editing request, design document, unapproved plan, or generic specification is not enough. When the gate is absent, leave execution to the host's normal
+agent loop; do not synthesize a DevMuse contract merely to activate this skill.
+An explicit request to work directly or use a lighter process overrides automatic
+invocation even when qualifying evidence exists.
 
 ## Quick Reference
 

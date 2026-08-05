@@ -110,15 +110,22 @@ for skill in "${codex_skills[@]}"; do
   [[ -f "$CODEX_ROOT/skills/$skill/agents/openai.yaml" ]] || fail "$skill lacks agents/openai.yaml"
 done
 
-for skill in mu-mrd mu-model mu-prd mu-wiki mu-retro mu-grill mu-plan mu-code mu-review mu-write-skill; do
+for skill in mu-mrd mu-model mu-prd mu-wiki mu-retro mu-grill mu-plan mu-review mu-write-skill; do
   rg -q 'allow_implicit_invocation:\s*false' "$CODEX_ROOT/skills/$skill/agents/openai.yaml" \
     || fail "$skill must be explicit-only on Codex"
 done
 
-for skill in mu-scope mu-arch mu-debug; do
+for skill in mu-scope mu-arch mu-code mu-debug; do
   rg -q 'allow_implicit_invocation:\s*true' "$CODEX_ROOT/skills/$skill/agents/openai.yaml" \
     || fail "$skill must remain auto-discoverable on Codex"
 done
+
+rg -q '^description: Use when the user asks to implement a mu-scope bounded execution contract or an approved DevMuse implementation plan$' \
+  "$CODEX_ROOT/skills/mu-code/SKILL.md" || fail "mu-code must use the contract-gated trigger description"
+rg -q 'Automatic invocation requires both conditions' "$CODEX_ROOT/skills/mu-code/SKILL.md" \
+  || fail "mu-code must enforce its conditional entry gate"
+rg -q 'generic specification.*is not enough' "$CODEX_ROOT/skills/mu-code/SKILL.md" \
+  || fail "mu-code must reject ordinary coding/spec requests"
 
 rg -q 'native `/plan`' "$CODEX_ROOT/HOST_POLICY.md" || fail "Codex policy must prefer native /plan"
 rg -q 'native `/review`' "$CODEX_ROOT/HOST_POLICY.md" || fail "Codex policy must prefer native /review"

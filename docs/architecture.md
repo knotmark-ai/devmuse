@@ -78,7 +78,7 @@ Skills and agents reference knowledge via `@` relative paths within the plugin:
 
 | Host | Adapter behavior |
 |---|---|
-| Codex / ChatGPT Work | `scripts/build-platform-adapters.mjs` generates a strict `.codex-plugin` package, self-contained skill references, and per-skill `agents/openai.yaml`. Only scope, architecture, and debug are implicit. |
+| Codex / ChatGPT Work | `scripts/build-platform-adapters.mjs` generates a strict `.codex-plugin` package, self-contained skill references, and per-skill `agents/openai.yaml`. Scope, architecture, and debug are description-gated; code additionally requires an execution request and recognized DevMuse contract. |
 | OpenClaw | Installs the Claude or Codex directory as a compatible content bundle. Skills run; Claude agents and `hooks/hooks.json` are detect-only. |
 | Hermes Agent | Root `plugin.yaml` + `__init__.py` register source skills under the explicit `devmuse:` namespace. |
 | Gemini CLI | `plugin/gemini-extension.json` discovers source skills; the small `GEMINI.md` coordinates activation with native Plan Mode and validation. |

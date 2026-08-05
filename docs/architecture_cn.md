@@ -77,7 +77,7 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 
 | 宿主 | 适配行为 |
 |---|---|
-| Codex / ChatGPT Work | `scripts/build-platform-adapters.mjs` 生成严格的 `.codex-plugin` 包、自包含引用以及逐技能 `agents/openai.yaml`；只有 scope、architecture、debug 可隐式触发。 |
+| Codex / ChatGPT Work | `scripts/build-platform-adapters.mjs` 生成严格的 `.codex-plugin` 包、自包含引用以及逐技能 `agents/openai.yaml`；scope、architecture、debug 按描述触发，code 还必须同时具备执行请求与已识别 DevMuse contract。 |
 | OpenClaw | 把 Claude 或 Codex 目录作为 compatible content bundle 安装。skills 可运行；Claude agents 与 `hooks/hooks.json` 仅检测不执行。 |
 | Hermes Agent | 根目录 `plugin.yaml` + `__init__.py` 把源技能注册到显式 `devmuse:` 命名空间。 |
 | Gemini CLI | `plugin/gemini-extension.json` 发现源技能；小型 `GEMINI.md` 负责与原生 Plan Mode 和验证能力协调。 |

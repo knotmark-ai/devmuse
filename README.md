@@ -34,7 +34,7 @@ Codex, OpenClaw, Hermes Agent, Gemini CLI, Cursor, GitHub Copilot CLI, OpenCode,
 
 ### Verify installation
 
-Start a new session and ask for something that should trigger a skill (for example, "scope this behavior change" or "let's debug this issue"). Automatic activation is intentionally host-specific: Codex and Gemini only auto-activate scope, architecture, and debug; planning and review normally stay with their native host capabilities.
+Start a new session and ask for something that should trigger a skill (for example, "scope this behavior change" or "let's debug this issue"). Automatic activation is intentionally host-specific: Codex and Gemini auto-activate scope, architecture, and debug when they match; code execution can take over only after the user asks to execute a recognized DevMuse contract or approved plan. Planning and review normally stay with native host capabilities.
 
 ## Pipeline
 

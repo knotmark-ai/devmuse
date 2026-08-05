@@ -7,10 +7,10 @@ DevMuse 采用一份工作流源文件和多个轻量宿主适配层，不强求
 | 宿主 | 分发格式 | 调用策略 | 保留为权威的宿主原生能力 |
 |---|---|---|---|
 | Claude Code | `plugin/` 中的 Claude marketplace bundle | bootstrap 按直接/有界/架构路径路由；六个产品与元技能保持显式调用 | Claude agents 与 `PreToolUse` hook |
-| Codex CLI / ChatGPT Work | `adapters/codex/` 中的 Codex plugin | 只有 `mu-scope`、`mu-arch`、`mu-debug` 可隐式触发，其余通过 `$mu-*` 显式调用 | 原生 `/plan`、`/review`、任务追踪、子 Agent、sandbox 与审批 |
+| Codex CLI / ChatGPT Work | `adapters/codex/` 中的 Codex plugin | `mu-scope`、`mu-arch`、`mu-debug` 可按 description 匹配隐式触发；`mu-code` 还必须同时满足执行请求与已识别 DevMuse contract，其余通过 `$mu-*` 显式调用 | 原生 `/plan`、`/review`、任务追踪、子 Agent、sandbox 与审批 |
 | OpenClaw | 以兼容 bundle 安装 Claude 或 Codex 目录 | 采用技能元数据；Claude bundle 中的手动技能仍保持手动 | OpenClaw 审批、sandbox、agents 与 skill allowlist |
 | Hermes Agent CLI / Desktop | 仓库根目录的 Hermes plugin | 默认以 `devmuse:mu-*` 命名空间显式加载 | Hermes `plan` skill、学习循环、记忆、工具权限与插件生命周期 |
-| Gemini CLI | `plugin/` 中的 Gemini extension 元数据 | 轻量 `GEMINI.md` 将自动触发限制为 scope、architecture、debug | 原生 Plan Mode、任务追踪、验证、hooks 与审批 |
+| Gemini CLI | `plugin/` 中的 Gemini extension 元数据 | 轻量 `GEMINI.md` 允许 scope、architecture、debug 按描述匹配，并允许 contract-gated code execution | 原生 Plan Mode、任务追踪、验证、hooks 与审批 |
 | Cursor、GitHub Copilot CLI、OpenCode、Cline、Windsurf、Goose 等 Agent Skills 宿主 | `adapters/codex/skills/` 中生成的可移植技能包 | 由宿主决定触发；非 Codex 宿主会忽略 OpenAI 策略元数据 | 各宿主自己的规划、审查、agents 与权限系统 |
 
 可移植包遵循 [Agent Skills 规范](https://agentskills.io/specification)。每个技能都内置自己需要的支持文件，因此单独复制技能不会破坏 DevMuse 的知识库或 reviewer 引用。
@@ -21,7 +21,7 @@ DevMuse 的价值在于产品澄清、风险分类、可追溯架构、系统化
 
 - 普通 Codex 规划使用 `/plan`；只有经确认的架构需要持久化、带 UC-ID 追溯的计划时才用 `mu-plan`。
 - 普通 Codex 审查使用 `/review`；需求覆盖、安全审查或明确授权的 review-and-fix 才用 `mu-review`。
-- Codex 上的 `mu-code` 为显式调用，因为实现与验证已经是宿主默认循环的一部分。
+- `mu-code` 不介入普通 Codex 实现。只有当用户要求执行 mu-scope 的 `bounded execution` contract 或已批准的 DevMuse plan 时，它才能自动接棒；一般编码请求、设计文档或未批准 spec 都不能通过入口条件。
 - Hermes 默认不把插件技能塞进启动索引，保留其渐进加载和学习模型。
 - Claude 保留完整 bootstrap，因为目前只有该适配层的路由、子 Agent 和防破坏 hook 在本仓库中经过行为测试。
 
@@ -49,7 +49,7 @@ codex plugin marketplace add knotmark-ai/devmuse \
 codex
 ```
 
-进入 `/plugins`，选择 `devmuse` marketplace 并安装。显式技能使用 `$mu-plan`、`$mu-code`、`$mu-review` 等形式。
+进入 `/plugins`，选择 `devmuse` marketplace 并安装。显式技能使用 `$mu-plan`、`$mu-review` 等形式。`$mu-code` 也可被显式点名，但在满足 DevMuse 执行契约时可以自动接棒。
 
 本地开发：
 

@@ -34,7 +34,7 @@ Codex、OpenClaw、Hermes Agent、Gemini CLI、Cursor、GitHub Copilot CLI、Ope
 
 ### 验证安装
 
-启动新会话，请求一些应该触发技能的操作（例如，"梳理这个行为变更的范围"或"让我们调试这个问题"）。自动触发策略因宿主而异：Codex 与 Gemini 默认只自动触发 scope、architecture、debug；普通规划和审查交给宿主原生能力。
+启动新会话，请求一些应该触发技能的操作（例如，"梳理这个行为变更的范围"或"让我们调试这个问题"）。自动触发策略因宿主而异：Codex 与 Gemini 会在匹配时自动触发 scope、architecture、debug；只有当用户要求执行已识别的 DevMuse contract 或 approved plan 时，code 才能自动接棒。普通规划和审查交给宿主原生能力。
 
 ## 管线
 

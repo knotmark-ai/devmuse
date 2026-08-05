@@ -11,7 +11,7 @@ const codexRoot = path.join(repoRoot, "adapters", "codex");
 const targetSkillsRoot = path.join(codexRoot, "skills");
 const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, "package.json"), "utf8"));
 
-const implicitSkills = new Set(["mu-scope", "mu-arch", "mu-debug"]);
+const implicitSkills = new Set(["mu-scope", "mu-arch", "mu-code", "mu-debug"]);
 
 const ui = {
   "mu-arch": ["DevMuse Architecture", "Design bounded technical architecture", "design the architecture for an approved scope"],
@@ -135,7 +135,7 @@ fs.writeFileSync(
 
 fs.writeFileSync(
   path.join(codexRoot, "HOST_POLICY.md"),
-  `# Codex host policy\n\nDevMuse augments Codex; it does not replace the host's normal agent loop.\n\n- Use native \`/plan\` for ordinary multi-step planning. Invoke \`$mu-plan\` only when an approved architecture needs a durable, UC-traceable plan artifact.\n- Use native \`/review\` for routine working-tree or branch review. Invoke \`$mu-review\` for requirements coverage, security, or an explicitly authorized review-and-fix loop.\n- Let Codex implement and verify direct or bounded work normally. Invoke \`$mu-code\` only after a DevMuse scope, architecture, or plan establishes a contract worth preserving.\n- Only mu-scope, mu-arch, and mu-debug allow implicit invocation. All other DevMuse skills require explicit \`$mu-*\` invocation.\n- Never force a direct or bounded task through the full scope → architecture → plan → code → review pipeline. Upgrade ceremony only when evidence exposes architectural risk or unresolved decisions.\n`,
+  `# Codex host policy\n\nDevMuse augments Codex; it does not replace the host's normal agent loop.\n\n- Use native \`/plan\` for ordinary multi-step planning. Invoke \`$mu-plan\` only when an approved architecture needs a durable, UC-traceable plan artifact.\n- Use native \`/review\` for routine working-tree or branch review. Invoke \`$mu-review\` for requirements coverage, security, or an explicitly authorized review-and-fix loop.\n- Let Codex implement and verify ordinary work normally. Allow \`$mu-code\` to take over automatically only when the user asks to execute a mu-scope \`bounded execution\` contract or an approved DevMuse implementation plan.\n- mu-scope, mu-arch, and mu-debug may invoke when their descriptions match. mu-code additionally requires its execution-request and contract gate. All other DevMuse skills require explicit \`$mu-*\` invocation.\n- Never force a direct or bounded task through the full scope → architecture → plan → code → review pipeline. Upgrade ceremony only when evidence exposes architectural risk or unresolved decisions.\n`,
 );
 
 fs.writeFileSync(

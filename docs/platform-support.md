@@ -7,10 +7,10 @@ DevMuse uses one workflow source and thin host adapters. It does not try to make
 | Host | Distribution | Invocation policy | Host-native capabilities kept authoritative |
 |---|---|---|---|
 | Claude Code | Claude marketplace bundle in `plugin/` | Bootstrap routes direct, bounded, and architectural work; six product/meta skills stay explicit | Claude agents and `PreToolUse` hook |
-| Codex CLI / ChatGPT Work | Codex plugin in `adapters/codex/` | Only `mu-scope`, `mu-arch`, and `mu-debug` may invoke implicitly; the rest are explicit `$mu-*` skills | Native `/plan`, `/review`, task tracking, subagents, sandbox, and approvals |
+| Codex CLI / ChatGPT Work | Codex plugin in `adapters/codex/` | `mu-scope`, `mu-arch`, and `mu-debug` may invoke on a description match; `mu-code` additionally requires an execution request plus a recognized DevMuse contract; the rest are explicit `$mu-*` skills | Native `/plan`, `/review`, task tracking, subagents, sandbox, and approvals |
 | OpenClaw | Installs the Claude or Codex directory as a compatible bundle | Uses skill metadata; manual skills remain manual in the Claude bundle | OpenClaw approvals, sandbox, agents, and skill allowlists |
 | Hermes Agent CLI / Desktop | Hermes plugin at repository root | Plugin skills are explicit and namespaced as `devmuse:mu-*` by default | Hermes `plan` skill, learning loop, memory, tool permissions, and plugin lifecycle |
-| Gemini CLI | Gemini extension metadata in `plugin/` | Lightweight `GEMINI.md` limits automatic activation to scope, architecture, and debug | Native Plan Mode, task tracking, validation, hooks, and approvals |
+| Gemini CLI | Gemini extension metadata in `plugin/` | Lightweight `GEMINI.md` allows scope, architecture, and debug on a description match, plus contract-gated code execution | Native Plan Mode, task tracking, validation, hooks, and approvals |
 | Cursor, GitHub Copilot CLI, OpenCode, Cline, Windsurf, Goose, and other Agent Skills hosts | Portable pack generated in `adapters/codex/skills/` | Host decides activation; OpenAI policy metadata is ignored by non-Codex hosts | Each host's planning, review, agents, and permissions |
 
 The portable pack follows the [Agent Skills specification](https://agentskills.io/specification). Its support files are vendored into each skill, so copying one skill does not break DevMuse's knowledge or reviewer references.
@@ -21,7 +21,7 @@ DevMuse adds value where a host needs product framing, risk classification, trac
 
 - Ordinary Codex planning uses `/plan`. `mu-plan` is reserved for an approved architecture that needs a durable plan with UC-ID traceability.
 - Ordinary Codex review uses `/review`. `mu-review` is reserved for requirements coverage, security, or an explicitly authorized review-and-fix loop.
-- `mu-code` is explicit on Codex because normal implementation and verification are already part of the host loop.
+- `mu-code` stays out of ordinary Codex implementation. It may invoke automatically only when the user asks to execute a mu-scope `bounded execution` contract or an approved DevMuse plan; a generic coding request, design, or unapproved specification does not pass the gate.
 - Hermes keeps plugin skills out of its startup index by default. This preserves its progressive-disclosure and learning model instead of loading a second global workflow.
 - Claude keeps the full bootstrap because it is the only adapter whose routing, subagents, and guard hook are currently behavior-tested in this repository.
 
@@ -49,7 +49,7 @@ codex plugin marketplace add knotmark-ai/devmuse \
 codex
 ```
 
-Then enter `/plugins`, select the `devmuse` marketplace, and install DevMuse. Invoke an explicit skill with `$mu-plan`, `$mu-code`, `$mu-review`, and so on.
+Then enter `/plugins`, select the `devmuse` marketplace, and install DevMuse. Invoke an explicit skill with `$mu-plan`, `$mu-review`, and so on. `$mu-code` may be named explicitly, but it can also take over after a qualifying DevMuse execution contract.
 
 For local development:
 
