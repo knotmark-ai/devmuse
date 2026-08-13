@@ -1,0 +1,6 @@
+{
+  "name": "devmuse",
+  "version": "2.2.0",
+  "description": "Risk-proportional software delivery skills for Gemini CLI",
+  "contextFileName": "GEMINI.md"
+}

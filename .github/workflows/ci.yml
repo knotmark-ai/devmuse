@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Build and validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build generated host adapters
+        run: npm run build:adapters
+
+      - name: Reject generated adapter drift
+        run: npm run test:generated
+
+      - name: Validate skill metadata and description budget
+        run: npm run test:skills
+
+      - name: Validate cross-host contracts and manifests
+        run: npm run test:platforms
+
+      - name: Validate routing policy
+        run: npm run test:routing
+
+      - name: Test destructive-command guard
+        run: npm run test:hooks
+
+      - name: Validate Mermaid compatibility
+        run: npm run test:mermaid
+
+      - name: Test token benchmark summarizer
+        run: npm run test:token-benchmark
+
+      - name: Reject whitespace errors
+        run: git diff --check

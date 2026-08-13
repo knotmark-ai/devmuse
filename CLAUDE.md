@@ -6,7 +6,7 @@ Rules for keeping this repo's documentation in sync. The failure mode these prev
 
 - **Skill inventory** (names, categories, roles): the Skills table in `README.md`. Every other doc points there; none repeats it.
 - **Agent dispatch mapping**: `docs/architecture.md` (skills → agents). Nowhere else.
-- **Routing** (intent tables, categories, confidence, and the cross-skill **Pipeline Graph**): `rules/bootstrap.md` — its only home. Skills decide internal flow only; a skill's Done line may name its default successor, but the graph is the authority.
+- **Routing** (intent tables, categories, confidence, and the cross-skill **Pipeline Graph**): `plugin/rules/bootstrap.md` — its only home. Skills decide internal flow only; a skill's Done line may name its default successor, but the graph is the authority.
 - **Domain model**: `CONTEXT.md` at repo root — its terms, state machines, and invariants are authoritative; respect its `_Avoid_` lists. Downstream docs cite it, never restate it.
 - **No hardcoded counts or file-level directory listings in docs** — they drift; say "see the directory" instead.
 
@@ -16,7 +16,7 @@ Touch ALL of these in the same commit:
 
 1. `README.md` — Skills table AND the Pipeline/Orthogonal/On-demand prose section (the list appears twice in that file)
 2. `README_CN.md` — mirror of both
-3. `rules/bootstrap.md` — category lists (both occurrences), if the category is involved
+3. `plugin/rules/bootstrap.md` — category lists (both occurrences), if the category is involved
 4. `docs/architecture.md` (+ `docs/architecture_cn.md`) — dispatch table, only if the skill dispatches agents
 
 ## Chinese twins
@@ -29,4 +29,4 @@ Touch ALL of these in the same commit:
 
 ## Skills are code
 
-Editing any `skills/*/SKILL.md` or `knowledge/principles/*.md` follows mu-write-skill's Iron Law (test before deploy) and its 8-step quality checklist.
+Editing any `plugin/skills/*/SKILL.md` or `plugin/knowledge/principles/*.md` follows mu-write-skill's Iron Law (test before deploy) and its 8-step quality checklist.

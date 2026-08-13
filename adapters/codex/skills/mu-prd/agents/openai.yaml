@@ -1,0 +1,6 @@
+interface:
+  display_name: "DevMuse PRD"
+  short_description: "Define product flows and requirements"
+  default_prompt: "Use $mu-prd to create or update the product requirements document."
+policy:
+  allow_implicit_invocation: false

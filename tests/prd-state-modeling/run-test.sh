@@ -15,7 +15,8 @@ if [ -z "$PROMPT_FILE" ]; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PLUGIN_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PLUGIN_DIR="$REPO_ROOT/plugin"
 
 TIMESTAMP=$(date +%s)
 SCENARIO="$(basename "$PROMPT_FILE" .txt)"

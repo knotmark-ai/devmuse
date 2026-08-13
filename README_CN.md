@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-DevMuse 是一套专为 Claude Code 设计的完整软件开发工作流，基于规则（rules）、技能（skills）、代理（agents）、知识（knowledge）四层架构构建。
+DevMuse 是一套按风险分配流程深度的软件开发工作流，支持 Claude Code、Codex、OpenClaw、Hermes Agent、Gemini CLI 以及其他 Agent Skills 宿主。它基于规则（rules）、技能（skills）、代理（agents）、知识（knowledge）四层架构，但不会强迫所有宿主走同一套流程。
 
 基于 [Superpowers](https://github.com/obra/superpowers)（Jesse Vincent）。
 
@@ -18,6 +18,8 @@ DevMuse 是一套专为 Claude Code 设计的完整软件开发工作流，基�
 
 ## 安装
 
+### Claude Code
+
 ```bash
 # 注册市场
 /plugin marketplace add knotmark-ai/devmuse
@@ -26,9 +28,13 @@ DevMuse 是一套专为 Claude Code 设计的完整软件开发工作流，基�
 /plugin install devmuse@devmuse
 ```
 
+### 其他宿主
+
+Codex、OpenClaw、Hermes Agent、Gemini CLI、Cursor、GitHub Copilot CLI、OpenCode 和其他 Agent Skills 宿主使用原生或生成的适配器。准确安装命令和能力差异见[平台支持与安装指南](docs/platform-support_cn.md)。
+
 ### 验证安装
 
-启动新会话，请求一些应该触发技能的操作（例如，"帮我规划这个功能"或"让我们调试这个问题"）。Agent 应该会自动调用相关技能。
+启动新会话，请求一些应该触发技能的操作（例如，"梳理这个行为变更的范围"或"让我们调试这个问题"）。自动触发策略因宿主而异：Codex 与 Gemini 会在匹配时自动触发 scope、architecture、debug；只有当用户要求执行已识别的 DevMuse contract 或 approved plan 时，code 才能自动接棒。普通规划和审查交给宿主原生能力。
 
 ## 管线
 
@@ -66,7 +72,7 @@ DevMuse 是一个软件工程工作流工具。它按风险与未知程度路由
 - **mu-model** 🧪 — 领域模型：概念、原型分类、模型主轴、谁产生谁维护。在 PRD 与设计之前跑，产出仓库根目录的 `CONTEXT.md`。使用 `/mu-model` 调用。**其 `create` 路径尚未在从零开始的项目上验证过**——见 README 的 Validation status。
 - **mu-prd** — 产品需求：用户流程、对象生命周期模型、线框图、特性规格、分级规则。使用 `/mu-prd` 调用。
 - **mu-wiki** — 当前架构文档的唯一持久化归属，从源码生成并带引用。使用 `/mu-wiki generate` 或 `/mu-wiki update` 调用。
-- **mu-retro** — 定期回顾：git 指标、审查模式分析、发现写入记忆。使用 `/mu-retro` 调用。
+- **mu-retro** — 定期回顾：git 指标、审查模式分析与可复用经验。使用 `/mu-retro` 调用。
 - **mu-grill** — 对方案/设计的穷追式访谈，收敛每一个"猜错即返工"的分叉后才开工。使用 `/mu-grill` 调用。
 
 这些技能**不会被自动路由**，需要用户显式调用。
@@ -89,10 +95,16 @@ DevMuse 是一个软件工程工作流工具。它按风险与未知程度路由
 
 ```
 devmuse/
-├── rules/        始终生效的原则（通过 SessionStart hook 加载）
-├── skills/       用户触发的工作流（/mu-xxx）
-├── agents/       独立角色（被 skill 派遣）
-└── knowledge/    领域知识（按需注入）
+├── plugin/           Claude/OpenClaw/Gemini 运行时
+│   ├── rules/            Claude 常驻路由（SessionStart）
+│   ├── skills/           工作流唯一源文件
+│   ├── agents/           Claude 独立角色
+│   └── knowledge/        共享领域知识
+├── adapters/codex/   生成的 Codex plugin 与自包含 Agent Skills
+├── plugin.yaml       Hermes plugin manifest
+├── __init__.py       Hermes 命名空间技能注册
+├── docs/             仓库文档；子树安装时不进入运行时
+└── tests/            开发与兼容性测试
 ```
 
 ### 技能
@@ -109,7 +121,7 @@ devmuse/
 | 按需 | **mu-model** 🧪 | 领域模型 — 概念、原型分类、模型主轴、谁产生谁维护；写入 `CONTEXT.md`，在 PRD 与设计之前 |
 | 按需 | **mu-prd** | 产品需求 — 用户流程、对象生命周期模型、线框图、特性规格、分级规则 |
 | 按需 | **mu-wiki** | 架构 Wiki — 生成和维护项目级架构文档 |
-| 按需 | **mu-retro** | 定期回顾，收集 git 指标并写入记忆 |
+| 按需 | **mu-retro** | 定期回顾，收集 git 指标并保留可复用经验 |
 | 按需 | **mu-grill** | 对方案/设计的穷追式访谈 — 开工前收敛每一个"猜错即返工"的分叉 |
 | 元 | **mu-write-skill** | 使用 TDD 方法论创建/编辑技能 |
 
@@ -130,7 +142,7 @@ devmuse/
 
 | 钩子 | 触发时机 | 角色 |
 |------|----------|------|
-| **destructive-guard** | Bash | 在执行破坏性命令（rm -rf、git push -f、DROP TABLE、git reset --hard）前发出警告。允许已知安全模式。 |
+| **destructive-guard** | Bash（仅 Claude Code） | 在执行破坏性命令（rm -rf、git push -f、DROP TABLE、git reset --hard）前发出警告；其他宿主以各自原生安全策略为权威。 |
 
 ### 知识
 
@@ -150,10 +162,17 @@ devmuse/
 
 ## 本地开发
 
-无需安装，直接从本地目录加载插件：
+先重新生成并验证宿主适配器：
 
 ```bash
-claude --plugin-dir /path/to/devmuse
+npm run build:adapters
+npm run test:platforms
+```
+
+无需安装，直接从本地目录加载 Claude 插件：
+
+```bash
+claude --plugin-dir /path/to/devmuse/plugin
 ```
 
 修改代码后无需重启，在会话中刷新：
@@ -165,8 +184,10 @@ claude --plugin-dir /path/to/devmuse
 可选：添加 shell alias 方便日常使用：
 
 ```bash
-alias claude-dev='claude --plugin-dir /path/to/devmuse'
+alias claude-dev='claude --plugin-dir /path/to/devmuse/plugin'
 ```
+
+Codex、OpenClaw、Hermes、Gemini 和通用 Agent Skills 的本地加载方式见[平台支持](docs/platform-support_cn.md#安装)。
 
 ## 更新
 

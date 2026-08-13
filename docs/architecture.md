@@ -4,11 +4,21 @@
 
 ```
 devmuse/
-├── rules/        "What must be followed" — always-on principles
-├── skills/       "What to do" — user-triggered workflows (/mu-xxx)
-├── agents/       "Who does it" — independent roles dispatched by skills
-└── knowledge/    "How to do it" — domain knowledge injected on demand
+├── plugin/           Canonical Claude/OpenClaw/Gemini runtime
+│   ├── rules/            "What must be followed" — always-on principles
+│   ├── skills/           "What to do" — canonical workflows (/mu-xxx)
+│   ├── agents/           "Who does it" — independent roles dispatched by skills
+│   └── knowledge/        "How to do it" — domain knowledge injected on demand
+├── adapters/codex/   Generated Codex + portable Agent Skills bundle
+├── plugin.yaml       Hermes manifest
+└── __init__.py       Hermes namespaced skill registration
 ```
+
+Layer paths below are relative to `plugin/`. `plugin/skills/` is the workflow
+source of truth. The Codex adapter vendors each skill's external knowledge and
+agent dependencies so copied Agent Skills remain self-contained. Platform
+installation boundaries and whether repository docs are fetched are detailed in
+[Platform support](platform-support.md).
 
 ## Layer Classification
 
@@ -31,14 +41,14 @@ devmuse/
 
 ---
 
-## Loading Mechanism
+## Claude loading mechanism
 
-All four layers work through plugin installation (`claude plugin add`), no manual setup required.
+All four layers work through the Claude marketplace installation, with no manual setup required.
 
 | Directory | Plugin auto-discovery | Mechanism |
 |-----------|-------------|------|
-| skills/ | ✅ | plugin.json declares, Claude Code discovers SKILL.md |
-| agents/ | ✅ | plugin.json lists each agent file explicitly |
+| skills/ | ✅ | Standard plugin-root directory; Claude Code discovers SKILL.md |
+| agents/ | ✅ | Standard plugin-root directory; Claude Code discovers agent files |
 | hooks/hooks.json | ✅ | Convention-based auto-load (not declared in plugin.json) |
 | knowledge/ | ❌ | Not auto-discovered; referenced via `@` relative paths |
 | rules/ | ❌ | Not natively supported; loaded via SessionStart hook |
@@ -63,6 +73,19 @@ Skills and agents reference knowledge via `@` relative paths within the plugin:
 ```
 
 `@` relative paths work across directories within the plugin (the entire plugin is copied to cache on install).
+
+## Other host adapters
+
+| Host | Adapter behavior |
+|---|---|
+| Codex / ChatGPT Work | `scripts/build-platform-adapters.mjs` generates a strict `.codex-plugin` package, self-contained skill references, and per-skill `agents/openai.yaml`. Scope, architecture, and debug are description-gated; code additionally requires an execution request and recognized DevMuse contract. |
+| OpenClaw | Installs the Claude or Codex directory as a compatible content bundle. Skills run; Claude agents and `hooks/hooks.json` are detect-only. |
+| Hermes Agent | Root `plugin.yaml` + `__init__.py` register source skills under the explicit `devmuse:` namespace. |
+| Gemini CLI | `plugin/gemini-extension.json` discovers source skills; the small `GEMINI.md` coordinates activation with native Plan Mode and validation. |
+| Generic Agent Skills hosts | Install generated skills from `adapters/codex/skills/`; each contains its own referenced support files. |
+
+The adapter boundary is deliberate: workflow content is shared, while invocation,
+subagent, hook, memory, and safety semantics remain host-native.
 
 ---
 
@@ -153,14 +176,12 @@ rules ──constrain──→ all layers
 
 ```json
 {
-  "agents": [
-    "./agents/mu-reviewer.md",
-    "./agents/mu-coder.md"
-  ],
-  "skills": ["./skills/"]
+  "name": "devmuse"
 }
 ```
 
-(Version field omitted here — see `.claude-plugin/plugin.json` for the current release.)
+(Version field omitted here — see `plugin/.claude-plugin/plugin.json` for the current release.)
 
-`hooks/hooks.json` is auto-loaded by convention (Claude Code v2.1+), not declared in plugin.json.
+Skills, agents, and `hooks/hooks.json` are auto-loaded from their standard
+plugin-root locations, so the manifest contains metadata rather than a second
+component inventory that can drift.

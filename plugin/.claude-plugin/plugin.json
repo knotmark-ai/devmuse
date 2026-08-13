@@ -1,0 +1,12 @@
+{
+  "name": "devmuse",
+  "description": "Risk-proportional software delivery skills for Claude Code",
+  "version": "2.2.0",
+  "author": {
+    "name": "KnotMark AI"
+  },
+  "homepage": "https://github.com/knotmark-ai/devmuse",
+  "repository": "https://github.com/knotmark-ai/devmuse",
+  "license": "MIT",
+  "keywords": ["skills", "tdd", "debugging", "collaboration", "best-practices", "workflows"]
+}

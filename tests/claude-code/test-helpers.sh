@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Helper functions for Claude Code skill tests
 
+TEST_HELPERS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEVMUSE_REPO_ROOT="$(cd "$TEST_HELPERS_DIR/../.." && pwd)"
+DEVMUSE_PLUGIN_DIR="${DEVMUSE_PLUGIN_DIR:-$DEVMUSE_REPO_ROOT/plugin}"
+
 # Run Claude Code with a prompt and capture output
 # Usage: run_claude "prompt text" [timeout_seconds] [allowed_tools]
 run_claude() {
@@ -21,7 +25,7 @@ run_claude() {
     fi
 
     # Build command
-    local cmd="claude -p \"$prompt\""
+    local cmd="claude -p \"$prompt\" --plugin-dir \"$DEVMUSE_PLUGIN_DIR\""
     if [ -n "$allowed_tools" ]; then
         cmd="$cmd --allowed-tools=$allowed_tools"
     fi

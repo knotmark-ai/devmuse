@@ -1,0 +1,6 @@
+interface:
+  display_name: "DevMuse Wiki"
+  short_description: "Generate or update architecture docs"
+  default_prompt: "Use $mu-wiki to generate or update the repository architecture wiki."
+policy:
+  allow_implicit_invocation: false

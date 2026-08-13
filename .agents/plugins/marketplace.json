@@ -1,0 +1,20 @@
+{
+  "name": "devmuse",
+  "interface": {
+    "displayName": "DevMuse"
+  },
+  "plugins": [
+    {
+      "name": "devmuse",
+      "source": {
+        "source": "local",
+        "path": "./adapters/codex"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# Tests for hooks/pre-tool-use/destructive-guard.sh
+# Tests for plugin/hooks/pre-tool-use/destructive-guard.sh
 # Covers: UC-4, UC-15, UC-24
 
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
-HOOK="$REPO_ROOT/hooks/pre-tool-use/destructive-guard.sh"
+PLUGIN_ROOT="$REPO_ROOT/plugin"
+HOOK="$PLUGIN_ROOT/hooks/pre-tool-use/destructive-guard.sh"
 
 PASS=0
 FAIL=0

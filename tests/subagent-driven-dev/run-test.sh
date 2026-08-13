@@ -4,7 +4,7 @@
 #
 # Example:
 #   ./run-test.sh go-fractals
-#   ./run-test.sh svelte-todo --plugin-dir /path/to/devmuse
+#   ./run-test.sh svelte-todo --plugin-dir /path/to/devmuse/plugin
 
 set -e
 
@@ -27,9 +27,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# Default plugin dir to parent of tests directory
+# Default to the runtime distribution directory inside the repository.
 if [[ -z "$PLUGIN_DIR" ]]; then
-  PLUGIN_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+  REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+  PLUGIN_DIR="$REPO_ROOT/plugin"
 fi
 
 # Verify test exists

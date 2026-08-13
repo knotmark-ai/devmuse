@@ -1,0 +1,6 @@
+interface:
+  display_name: "DevMuse Code"
+  short_description: "Execute an approved DevMuse contract"
+  default_prompt: "Use $mu-code to implement an approved DevMuse scope or plan."
+policy:
+  allow_implicit_invocation: true
