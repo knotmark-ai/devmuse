@@ -91,16 +91,37 @@ import path from "node:path";
 const root = process.argv[2];
 const skillRoot = path.join(root, "skills");
 
-for (const skill of fs.readdirSync(skillRoot)) {
-  const skillFile = path.join(skillRoot, skill, "SKILL.md");
-  if (!fs.existsSync(skillFile)) continue;
+function walkMarkdown(root) {
+  const files = [];
+  for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
+    const file = path.join(root, entry.name);
+    if (entry.isDirectory()) files.push(...walkMarkdown(file));
+    else if (entry.isFile() && file.endsWith(".md")) files.push(file);
+  }
+  return files;
+}
 
-  const body = fs.readFileSync(skillFile, "utf8");
-  const references = body.matchAll(/@?(references\/devmuse\/[A-Za-z0-9._/-]+\.md)/g);
-  for (const match of references) {
-    const target = path.join(skillRoot, skill, match[1]);
-    if (!fs.existsSync(target)) {
-      throw new Error(`${skill}: missing vendored reference ${match[1]}`);
+function assertPackagedReference(skill, root, file, reference, target) {
+  const packagedPath = path.relative(root, target);
+  if (packagedPath === ".." || packagedPath.startsWith(`..${path.sep}`) || path.isAbsolute(packagedPath)) {
+    throw new Error(`${skill}: reference escapes skill package: ${reference} from ${path.relative(root, file)}`);
+  }
+  if (!fs.existsSync(target)) {
+    throw new Error(`${skill}: missing packaged reference ${reference} from ${path.relative(root, file)}`);
+  }
+}
+
+for (const skill of fs.readdirSync(skillRoot)) {
+  const root = path.join(skillRoot, skill);
+  if (!fs.statSync(root).isDirectory() || !fs.existsSync(path.join(root, "SKILL.md"))) continue;
+
+  for (const file of walkMarkdown(root)) {
+    const body = fs.readFileSync(file, "utf8");
+    for (const match of body.matchAll(/@((?:\.\.\/|\.\/)+[A-Za-z0-9._/-]+\.md)/g)) {
+      assertPackagedReference(skill, root, file, match[1], path.resolve(path.dirname(file), match[1]));
+    }
+    for (const match of body.matchAll(/(?:^|[^A-Za-z0-9._/-])(references\/devmuse\/[A-Za-z0-9._/-]+\.md)/gm)) {
+      assertPackagedReference(skill, root, file, match[1], path.join(root, match[1]));
     }
   }
 }
