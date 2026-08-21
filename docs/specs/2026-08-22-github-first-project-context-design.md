@@ -13,7 +13,7 @@ by #63.
 
 ## Requirements Reference
 
-- Requirements evidence: [GitHub issue #62](https://github.com/knotmark-ai/devmuse/issues/62), including the approved Option A and the subsequent section approvals
+- Requirements evidence: [GitHub issue #62](https://github.com/knotmark-ai/devmuse/issues/62), including the [approved Option A](https://github.com/knotmark-ai/devmuse/issues/62#issuecomment-5371879091) and the [recorded section approvals](https://github.com/knotmark-ai/devmuse/issues/62#issuecomment-5372475995)
 - Covers: UC-G1 through UC-G10 and UC-GR1 through UC-GR3
 - Related behavior: [issue #40](https://github.com/knotmark-ai/devmuse/issues/40) for scope-to-architecture revision loops
 - Domain facts: [Project context and Delivery lifecycle](../../CONTEXT.md#project-context) in `CONTEXT.md`
@@ -46,17 +46,24 @@ redrawn here.
 ```mermaid
 graph LR
     User["User"] --> Host["Host-native agent"]
-    Host --> Bootstrap["Modified - bootstrap and pipeline skills"]
-    Bootstrap --> Resolver["New - project context resolver"]
+    subgraph DevMuse["DevMuse plugin and generated adapters"]
+        Bootstrap["Modified - bootstrap and pipeline skills"]
+        Resolver["New - project context resolver"]
+        Probe["New - live collaboration probe"]
+        Router["Modified - artifact router"]
+        Generator["Modified - adapter generator"]
+    end
+    Host --> Bootstrap
+    Bootstrap --> Resolver
     Resolver --> Manifest["New - tracked project manifest"]
     Resolver --> Cache["New - Git-common private cache"]
-    Resolver --> Probe["New - live collaboration probe"]
+    Resolver --> Probe
     Probe --> GitHub["GitHub Issues and Draft PRs"]
-    Resolver --> Router["Modified - artifact router"]
+    Resolver --> Router
     Router --> GitHub
     Router --> Docs["Living repository truth and ADRs"]
     Router --> Fallback["Offline or declined local fallback"]
-    Generator["Modified - adapter generator"] --> Host
+    Generator --> Host
 ```
 
 ### Component responsibilities
@@ -110,19 +117,32 @@ into an indexed architecture set without changing this schema.
 
 ### Project identity
 
-Identity resolution uses this order:
+Identity resolution validates sources before applying precedence:
 
-1. a validated `project.id` from the manifest;
-2. the immutable GitHub repository node ID from a live read probe;
-3. a UUID written to a user-approved manifest for a non-GitHub project; and
-4. a normalized remote host/owner/repository tuple only as a provisional
+1. Parse and schema-validate a manifest candidate.
+2. When a live provider read is available, compare the manifest repository and
+   `project.id` with the provider's immutable repository ID. Matching immutable
+   IDs bind the manifest to the checkout. A renamed or transferred repository
+   remains the same project, but updating the repository tuple is a
+   user-approved tracked manifest change.
+3. A different immutable ID returns `identity-conflict`, blocks remote writes
+   and cache propagation, and offers `adopt-current-repository` as an explicit
+   tracked manifest change. Retaining the existing manifest selects local
+   fallback for this checkout; it never mutates the other repository.
+4. When the provider cannot be read, a valid manifest may supply
+   `manifest-unverified` identity for local fallback only. Remote writes remain
+   blocked until live equivalence is established.
+5. With no manifest, the immutable provider ID is authoritative after a live
+   read. A non-GitHub project may instead use a UUID written to a user-approved
+   manifest. A normalized host/owner/repository tuple is only a provisional
    discovery hint.
 
 A checkout directory never becomes the project key. SSH and HTTPS remotes are
-normalized to the same repository tuple. A rename or transfer keeps the
-immutable provider ID. In a worktree whose branch predates the manifest, the
-resolver may read the manifest blob from the default branch as a candidate but
-must not write it into the current branch automatically.
+normalized to the same repository tuple after user information, embedded
+credentials, query strings, and fragments are stripped. In a worktree whose
+branch predates the manifest, the resolver may read the manifest blob from the
+default branch as a candidate, subject it to the same live-equivalence checks,
+and must not write it into the current branch automatically.
 
 The Git-common cache records the accepted project ID. If another worktree in
 the same Git common directory presents a different ID, resolution returns
@@ -147,20 +167,36 @@ Its logical schema is:
   "capability_probe": {
     "checked_at": "2026-08-22T00:00:00Z",
     "provider": "github",
-    "read": true,
-    "write": false,
-    "reason": "authentication-required"
+    "operations": {
+      "repository.read": {"allowed": true, "reason": "ok"},
+      "issue.read": {"allowed": true, "reason": "ok"},
+      "issue.create": {"allowed": false, "reason": "authentication-required"},
+      "issue.update": {"allowed": false, "reason": "authentication-required"},
+      "branch.push": {"allowed": false, "reason": "authentication-required"},
+      "pull_request.read": {"allowed": true, "reason": "ok"},
+      "pull_request.create": {"allowed": false, "reason": "authentication-required"},
+      "pull_request.update": {"allowed": false, "reason": "authentication-required"}
+    }
   },
   "worktrees": {
     "main": {
       "branch": "main",
+      "work_id": "issue-62",
       "issue": 62,
       "pull_request": null,
       "pipeline_phase": "architecture",
       "updated_at": "2026-08-22T00:00:00Z"
     }
   },
-  "recovery": []
+  "recovery": {
+    "issue-62": {
+      "operation": "pull_request.create",
+      "attempt_id": "7deba3e4-8fd5-4cda-a287-6675be601234",
+      "status": "indeterminate",
+      "started_at": "2026-08-22T00:00:00Z",
+      "last_error_code": "transport-timeout"
+    }
+  }
 }
 ```
 
@@ -168,13 +204,23 @@ The worktree key comes from Git's worktree administration record, not the
 checkout path. A path may appear only as a diagnostic hint. Capability results
 may accelerate discovery but never authorize a write.
 
-Cache mutation acquires a lock in the same Git-common namespace, rereads the
-current revision inside the lock, merges disjoint worktree entries, and writes
-a mode-`0600` temporary file before atomic rename. A conflict in the same
-worktree's Issue, PR, or project identity is retained as candidates and
-returned as `needs-reconciliation`; it is never reduced by whole-file or
-timestamp-only last-writer-wins. Corrupt or missing cache state degrades to
-fresh discovery.
+`recovery` contains only sanitized, resumable mutation metadata and is removed
+when the outcome is resolved. Cache mutation acquires a lock in the same
+Git-common namespace, rereads the current revision inside the lock, merges
+disjoint worktree entries, and writes a private temporary file before atomic
+rename. POSIX hosts require mode `0600`; Windows hosts require a current-user-
+only ACL when supported and otherwise keep the private cache in memory and use
+fresh discovery next time.
+
+A same-entry conflict retains both candidates and returns
+`needs-reconciliation`. The resolver revalidates each candidate against Git
+and GitHub, discards invalid candidates, and field-merges disjoint valid facts.
+Two valid conflicting Issue or PR candidates require a user choice. After the
+choice, the resolver acquires the lock, rereads the cache revision, restarts if
+it changed, writes the chosen merged entry, increments `revision`, and returns
+`resolved`. Project identity conflicts use the separate manifest/live repair
+path above. Whole-file and timestamp-only last-writer-wins are forbidden.
+Corrupt or missing cache state degrades to fresh discovery.
 
 ### Resolver result contract
 
@@ -187,12 +233,14 @@ manifest_source
 collaboration_mode
 provider
 repository
-capability: none | read | write
+capability.operations[operation]: allowed + reason
+authorization: source + repository_id + work_id + operations + expires
 active_issue
 active_pr
 pipeline_phase
 fallback_reason
 conflicts
+recovery_state
 ```
 
 The canonical knowledge contract defines those fields and decisions. Claude's
@@ -200,33 +248,53 @@ session hook may preload a safe subset. Codex and other Agent Skills hosts run
 the same resolution through host-native Git, filesystem, and collaboration
 tools. A missing hook, connector, or helper changes capability, not semantics.
 
+Capability is operation-scoped rather than a single read/write level. Every
+remote mutation requires both a fresh `allowed` result for its exact operation
+and an active authorization grant with `source`, immutable repository ID,
+`work_id`, allowed operations, and an end-of-turn or end-of-workflow-step
+lifetime. The grant comes from an explicit user request or an approved workflow
+step and is never cached. Issue creation always asks for explicit creation
+approval, even when the remembered collaboration preference is GitHub-first.
+
 ### Issue discovery and managed scope
 
 Matching follows this order:
 
 1. an Issue URL or number explicitly named by the user;
 2. a cached pointer after repository and open-state revalidation;
-3. an Issue carrying the same `work_id`; and
-4. a uniquely strong title, use-case, and affected-path match.
+3. an open Issue in the same repository carrying the exact `work_id`; and
+4. semantic title, use-case, and affected-path search for discovery only.
 
-Several plausible candidates produce one user choice. No candidate plus live
-write capability produces an offer to create an Issue; creation occurs only
-after approval. Read-only, unavailable, non-GitHub, or declined publication
-routes to fallback and records the reason.
+Semantic candidates must also be open and in the same repository. An unmarked
+semantic candidate is never updated automatically: one or several candidates
+are shown to the user for confirmation. Confirming an existing unmarked Issue
+adopts it by adding the managed block and a work ID; no Issue is silently
+claimed. No candidate plus live create capability produces an offer to create
+an Issue; creation occurs only after approval. Read-only, unavailable,
+non-GitHub, or declined publication routes to fallback and records the
+operation-specific reason.
 
 DevMuse edits only a marked block and preserves all human-authored text around
 it:
 
 ```markdown
-<!-- devmuse:scope:start schema=1 work_id=<uuid> -->
+<!-- devmuse:scope:start schema=1 work_id=issue-62 revision=1 content_sha256=<64-hex> -->
 Goal, use cases, acceptance criteria, dependencies, ownership, and external work
 <!-- devmuse:scope:end -->
 ```
 
-The `work_id` is created when a scope becomes durable. It lives in the Issue
-marker, related PR marker, cache pointer, or fallback artifact, never in the
-project manifest. Repeating discovery or publication with the same work ID is
-an update, not a second Issue.
+The `work_id` is a project-scoped opaque identifier using
+`[A-Za-z0-9._:-]{1,128}`. New work starts with a UUID; a confirmed existing
+Issue may adopt `issue-<number>`. It lives in the Issue marker, related PR
+marker, cache pointer, or fallback artifact, never in the project manifest.
+The revision is monotonic and `content_sha256` covers normalized managed
+content between the marker lines: encode as UTF-8, convert CRLF or CR to LF,
+preserve all other characters, and ensure exactly one terminal LF. Exactly one
+well-formed marker pair is allowed. Unknown schemas, duplicates, or malformed
+pairs are read-only and require repair. Repeating discovery or publication
+with the same work ID is an update, not a second Issue. A fallback artifact
+records the same work ID in its header so later publication can adopt the
+existing delivery without duplication.
 
 ### Draft PR plan and progress
 
@@ -241,20 +309,54 @@ links to remaining external work. Human or platform operations such as DNS,
 identity, app-store, console, and secret-manager changes remain owned by the
 Issue. The PR links to those tasks instead of copying their status.
 
+```markdown
+<!-- devmuse:plan:start schema=1 work_id=issue-62 issue=62 revision=1 content_sha256=<64-hex> -->
+Requirements Reference, required PR set, UC-tagged tasks, progress, and evidence
+<!-- devmuse:plan:end -->
+```
+
+The same one-pair, schema, revision, and hash rules apply. All PRs explicitly
+linked by exact work ID form the candidate set; the managed Issue block records
+which are required. The lifecycle projector emits the completion fact only
+when every required PR is merged or explicitly waived. Merging one PR never
+implies completion of the set, and closing one unmerged PR affects delivery
+only after the other linked required PRs are considered. Waiving a required PR
+is a user-authorized managed-Issue update, not an inference from inactivity.
+
 `mu-plan` authors the managed plan block when GitHub is canonical; `mu-code`
 updates tasks and verification; `mu-review` adds final review evidence. The
 existing dated `docs/plans/` output remains the offline, non-GitHub, or declined
 fallback rather than the GitHub-first default.
 
+### Remote mutation protocol
+
+Before updating an Issue or PR, the adapter reads the complete object plus its
+provider revision or ETag, validates the single managed block, and merges the
+new block into the latest human-authored body. `conditional_update` carries
+the expected remote revision. A provider conflict causes refetch and explicit
+reconciliation, never overwrite. If the provider cannot guarantee a
+conditional update, DevMuse does not automatically overwrite the object body;
+it either appends an immutable, versioned managed-revision comment or asks the
+user to approve a merged-body preview.
+
+Create operations generate `work_id` and `attempt_id` before the write. A
+timeout or lost response is indeterminate and is never blindly retried. The
+resolver searches recent same-repository objects for the exact work-ID marker:
+one result is adopted, several require reconciliation, and no result leaves a
+pending recovery record for a later probe or user-approved retry. Only a
+definite no-side-effect failure may retry while the operation grant remains
+active, and provider `retry-after` guidance is honored.
+
 ### Delivery lifecycle
 
-The canonical state names and transitions live in
-[`CONTEXT.md` § Delivery lifecycle](../../CONTEXT.md#delivery-lifecycle). The
-technical realization keeps the Issue open through Scoped, Implementing,
-Reviewing, and MergedPendingDelivery. A merged PR does not close the Issue when
-external tasks, documentation, or acceptance checks remain. An unmerged closed
-PR returns the work to Scoped unless another associated PR still implements
-it; blocked is a reason attached to a task, not another lifecycle state.
+The lifecycle projector applies only the canonical machine in
+[`CONTEXT.md` § Delivery lifecycle](../../CONTEXT.md#delivery-lifecycle); this
+spec does not copy its states or transitions. It consumes provider and workflow
+facts such as first meaningful commit, task verification, requested changes,
+required-PR aggregation, external-work verification, cancellation, and last
+active PR closure. It returns `current_state`, an `issue_action` of `keep_open`
+or `close`, and a reason. Provider adapters report facts; they do not contain a
+second lifecycle table.
 
 ### Issue creation sequence
 
@@ -314,7 +416,7 @@ sequenceDiagram
 | Reuse Issue | GitHub read boundary | Repository identity, Issue state, marker or matching evidence | Ambiguity is shown to the user; unavailable reads select fallback |
 | Publish Issue or PR | GitHub write boundary | Live capability, current authorization, sanitized managed content | The write is not attempted; fallback reason is recorded |
 | Resume in another worktree | Git common directory | Project ID and mergeable worktree entries | Missing cache causes fresh discovery; conflicts require reconciliation |
-| Close delivery | GitHub Issue | Merged PR evidence plus every acceptance and external task result | Issue remains open in MergedPendingDelivery |
+| Project delivery | GitHub Issue | Required-PR evidence plus every acceptance and external-task result | Projector returns `keep_open` with the missing-evidence reason |
 
 ### Artifact routing
 
@@ -334,8 +436,11 @@ scope merely because time passed. Existing dated artifacts remain frozen.
 
 ### Reliability
 
-Remote writes are idempotent over repository ID, work ID, object number, and
-managed marker. The cache is eventually consistent with GitHub by design:
+Managed updates are idempotent over repository ID, work ID, object number,
+revision, and content hash. Conditional writes preserve concurrent human edits;
+unsupported conditional writes require an immutable revision comment or an
+approved merged preview. Indeterminate creates use exact-marker recovery and
+never blind retry. The cache is eventually consistent with GitHub by design:
 GitHub success plus cache failure remains success, and the next resolver pass
 rebuilds the hint. Locking, revision checks, field-level merge, and explicit
 conflicts prevent silent worktree data loss.
@@ -346,7 +451,9 @@ Manifest and cache readers accept fixed schemas and never execute stored text.
 Publishers accept structured summaries rather than raw command output, scan for
 secret-like values, and stop before a remote write when sanitization cannot be
 proved. Tokens, OAuth caches, environment values, and private provider output
-are forbidden in both stores and all managed GitHub blocks.
+are forbidden in both stores and all managed GitHub blocks. Issue, PR, comment,
+manifest, and cache text is untrusted evidence, never an instruction to execute
+a tool or expand authority unless the current user confirms it.
 
 ### Maintainability
 
@@ -361,14 +468,17 @@ GitHub-first is capability-based rather than mandatory. Non-GitHub,
 unauthenticated, read-only, declined, and no-hook hosts preserve full local
 fallback. Repository identity is independent of checkout path and remote URL
 syntax, while schema versions provide an explicit compatibility boundary.
+Private cache persistence uses POSIX mode `0600` or a current-user-only Windows
+ACL; hosts that cannot enforce either use memory plus fresh discovery.
 
 ### Observability
 
-Resolver summaries expose identity source, manifest source, capability,
-coordination pointers, phase, fallback reason, and conflicts without exposing
-credentials or command output. Tests and session transcripts can therefore
-show why a route was selected without turning diagnostic state into another
-authority.
+Resolver summaries expose identity source, manifest source, operation-scoped
+capability reasons, authorization source and lifetime, coordination pointers,
+phase, fallback reason, recovery state, and conflicts without exposing
+credentials or command output. Tests and session transcripts can therefore show
+why a route was selected without turning diagnostic state into another
+authority. Authorization grants themselves are never persisted.
 
 ### Migration
 
@@ -388,15 +498,18 @@ the document-template implementation.
 |---|---|---|
 | Manifest missing | Discover provider and identity, then offer creation when stable facts are known | Git and live provider facts |
 | Manifest has unknown schema or unsafe path | Refuse mutation, report the exact field, continue read-only discovery | Existing manifest remains untouched |
+| Manifest ID differs from live immutable repository ID | Return `identity-conflict`, block remote writes and cache propagation, and offer explicit adoption or local fallback | Existing manifest and live provider fact remain separate |
 | GitHub unavailable, unauthenticated, read-only, or declined | Select local fallback and record a bounded reason | Local fallback artifact and repository truth |
 | Several Issues or PRs plausibly match | Ask one choice; do not create or update until resolved | Existing GitHub objects |
 | Managed marker malformed or duplicated | Refuse automatic replacement and show the conflicting ranges | Human-authored object body |
 | Secret-like content reaches publication boundary | Stop the remote write and present a redacted preview | Local source and existing remote object |
 | Cache missing or corrupt | Ignore it and reconstruct from manifest, Git, and GitHub | Manifest and GitHub |
-| Concurrent cache entries conflict | Preserve both candidates and return `needs-reconciliation` | Manifest and GitHub |
+| Concurrent cache entries conflict | Revalidate candidates, merge disjoint facts, ask on valid conflicts, then revision-check the chosen write | Manifest and GitHub |
+| Provider rejects expected remote revision | Preserve both bodies, refetch, and reconcile; never overwrite | Latest remote human-authored body |
+| Provider rate-limits a definite no-side-effect operation | Keep the grant bounded, honor `retry-after`, and report an operation-specific reason if it expires | Existing remote object or absence |
+| Create response is lost or times out | Record indeterminate recovery, search exact work-ID markers, and do not blind retry | Provider result when discoverable; otherwise pending recovery |
 | Issue creation succeeds but cache update fails | Report success plus recoverable cache warning | Created Issue |
-| Draft PR closes without merge | Return to Scoped unless another linked PR remains active | Open Issue |
-| PR merges while external delivery remains | Keep the Issue open in MergedPendingDelivery | Open Issue and merged PR evidence |
+| Provider reports a delivery event | Feed the fact and required-PR set to the canonical lifecycle projector, then apply its `issue_action` | `CONTEXT.md` lifecycle and provider evidence |
 
 ## Testing Strategy
 
@@ -404,16 +517,17 @@ the document-template implementation.
 |---|---|
 | Manifest fixtures for valid schema, unknown version, unsafe path, symlink escape, and forbidden secret fields | UC-G7, UC-G8, UC-G9, UC-GR3 |
 | Temporary Git repositories with two linked worktrees, SSH/HTTPS remotes, a branch missing the manifest, and identity conflicts | UC-G8, UC-G9, UC-GR3 |
-| Cache fixtures for lock/revision merge, same-entry conflict, corruption recovery, mode `0600`, and atomic replacement | UC-G8, UC-G9 |
-| Fake collaboration adapter for none/read/write capability and current-write re-probe | UC-G2, UC-G3, UC-G7, UC-GR1 |
-| Managed-block fixtures that preserve human text and remain byte-stable on repeated update | UC-G1, UC-G2, UC-G4 |
-| Matching fixtures for explicit object, valid cache, work ID, unique semantic candidate, and ambiguous candidates | UC-G1, UC-G2 |
-| Delivery transition table tests for merged external work, unmerged PR closure, multiple PRs, cancellation, and final completion | UC-G4, UC-G5, UC-G6, UC-GR2 |
+| Cache fixtures for lock/revision merge, deterministic reconciliation, recovery cleanup, corruption recovery, POSIX `0600`, Windows ACL fallback, and atomic replacement | UC-G8, UC-G9 |
+| Fake collaboration adapter for every operation capability, denial reason, fresh re-probe, authorization scope, and grant expiry | UC-G2, UC-G3, UC-G7, UC-GR1 |
+| Managed-block fixtures for exact Issue/PR syntax, schema and duplicate rejection, content hash, conditional conflict, human-text preservation, and byte-stable repeat update | UC-G1, UC-G2, UC-G4 |
+| Create fixtures for definite failure, rate limit, timeout, lost response, one/many/no exact-marker recovery result, and no blind retry | UC-G2, UC-G4, UC-G8 |
+| Matching fixtures for explicit object, valid cache, exact work ID, confirmed unmarked semantic candidates, and ambiguous candidates | UC-G1, UC-G2 |
+| Lifecycle-projector tests feed canonical events for external work, unmerged PR closure, required multi-PR aggregation, waiver, cancellation, and final completion | UC-G4, UC-G5, UC-G6, UC-GR2 |
 | Routing and skill contract tests for bootstrap, mu-scope, mu-arch, mu-plan, mu-code, and mu-review | UC-G1 through UC-G6, UC-G10, UC-GR1, UC-GR2 |
 | Generated adapter and platform tests that vendor the canonical contract and preserve host-native permission boundaries | UC-G3, UC-G8, UC-G9, UC-GR1 |
 | Secret fixtures that attempt token, environment, OAuth cache, and raw command-output publication | UC-G7 |
 | Digests of every pre-existing dated scope, spec, and plan before and after implementation | UC-G10 |
-| Live behavior scenarios for GitHub write, GitHub read-only, no GitHub, declined publication, ambiguous Issue, cross-worktree resume, and secret rejection | All happy and reverse routes |
+| Reproducible `npm run test:project-context -- --scenario <name>` cases for GitHub write, GitHub read-only, no GitHub, declined publication, ambiguous Issue, cross-worktree resume, concurrent human edit, indeterminate create, and secret rejection | All happy and reverse routes |
 | DevMuse dogfood from Issue #62 through Draft PR, merge, external-delivery check, and final Issue closure | End-to-end acceptance for UC-G1 through UC-G10 |
 
 The deterministic layer extends the existing routing, hook, platform,
@@ -439,4 +553,5 @@ regression.
 
 | Date | Commit | Change |
 |---|---|---|
-| 2026-08-22 | — | Initial creation: selected GitHub-first coordination, a tracked stable manifest, a Git-common recoverable cache, repository-identity resolution, managed Issue and Draft PR blocks, and delivery completion after external verification |
+| 2026-08-22 | 2a19598 | Initial creation: selected GitHub-first coordination, a tracked stable manifest, a Git-common recoverable cache, repository-identity resolution, managed Issue and Draft PR blocks, and delivery completion after external verification |
+| 2026-08-22 | — (uncommitted) | Closed independent-review gaps in identity binding, conflict recovery, work correlation, operation authorization, discovery safety, concurrent mutation, lifecycle authority, and cross-platform cache privacy |

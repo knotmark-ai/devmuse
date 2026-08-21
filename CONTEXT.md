@@ -316,9 +316,12 @@ stateDiagram-v2
     Scoped --> Implementing: first meaningful commit and Draft PR
     Implementing --> Reviewing: tasks and verification complete
     Reviewing --> Implementing: changes requested
+    Implementing --> Scoped: last active PR closed without merge
+    Reviewing --> Scoped: last active PR closed without merge
     Reviewing --> Complete: merged and all acceptance criteria verified
     Reviewing --> MergedPendingDelivery: merged but external work remains
     MergedPendingDelivery --> Complete: external work verified
+    MergedPendingDelivery --> Cancelled: delivery abandoned with reason
     Scoped --> Cancelled: closed with reason
     Implementing --> Cancelled: closed with reason
     Reviewing --> Cancelled: closed with reason
@@ -386,7 +389,8 @@ _Avoid_: skill SEO, discoverability tuning
 
 | Date | Commit | Change |
 |---|---|---|
-| 2026-08-22 | — (uncommitted) | Added **Project context** and **Delivery lifecycle** for ADR-0002, generalized living artifacts to include GitHub Issues and Draft PRs, and separated delivery completion from merge completion. |
+| 2026-08-22 | 2a19598 | Added **Project context** and **Delivery lifecycle** for ADR-0002, generalized living artifacts to include GitHub Issues and Draft PRs, and separated delivery completion from merge completion. |
+| 2026-08-22 | — (uncommitted) | Completed lifecycle exits for unmerged PR closure and abandoned post-merge delivery. |
 | 2026-08-04 | — (uncommitted) | Retired **mu-explore** as a persistent workflow. Read-only understanding moved to Direct inspection, unfamiliar changes to mu-scope Quick Probe, bug-adjacent investigation to mu-debug, and durable current architecture to explicit `/mu-wiki`. Per-task independent review was also removed from mu-code in favor of one final mu-review. |
 | 2026-08-03 | — (uncommitted) | Added **Direct lane** and **Scope path** so ceremony scales with execution risk: exact mechanical work bypasses skills, bounded behavior stays inline, architectural work retains the artifact pipeline. |
 | 2026-07-13 | — | "UC" ruled exclusive to mu-scope; mu-explore's five exploration types renamed **variant**. Bare "gate" retired — always qualified (HARD-GATE / sign-off gate / size-area gate). |

@@ -20,6 +20,11 @@ and shared by worktrees but disappear in a fresh clone. GitHub records team
 coordination but cannot supply repository-local canonical document paths when
 offline.
 
+The requirements and design-section approvals are recorded in
+[issue #62](https://github.com/knotmark-ai/devmuse/issues/62), including the
+[Option A decision](https://github.com/knotmark-ai/devmuse/issues/62#issuecomment-5371879091)
+and [complete design approval](https://github.com/knotmark-ai/devmuse/issues/62#issuecomment-5372475995).
+
 ## Decision
 
 DevMuse uses three authorities with non-overlapping responsibilities:
@@ -54,6 +59,8 @@ local dated files.
 
 The trade-off is a reconciliation protocol across three sources. The resolver
 must validate schemas, merge cache entries under a lock, distinguish authority
-from hints, and expose conflicts instead of silently selecting a winner.
-Projects also retain an explicit local fallback because GitHub availability and
-authorization cannot be assumed.
+from hints, verify manifest identity against the live immutable repository ID,
+and expose conflicts instead of silently selecting a winner. Remote object
+updates require conditional-write protection; indeterminate creates require
+work-ID recovery rather than blind retries. Projects also retain an explicit
+local fallback because GitHub availability and authorization cannot be assumed.
