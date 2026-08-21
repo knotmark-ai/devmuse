@@ -148,15 +148,28 @@ function rejectNestedOutput(repoRoot, output) {
   if (nested) throw new Error(`Release output is inside a source bundle: ${relative}`);
 }
 
-function rejectDirtyRuntimeFiles(repoRoot) {
+function rejectDirtyCheckout(repoRoot, output) {
   const modified = splitNull(git(repoRoot, ["diff", "HEAD", "--name-only", "-z"], "buffer"));
-  const untracked = [
-    ...splitNull(git(repoRoot, ["ls-files", "--others", "--exclude-standard", "-z"], "buffer")),
-    ...splitNull(git(repoRoot, ["ls-files", "--others", "--ignored", "--exclude-standard", "-z"], "buffer")),
-  ];
-  const dirty = modified.map((file) => file.replaceAll("\\", "/")).filter(isReleaseInput).sort(utf8Sort);
-  if (dirty.length > 0) throw new Error(`Modified release input must be committed: ${dirty.join(", ")}`);
-  const normalizedUntracked = [...new Set(untracked.map((file) => file.replaceAll("\\", "/")))];
+  const untracked = splitNull(git(repoRoot, ["ls-files", "--others", "--exclude-standard", "-z"], "buffer"));
+  const ignored = splitNull(
+    git(repoRoot, ["ls-files", "--others", "--ignored", "--exclude-standard", "-z"], "buffer"),
+  );
+  const normalizedModified = modified.map((file) => file.replaceAll("\\", "/")).sort(utf8Sort);
+  const dirtyReleaseInputs = normalizedModified.filter(isReleaseInput);
+  if (dirtyReleaseInputs.length > 0) {
+    throw new Error(`Modified release input must be committed: ${dirtyReleaseInputs.join(", ")}`);
+  }
+  if (normalizedModified.length > 0) {
+    throw new Error(`Modified checkout input must be committed: ${normalizedModified.join(", ")}`);
+  }
+
+  let outputRelative = null;
+  if (output) {
+    const relative = path.relative(repoRoot, path.resolve(output)).replaceAll("\\", "/");
+    if (relative && !relative.startsWith("../") && !path.isAbsolute(relative)) outputRelative = relative;
+  }
+  const outsideOutput = (file) => !outputRelative || (file !== outputRelative && !file.startsWith(`${outputRelative}/`));
+  const normalizedUntracked = [...new Set(untracked.map((file) => file.replaceAll("\\", "/")))].filter(outsideOutput);
   const bundleInputs = normalizedUntracked.filter(isRuntimePath).sort(utf8Sort);
   if (bundleInputs.length > 0) {
     throw new Error(`Untracked bundle input must be removed or committed: ${bundleInputs.join(", ")}`);
@@ -165,13 +178,24 @@ function rejectDirtyRuntimeFiles(repoRoot) {
   if (metadataInputs.length > 0) {
     throw new Error(`Untracked release input must be removed or committed: ${metadataInputs.join(", ")}`);
   }
+  if (normalizedUntracked.length > 0) {
+    throw new Error(`Untracked checkout input must be removed or committed: ${normalizedUntracked.sort(utf8Sort).join(", ")}`);
+  }
+
+  const ignoredBundleInputs = [...new Set(ignored.map((file) => file.replaceAll("\\", "/")))]
+    .filter(outsideOutput)
+    .filter(isRuntimePath)
+    .sort(utf8Sort);
+  if (ignoredBundleInputs.length > 0) {
+    throw new Error(`Ignored bundle input must be removed or committed: ${ignoredBundleInputs.join(", ")}`);
+  }
 }
 
 export function loadReleaseContext(repoRoot, options = {}) {
   const root = path.resolve(repoRoot);
   rejectNestedOutput(root, options.output);
   const files = trackedFiles(root);
-  rejectDirtyRuntimeFiles(root);
+  rejectDirtyCheckout(root, options.output);
   const { version, versions } = assertVersionConsistency(root);
   const commit = git(root, ["rev-parse", "HEAD"]).trim();
   const epoch = Number(git(root, ["show", "-s", "--format=%ct", commit]).trim());
