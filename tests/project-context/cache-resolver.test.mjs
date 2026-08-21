@@ -16,6 +16,22 @@ import {
 } from "../../plugin/runtime/project-context/cache.mjs";
 import { resolveLocalProjectContext } from "../../plugin/runtime/project-context/resolver.mjs";
 
+function recoveryAttempt(attemptId) {
+  return {
+    operation: "pull_request.create",
+    attempt_id: attemptId,
+    work_id: "issue-62",
+    object_kind: "pull_request",
+    repository_id: "github:repo",
+    head: "feature",
+    base: "main",
+    request_fingerprint: `sha256:${"a".repeat(64)}`,
+    status: "indeterminate",
+    started_at: "2026-08-22T00:00:00Z",
+    last_error_code: "transport-timeout",
+  };
+}
+
 // Covers: UC-G9
 test("disjoint worktrees merge and same-entry conflicts require reconciliation", () => {
   const base = { schema_version: 1, revision: 1, project_id: "github:repo", worktrees: { main: { work_id: "a", issue: 1 } }, recovery: {} };
@@ -89,8 +105,8 @@ test("concurrent locked updates reread and preserve disjoint worktree entries", 
 // Covers: UC-G8, UC-G9
 test("concurrent attempts under one work ID survive and clear independently", () => {
   const empty = { schema_version: 1, revision: 1, project_id: "github:repo", worktrees: {}, recovery: {} };
-  const one = upsertRecoveryAttempt(empty, { attempt_id: "a", work_id: "issue-62", operation: "pull_request.create" });
-  const two = upsertRecoveryAttempt(one, { attempt_id: "b", work_id: "issue-62", operation: "pull_request.create" });
+  const one = upsertRecoveryAttempt(empty, recoveryAttempt("a"));
+  const two = upsertRecoveryAttempt(one, recoveryAttempt("b"));
   assert.deepEqual(Object.keys(two.recovery).sort(), ["a", "b"]);
   const cleared = clearRecoveryAttempt(two, "a");
   assert.deepEqual(Object.keys(cleared.recovery), ["b"]);
@@ -132,10 +148,52 @@ test("cache reader rejects unknown, credential-bearing, and malformed fixed-sche
   }
 });
 
+// Covers: UC-G7, UC-G9
+test("cache mutation and persistence reject unsafe state before touching storage", async (t) => {
+  const base = { schema_version: 1, revision: 1, project_id: "github:repo", worktrees: {}, recovery: {} };
+  assert.deepEqual(
+    mergeCache(base, { worktreeKey: "main", entry: { issue: 62, token: "plain-secret" } }),
+    { status: "invalid-update", reason: "unsafe-cache-state" },
+  );
+  assert.deepEqual(
+    mergeCache(base, { attempt: { ...recoveryAttempt("a"), token: "plain-secret" } }),
+    { status: "invalid-update", reason: "unsafe-cache-state" },
+  );
+  assert.throws(
+    () => upsertRecoveryAttempt(base, { ...recoveryAttempt("a"), token: "plain-secret" }),
+    (error) => error.code === "invalid-cache-update",
+  );
+  assert.throws(
+    () => clearRecoveryAttempt({ ...base, token: "plain-secret" }, "a"),
+    (error) => error.code === "invalid-cache-update",
+  );
+  assert.equal(Object.hasOwn(base.worktrees, "main"), false);
+
+  const calls = [];
+  assert.deepEqual(await writeCacheAtomic("ignored", { schema_version: 1, token: "plain-secret" }, {
+    mkdir: async () => calls.push("mkdir"),
+    writeFile: async () => calls.push("write"),
+    rename: async () => calls.push("rename"),
+  }), { status: "rejected", reason: "unsafe-cache-state" });
+  assert.deepEqual(calls, []);
+
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-reject-cache-"));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const file = path.join(directory, "project-context.v1.json");
+  const original = `${JSON.stringify(base)}\n`;
+  fs.writeFileSync(file, original, { mode: 0o600 });
+  assert.deepEqual(
+    await updateCache(file, { worktreeKey: "main", entry: { issue: "62", token: "plain-secret" } }),
+    { status: "invalid-update", reason: "unsafe-cache-state" },
+  );
+  assert.equal(fs.readFileSync(file, "utf8"), original);
+});
+
 // Covers: UC-G3, UC-G9
 test("Windows cache uses an ACL adapter or remains memory-only", async () => {
   const calls = [];
-  const result = await writeCacheAtomic("C:\\repo\\.git\\devmuse\\project-context.v1.json", { schema_version: 1 }, {
+  const value = { schema_version: 1, revision: 1, project_id: "github:repo", worktrees: {}, recovery: {} };
+  const result = await writeCacheAtomic("C:\\repo\\.git\\devmuse\\project-context.v1.json", value, {
     platform: "win32",
     applyCurrentUserAcl: async (file) => calls.push(file),
     writeFile: async () => {},
@@ -144,7 +202,7 @@ test("Windows cache uses an ACL adapter or remains memory-only", async () => {
   assert.equal(result.status, "persisted");
   assert.equal(calls.length, 1);
   assert.deepEqual(
-    await writeCacheAtomic("C:\\repo\\.git\\devmuse\\project-context.v1.json", { schema_version: 1 }, { platform: "win32", applyCurrentUserAcl: null }),
+    await writeCacheAtomic("C:\\repo\\.git\\devmuse\\project-context.v1.json", value, { platform: "win32", applyCurrentUserAcl: null }),
     { status: "memory-only", reason: "private-acl-unavailable" },
   );
 });
@@ -155,7 +213,8 @@ test("failed atomic replacement preserves the previous cache", async (t) => {
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
   const file = path.join(directory, "project-context.v1.json");
   fs.writeFileSync(file, '{"revision":1}\n', { mode: 0o600 });
-  await assert.rejects(writeCacheAtomic(file, { revision: 2 }, { rename: async () => { throw new Error("rename failed"); } }), /rename failed/);
+  const replacement = { schema_version: 1, revision: 2, project_id: "github:repo", worktrees: {}, recovery: {} };
+  await assert.rejects(writeCacheAtomic(file, replacement, { rename: async () => { throw new Error("rename failed"); } }), /rename failed/);
   assert.equal(JSON.parse(fs.readFileSync(file, "utf8")).revision, 1);
   assert.deepEqual(fs.readdirSync(directory), ["project-context.v1.json"]);
 });

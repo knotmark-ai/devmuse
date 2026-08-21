@@ -90,6 +90,13 @@ function clone(value) {
   return structuredClone(value);
 }
 
+function requireValidCache(value) {
+  if (validCache(value)) return value;
+  const error = new Error("unsafe cache state");
+  error.code = "invalid-cache-update";
+  throw error;
+}
+
 function withoutValidity(candidate) {
   const { valid: _valid, ...value } = candidate;
   return value;
@@ -106,6 +113,8 @@ export function readCache(text) {
 }
 
 export function mergeCache(current, incoming) {
+  if (!validCache(current)) return { status: "invalid-cache", reason: "unsafe-cache-state" };
+  if (!isRecord(incoming)) return { status: "invalid-update", reason: "unsafe-cache-state" };
   const incomingProjectId = incoming.projectId ?? incoming.project_id ?? null;
   if (incomingProjectId && current.project_id && incomingProjectId !== current.project_id) {
     return { status: "identity-conflict", sources: { cache: current.project_id, incoming: incomingProjectId } };
@@ -124,6 +133,7 @@ export function mergeCache(current, incoming) {
   if (incoming.clearAttemptId) delete next.recovery[incoming.clearAttemptId];
   next.project_id = next.project_id || incomingProjectId;
   next.revision = current.revision + 1;
+  if (!validCache(next)) return { status: "invalid-update", reason: "unsafe-cache-state" };
   return { status: "merged", value: next };
 }
 
@@ -148,17 +158,18 @@ export function upsertRecoveryAttempt(cache, attempt) {
   const next = clone(cache);
   next.recovery ??= {};
   next.recovery[attempt.attempt_id] = clone(attempt);
-  return next;
+  return requireValidCache(next);
 }
 
 export function clearRecoveryAttempt(cache, attemptId) {
   const next = clone(cache);
   next.recovery ??= {};
   delete next.recovery[attemptId];
-  return next;
+  return requireValidCache(next);
 }
 
 export async function writeCacheAtomic(file, value, options = {}) {
+  if (!validCache(value)) return { status: "rejected", reason: "unsafe-cache-state" };
   const platform = options.platform ?? process.platform;
   if (platform === "win32" && typeof options.applyCurrentUserAcl !== "function") {
     return { status: "memory-only", reason: "private-acl-unavailable" };
