@@ -17,6 +17,7 @@ npm run build:adapters
 npm run test:generated
 npm run test:platforms
 npm run test:skills
+npm run test:project-context
 npm run test:routing
 npm run test:hooks
 npm run test:mermaid
@@ -31,6 +32,16 @@ manifest 和版本一致性，并落实 Codex/Gemini 的原生能力策略。发
 
 `routing-policy` 是 Direct、有界、架构三种流程，只读检查、review 模式、
 已退休制品以及 `docs/wiki/` 单一归属的回归契约。
+
+`npm run test:project-context` 使用确定性的 fake 平台输入，覆盖 manifest 校验、
+稳定身份、linked-worktree 缓存、逐操作授权、managed revision、create 恢复、
+交付投影和工作流接线。各个具名场景及预期结果见
+[`tests/project-context/live-scenarios.md`](../tests/project-context/live-scenarios.md)；
+这些场景不会授权或执行 GitHub 写入。
+
+真实 GitHub 检查属于另一层，必须获得明确授权。写路径应使用一次性 fixture
+仓库或 `--dry-run`；在本仓库 dogfood 时使用只读 Issue/PR 查询。fake adapter
+通过证明决策契约正确，live 检查证明当前宿主绑定和平台状态可用。
 
 ## 发布验证
 

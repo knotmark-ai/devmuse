@@ -16,6 +16,14 @@ Cross-system, public-contract, security, migration, or genuinely unresolved work
 
 If a bounded task grows, DevMuse upgrades it before the risky surface changes. The process can get heavier when evidence justifies it; task size or a trigger verb alone never does.
 
+When a repository opts into GitHub-first collaboration and GitHub is currently
+usable, DevMuse reuses one matching Issue for active scope and delivery, then
+keeps plan revisions, progress, and review evidence on the related Draft PR.
+Every remote mutation still needs fresh operation-specific capability and user
+authority. Offline, read-only, non-GitHub, or declined publication falls back
+to repository artifacts with the reason recorded; tracked project truth never
+depends on a checkout path or a private cache.
+
 ## Installation
 
 ### Claude Code

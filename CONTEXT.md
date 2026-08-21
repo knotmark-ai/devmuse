@@ -389,6 +389,7 @@ _Avoid_: skill SEO, discoverability tuning
 
 | Date | Commit | Change |
 |---|---|---|
+| 2026-08-22 | `31f7a79`–`945c68a` | Implemented the approved **Project context** and **Delivery lifecycle**: tracked identity, cross-worktree recovery, authority-safe GitHub coordination, workflow bindings, portable adapters, and default-branch manifest recovery. |
 | 2026-08-22 | 2a19598 | Added **Project context** and **Delivery lifecycle** for ADR-0002, generalized living artifacts to include GitHub Issues and Draft PRs, and separated delivery completion from merge completion. |
 | 2026-08-22 | — (uncommitted) | Completed lifecycle exits for unmerged PR closure and abandoned post-merge delivery. |
 | 2026-08-04 | — (uncommitted) | Retired **mu-explore** as a persistent workflow. Read-only understanding moved to Direct inspection, unfamiliar changes to mu-scope Quick Probe, bug-adjacent investigation to mu-debug, and durable current architecture to explicit `/mu-wiki`. Per-task independent review was also removed from mu-code in favor of one final mu-review. |
