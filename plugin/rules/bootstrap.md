@@ -59,6 +59,35 @@ security; schemas/migrations; dependencies/lockfiles; cross-subsystem behavior;
 externally consumed text/events/logs; operational defaults; retry, timeout, or
 cache policy; and timing/order/concurrency.
 
+### Exact operational binding
+
+A public hostname or provider boundary is not by itself a public-contract or
+cross-subsystem behavior change. A DNS/custom-domain binding remains Exact
+execution when all of these hold:
+
+- the destination is an existing, identified service;
+- the requested record or mapping is explicit;
+- it is an additive and safely reversible binding to an unchanged existing service;
+- it does not unexpectedly overwrite an existing production record; and
+- it changes no application behavior, public response contract, auth/security
+  policy, schema, traffic policy, retry policy, or cache policy.
+
+Run a **narrow live-state preflight** against the provider control planes:
+verify the target, current record/mapping, authority, conflict risk, and
+rollback. Then execute only the exact binding and verify DNS resolution,
+certificate state, and HTTPS health proportionally. Do not create a
+scope/spec/plan artifact or code review for this Direct case.
+
+Work enters mu-scope when it involves replacing or deleting an existing
+production DNS record; changing NS, MX, DNSSEC, certificate policy, proxy/WAF,
+auth/security, or traffic policy; or leaving target, ownership, rollback, or
+blast radius unresolved.
+
+- Direct example: “Map `api.example.com` to the existing `api` service with
+  one new CNAME; do not change application behavior.”
+- mu-scope example: “Replace the production DNS record and cut traffic to a
+  new service.”
+
 Typical Direct execution: an exact prose correction, specified formatter or
 generator, asset organization, exact local rename, or authorized Git operation.
 Before changing runtime code, identifiers, configuration, or automation, do a
