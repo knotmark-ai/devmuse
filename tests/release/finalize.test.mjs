@@ -42,10 +42,26 @@ test("UC-6 UC-8 UC-R3: finalization is deterministic and has no checksum self-re
   );
   const packet = fs.readFileSync(path.join(first, "marketplace-submission.md"), "utf8");
   assert.match(packet, /Validation evidence:/);
-  for (const target of ["claude", "codex", "gemini", "hermes"]) {
-    const bundle = JSON.parse(fs.readFileSync(path.join(first, "bundle-manifest.json"), "utf8")).bundles[target];
-    assert.match(packet, new RegExp(bundle.artifact.replaceAll(".", "\\.")));
-    assert.match(packet, new RegExp(bundle.sha256));
+  const packetManifest = JSON.parse(fs.readFileSync(path.join(first, "bundle-manifest.json"), "utf8"));
+  const sections = {
+    claude: packet.match(/## Claude Code\n([\s\S]*?)(?=\n## )/)?.[1],
+    codex: packet.match(/## Codex\n([\s\S]*?)(?=\n## )/)?.[1],
+    gemini: packet.match(/## Gemini CLI\n([\s\S]*?)(?=\n## )/)?.[1],
+    hermes: packet.match(/## Hermes Agent\n([\s\S]*?)(?=\n## )/)?.[1],
+    openclaw: packet.match(/## OpenClaw compatibility\n([\s\S]*)/)?.[1],
+  };
+  for (const [target, bundleName] of Object.entries({
+    claude: "claude",
+    codex: "codex",
+    gemini: "gemini",
+    hermes: "hermes",
+    openclaw: "claude",
+  })) {
+    const bundle = packetManifest.bundles[bundleName];
+    assert.ok(sections[target], `missing ${target} packet section`);
+    assert.match(sections[target], new RegExp(bundle.artifact.replaceAll(".", "\\.")));
+    assert.match(sections[target], new RegExp(bundle.sha256));
+    assert.match(sections[target], /Validation evidence|Human submission steps:/);
   }
   assert.equal((packet.match(/Human submission steps:/g) ?? []).length, 5);
   assert.match(packet, /OpenClaw[\s\S]*Claude/);

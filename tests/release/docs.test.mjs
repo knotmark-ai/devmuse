@@ -19,6 +19,37 @@ test("UC-9: English and Chinese platform docs use the smallest release archives"
   }
 });
 
+test("UC-9: each host section presents its release archive before any source-development path", () => {
+  const contracts = {
+    "docs/platform-support.md": {
+      "Claude Code": "claude",
+      "Codex CLI and ChatGPT Work": "codex",
+      OpenClaw: "claude",
+      "Hermes Agent CLI and Desktop": "hermes",
+      "Gemini CLI": "gemini",
+    },
+    "docs/platform-support_cn.md": {
+      "Claude Code": "claude",
+      "Codex CLI 与 ChatGPT Work": "codex",
+      OpenClaw: "claude",
+      "Hermes Agent CLI 与 Desktop": "hermes",
+      "Gemini CLI": "gemini",
+    },
+  };
+  for (const [file, hosts] of Object.entries(contracts)) {
+    const body = read(file);
+    for (const [heading, archive] of Object.entries(hosts)) {
+      const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const section = body.match(new RegExp(`### ${escaped}\\n([\\s\\S]*?)(?=\\n### |\\n## )`))?.[1];
+      assert.ok(section, `${file}: missing ${heading}`);
+      const archivePosition = section.indexOf(`devmuse-<version>-${archive}.tar.gz`);
+      const sourcePosition = section.search(/source-based development|live source development|源码开发|源码实时开发/i);
+      assert.ok(archivePosition >= 0, `${file}: ${heading} lacks its archive`);
+      assert.ok(sourcePosition < 0 || archivePosition < sourcePosition, `${file}: ${heading} does not lead with its archive`);
+    }
+  }
+});
+
 test("UC-4 UC-R5: platform docs map OpenClaw to Claude without a duplicate archive", () => {
   assert.match(read("docs/platform-support.md"), /OpenClaw[\s\S]*Claude archive[\s\S]*no separate OpenClaw archive/i);
   assert.match(read("docs/platform-support_cn.md"), /OpenClaw[\s\S]*Claude 归档[\s\S]*不生成单独的 OpenClaw 归档/);

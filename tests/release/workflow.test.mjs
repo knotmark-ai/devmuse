@@ -32,6 +32,12 @@ test("UC-2 UC-3 UC-7 UC-R1 UC-R4: release workflow has pure dry run and gated mu
     3,
   );
   assert.match(workflow, /vars\.DEVMUSE_PUBLISH_NPM == 'true'/);
+  const nodeVersions = [...workflow.matchAll(/node-version:\s*([^\s]+)/g)].map((match) => match[1]);
+  assert.ok(nodeVersions.length > 0 && nodeVersions.every((version) => version === "22.23.2"));
+  assert.equal(
+    (workflow.match(/npm install --global --ignore-scripts npm@11\.5\.1/g) ?? []).length,
+    nodeVersions.length,
+  );
   assert.match(workflow, /RELEASE_TAG:\s*\$\{\{ github\.ref_name \}\}/);
   assert.doesNotMatch(workflow, /--tag\s+\$\{\{ github\.ref_name \}\}/);
   assert.doesNotMatch(workflow, /uses:\s*[^\s]+@v\d+/);
