@@ -32,6 +32,8 @@ If a bounded task grows, DevMuse upgrades it before the risky surface changes. T
 
 Codex, OpenClaw, Hermes Agent, Gemini CLI, Cursor, GitHub Copilot CLI, OpenCode, and other Agent Skills hosts use native or generated adapters. See the [platform support and installation guide](docs/platform-support.md) for exact commands and capability differences.
 
+Published versions also provide a host-specific release archive that excludes repository docs and tests. Choose the smallest artifact for your host, verify it against `SHA256SUMS`, and follow the [platform support and installation guide](docs/platform-support.md#install).
+
 ### Verify installation
 
 Start a new session and ask for something that should trigger a skill (for example, "scope this behavior change" or "let's debug this issue"). Automatic activation is intentionally host-specific: Codex and Gemini auto-activate scope, architecture, and debug when they match; code execution can take over only after the user asks to execute a recognized DevMuse contract or approved plan. Planning and review normally stay with native host capabilities.

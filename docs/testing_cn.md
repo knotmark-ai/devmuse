@@ -6,26 +6,22 @@ DevMuse 将确定性的契约检查与真实模型行为测试分开。修改路
 
 ## 测试结构
 
-```
-tests/
-├── routing-policy/          路由、去重与制品归属的静态契约
-├── hooks/                   确定性的 Hook 测试
-├── platform-compat/         生成式适配器、清单与宿主策略契约
-├── skill-triggering/        自动调用的真实模型探针
-├── explicit-skill-requests/ 当前 Skill 的显式调用探针
-├── claude-code/             mu-code 行为/文档检查
-├── prd-state-modeling/      状态化产品与 bootstrap 压力场景
-├── subagent-driven-dev/     架构型 mu-code 手动端到端项目
-└── brainstorm-server/       可视化伴侣服务测试
-```
+当前 suite 见 `tests/` 目录。确定性检查覆盖路由、hooks、宿主打包、发布行为、
+元数据、Mermaid 与 token 统计；真实场景覆盖模型触发和 Agent 端到端行为。
+本文按执行成本分组，不复制容易漂移的目录清单。
 
 ## 快速确定性检查
 
 ```bash
 npm run build:adapters
+npm run test:generated
 npm run test:platforms
-bash tests/routing-policy/test-routing-policy.sh
-bash tests/hooks/test-destructive-guard.sh
+npm run test:skills
+npm run test:routing
+npm run test:hooks
+npm run test:mermaid
+npm run test:token-benchmark
+npm run test:release
 git diff --check
 ```
 
@@ -35,6 +31,26 @@ manifest 和版本一致性，并落实 Codex/Gemini 的原生能力策略。发
 
 `routing-policy` 是 Direct、有界、架构三种流程，只读检查、review 模式、
 已退休制品以及 `docs/wiki/` 单一归属的回归契约。
+
+## 发布验证
+
+`npm run test:release` 会在不访问 GitHub Releases 或 npm 的情况下，验证发布
+模型、确定性归档、两次构建对比、安全解压、宿主生命周期 smoke、最终化、
+发布重试边界、workflow 权限和文档契约。
+
+使用临时输出目录执行完整本地 dry run：
+
+```bash
+release_root="$(mktemp -d)/release"
+npm run release:build -- --output "$release_root"
+npm run release:verify -- --input "$release_root"
+npm run release:smoke -- --input "$release_root" --evidence "$release_root/smoke-evidence.json"
+npm run release:finalize -- --input "$release_root" --evidence "$release_root/smoke-evidence.json"
+```
+
+Tag workflow 会在 Linux、macOS、Windows 上重复打包和 smoke，比对构建阶段的
+checksum contract，再最终化一份已验证输出。手动 dispatch 到此为止；只有匹配
+版本的远端 tag 才能进入 attestation、GitHub Release 变更和隔离的可选 npm job。
 
 ## 真实触发检查
 

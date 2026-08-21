@@ -841,7 +841,7 @@ git commit -m "ci(release): orchestrate verified tag releases"
 - Modify: `README.md`
 - Modify: `README_CN.md`
 
-- [ ] **Step 1: Write the failing bilingual documentation contract**
+- [x] **Step 1: Write the failing bilingual documentation contract**
 
 ```js
 // tests/release/docs.test.mjs
@@ -874,13 +874,13 @@ test("testing twins document local release validation", () => {
 });
 ```
 
-- [ ] **Step 2: Run the docs contract and verify it fails**
+- [x] **Step 2: Run the docs contract and verify it fails**
 
 Run: `node --test tests/release/docs.test.mjs`
 
 Expected: FAIL because host-specific release archive instructions are absent.
 
-- [ ] **Step 3: Update English and Chinese documentation twins**
+- [x] **Step 3: Update English and Chinese documentation twins**
 
 Constraints:
 - In both platform-support twins, make each supported host's primary release installation path the smallest matching archive, explain checksum verification, and link the manual marketplace packet. Keep clone/source instructions clearly labeled for development.
@@ -889,7 +889,7 @@ Constraints:
 - Update both testing twins with `test:release`, local build/verify/smoke/finalize commands, cross-OS matrix behavior, and the distinction between deterministic local tests and network publication.
 - Add a short release-artifacts pointer to both README twins without copying the skill inventory, routing table, domain model, a hardcoded count, or a directory file listing.
 
-- [ ] **Step 4: Run docs and full deterministic verification**
+- [x] **Step 4: Run docs and full deterministic verification**
 
 Run:
 
@@ -922,7 +922,7 @@ npm run release:finalize -- --input "$release_root" --evidence "$release_root/sm
 
 Expected: commands exit 0; `expected-assets.json` verifies the local upload set; no network release or registry mutation occurs.
 
-- [ ] **Step 6: Commit documentation and verification evidence**
+- [x] **Step 6: Commit documentation and verification evidence**
 
 ```bash
 git add README.md README_CN.md docs/platform-support.md docs/platform-support_cn.md docs/testing.md docs/testing_cn.md tests/release/docs.test.mjs
