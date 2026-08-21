@@ -5,12 +5,52 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
+import { gunzipSync, gzipSync } from "node:zlib";
 
 import { createTarGz, extractTarGz, readTarGz } from "../../scripts/release/archive.mjs";
-import { buildRelease, stableJson, verifyRelease } from "../../scripts/release/artifacts.mjs";
+import {
+  buildRelease,
+  normalizeNpmTarball,
+  stableJson,
+  verifyRelease,
+} from "../../scripts/release/artifacts.mjs";
+import { loadReleaseContext } from "../../scripts/release/model.mjs";
 
 const repoRoot = path.resolve(import.meta.dirname, "../..");
 const digest = (file) => createHash("sha256").update(fs.readFileSync(file)).digest("hex");
+
+function rewriteNpmMode(input, targetPath, mode) {
+  const tar = Buffer.from(gunzipSync(input));
+  const readString = (block, offset, length) => {
+    const field = block.subarray(offset, offset + length);
+    const end = field.indexOf(0);
+    return field.subarray(0, end < 0 ? field.length : end).toString("utf8");
+  };
+  let offset = 0;
+  let changed = false;
+  while (offset + 512 <= tar.length) {
+    const header = tar.subarray(offset, offset + 512);
+    if (header.every((byte) => byte === 0)) break;
+    const name = readString(header, 0, 100);
+    const prefix = readString(header, 345, 155);
+    const entryPath = prefix ? `${prefix}/${name}` : name;
+    const size = Number.parseInt(readString(header, 124, 12).trim(), 8);
+    if (entryPath === targetPath) {
+      header.fill(0, 100, 108);
+      Buffer.from(`${mode.toString(8).padStart(7, "0")}\0`).copy(header, 100);
+      header.fill(0x20, 148, 156);
+      const checksum = header.reduce((total, byte) => total + byte, 0);
+      Buffer.from(`${checksum.toString(8).padStart(6, "0")}\0 `).copy(header, 148);
+      changed = true;
+    }
+    offset += 512 + Math.ceil(size / 512) * 512;
+  }
+  assert.equal(changed, true, `missing npm fixture entry ${targetPath}`);
+  const gzip = Buffer.from(gzipSync(tar, { level: 9, mtime: 0 }));
+  gzip.fill(0, 4, 8);
+  gzip[9] = 255;
+  return gzip;
+}
 
 test("UC-3: tar gzip bytes and metadata are deterministic", () => {
   const longPath = `devmuse/${"x".repeat(180)}/file.txt`;
@@ -123,4 +163,13 @@ test("UC-R3: verification rejects self-consistent host and npm tampering", async
   fs.writeFileSync(manifestFile, stableJson(npmManifest));
   fs.writeFileSync(checksumsFile, stableJson(npmChecksums));
   assert.throws(() => verifyRelease({ repoRoot, input: output }), /canonical|npm|tarball/i);
+});
+
+test("UC-3: npm normalization restores Git executable modes independent of staging filesystem", async () => {
+  const output = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-npm-mode-")), "release");
+  const built = await buildRelease({ repoRoot, output });
+  const canonical = fs.readFileSync(path.join(output, built.bundleManifest.npm.artifact));
+  const modeLost = rewriteNpmMode(canonical, "package/plugin/hooks/session-start", 0o644);
+  assert.notDeepEqual(modeLost, canonical);
+  assert.deepEqual(normalizeNpmTarball(modeLost, loadReleaseContext(repoRoot)), canonical);
 });
