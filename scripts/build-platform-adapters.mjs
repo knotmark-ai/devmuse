@@ -12,6 +12,8 @@ const targetSkillsRoot = path.join(codexRoot, "skills");
 const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, "package.json"), "utf8"));
 
 const implicitSkills = new Set(["mu-scope", "mu-arch", "mu-code", "mu-debug"]);
+const projectContextConsumers = new Set(["mu-scope", "mu-arch", "mu-plan", "mu-code", "mu-review"]);
+const projectContextRuntimeRoot = path.join(sourcePluginRoot, "runtime", "project-context");
 
 const ui = {
   "mu-arch": ["DevMuse Architecture", "Design bounded technical architecture", "design the architecture for an approved scope"],
@@ -44,6 +46,14 @@ function rewritePortableText(text, skillName) {
     .replace(/^disable-model-invocation:\s*true\s*\n/gm, "")
     .replaceAll("@../../knowledge/", "references/devmuse/knowledge/")
     .replaceAll("@../../agents/", "references/devmuse/agents/")
+    .replaceAll(
+      "Claude skills invoke\n`${CLAUDE_PLUGIN_ROOT}/runtime/project-context/cli.mjs`. Portable skills invoke\ntheir vendored `references/devmuse/runtime/project-context/cli.mjs`.",
+      "Codex skills invoke their vendored\n`references/devmuse/runtime/project-context/cli.mjs`.",
+    )
+    .replaceAll(
+      "${CLAUDE_PLUGIN_ROOT}/runtime/project-context/cli.mjs",
+      "references/devmuse/runtime/project-context/cli.mjs",
+    )
     .replaceAll(`skills/${skillName}/`, "");
 }
 
@@ -122,6 +132,14 @@ for (const skillName of skillNames) {
     fs.copyFileSync(source, target);
   }
 
+  if (projectContextConsumers.has(skillName)) {
+    fs.cpSync(
+      projectContextRuntimeRoot,
+      path.join(targetRoot, "references", "devmuse", "runtime", "project-context"),
+      { recursive: true },
+    );
+  }
+
   for (const file of walkFiles(targetRoot)) {
     if (!file.endsWith(".md")) continue;
     const before = fs.readFileSync(file, "utf8");
@@ -161,7 +179,7 @@ fs.writeFileSync(
 
 fs.writeFileSync(
   path.join(codexRoot, "HOST_POLICY.md"),
-  `# Codex host policy\n\nDevMuse augments Codex; it does not replace the host's normal agent loop.\n\n- Use native \`/plan\` for ordinary multi-step planning. Invoke \`$mu-plan\` only when an approved architecture needs a durable, UC-traceable plan artifact.\n- Use native \`/review\` for routine working-tree or branch review. Invoke \`$mu-review\` for requirements coverage, security, or an explicitly authorized review-and-fix loop.\n- Let Codex implement and verify ordinary work normally. Allow \`$mu-code\` to take over automatically only when the user asks to execute a mu-scope \`bounded execution\` contract or an approved DevMuse implementation plan.\n- mu-scope, mu-arch, and mu-debug may invoke when their descriptions match. mu-code additionally requires its execution-request and contract gate. All other DevMuse skills require explicit \`$mu-*\` invocation.\n- Never force a direct or bounded task through the full scope → architecture → plan → code → review pipeline. Upgrade ceremony only when evidence exposes architectural risk or unresolved decisions.\n- Keep exact operational bindings Direct under the canonical bootstrap criteria: a public hostname or provider boundary alone does not justify the full pipeline. Destructive DNS changes and policy changes still upgrade through mu-scope.\n- Keep Codex sandbox, approval, and administrator policy authoritative. Do not emulate the Claude destructive-command \`ask\` hook: Codex \`PreToolUse\` can deny, but it cannot currently request approval.\n`,
+  `# Codex host policy\n\nDevMuse augments Codex; it does not replace the host's normal agent loop.\n\n- Use native \`/plan\` for ordinary multi-step planning. Invoke \`$mu-plan\` only when an approved architecture needs a durable, UC-traceable plan artifact.\n- Use native \`/review\` for routine working-tree or branch review. Invoke \`$mu-review\` for requirements coverage, security, or an explicitly authorized review-and-fix loop.\n- Let Codex implement and verify ordinary work normally. Allow \`$mu-code\` to take over automatically only when the user asks to execute a mu-scope \`bounded execution\` contract or an approved DevMuse implementation plan.\n- mu-scope, mu-arch, and mu-debug may invoke when their descriptions match. mu-code additionally requires its execution-request and contract gate. All other DevMuse skills require explicit \`$mu-*\` invocation.\n- Never force a direct or bounded task through the full scope → architecture → plan → code → review pipeline. Upgrade ceremony only when evidence exposes architectural risk or unresolved decisions.\n- Keep exact operational bindings Direct under the canonical bootstrap criteria: a public hostname or provider boundary alone does not justify the full pipeline. Destructive DNS changes and policy changes still upgrade through mu-scope.\n- GitHub-first coordination uses Issues and Draft PRs only after a fresh host-native capability and approval check for the exact operation. Read each skill's vendored project-context contract and runtime; cached discovery is never authority to mutate GitHub.\n- Codex has no Claude SessionStart hook dependency. Resolve context when the workflow needs it and keep native GitHub tools, sandbox, approval, and administrator policy authoritative. Do not emulate the Claude destructive-command \`ask\` hook: Codex \`PreToolUse\` can deny, but it cannot currently request approval.\n`,
 );
 
 fs.writeFileSync(
