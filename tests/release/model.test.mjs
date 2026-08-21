@@ -83,3 +83,15 @@ test("UC-R2: context rejects symlinks, untracked bundle inputs, and nested outpu
     /output.*bundle/i,
   );
 });
+
+test("UC-3: context rejects dirty npm metadata that would escape source provenance", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-model-npm-"));
+  execFileSync("git", ["init", "-q"], { cwd: root });
+  execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: root });
+  execFileSync("git", ["config", "user.name", "Test"], { cwd: root });
+  fs.writeFileSync(path.join(root, "README.md"), "committed\n");
+  execFileSync("git", ["add", "."], { cwd: root });
+  execFileSync("git", ["commit", "-qm", "fixture"], { cwd: root });
+  fs.writeFileSync(path.join(root, "README.md"), "dirty\n");
+  assert.throws(() => loadReleaseContext(root), /modified release input.*README\.md/i);
+});

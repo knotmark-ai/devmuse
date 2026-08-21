@@ -129,6 +129,16 @@ function isRuntimePath(filePath) {
   return Object.values(BUNDLE_CATALOG).some((definition) => matchesBundle(filePath, definition));
 }
 
+function isNpmMetadataPath(filePath) {
+  if (filePath === "package.json") return true;
+  if (filePath.includes("/")) return false;
+  return /^(?:readme|licen[sc]e)(?:\..*)?$/i.test(filePath);
+}
+
+function isReleaseInput(filePath) {
+  return isRuntimePath(filePath) || isNpmMetadataPath(filePath);
+}
+
 function rejectNestedOutput(repoRoot, output) {
   if (!output) return;
   const relative = path.relative(repoRoot, path.resolve(output)).replaceAll("\\", "/");
@@ -144,10 +154,17 @@ function rejectDirtyRuntimeFiles(repoRoot) {
     ...splitNull(git(repoRoot, ["ls-files", "--others", "--exclude-standard", "-z"], "buffer")),
     ...splitNull(git(repoRoot, ["ls-files", "--others", "--ignored", "--exclude-standard", "-z"], "buffer")),
   ];
-  const dirty = modified.map((file) => file.replaceAll("\\", "/")).filter(isRuntimePath).sort(utf8Sort);
-  if (dirty.length > 0) throw new Error(`Modified bundle input must be committed: ${dirty.join(", ")}`);
-  const inputs = [...new Set(untracked.map((file) => file.replaceAll("\\", "/")).filter(isRuntimePath))].sort(utf8Sort);
-  if (inputs.length > 0) throw new Error(`Untracked bundle input must be removed or committed: ${inputs.join(", ")}`);
+  const dirty = modified.map((file) => file.replaceAll("\\", "/")).filter(isReleaseInput).sort(utf8Sort);
+  if (dirty.length > 0) throw new Error(`Modified release input must be committed: ${dirty.join(", ")}`);
+  const normalizedUntracked = [...new Set(untracked.map((file) => file.replaceAll("\\", "/")))];
+  const bundleInputs = normalizedUntracked.filter(isRuntimePath).sort(utf8Sort);
+  if (bundleInputs.length > 0) {
+    throw new Error(`Untracked bundle input must be removed or committed: ${bundleInputs.join(", ")}`);
+  }
+  const metadataInputs = normalizedUntracked.filter(isNpmMetadataPath).sort(utf8Sort);
+  if (metadataInputs.length > 0) {
+    throw new Error(`Untracked release input must be removed or committed: ${metadataInputs.join(", ")}`);
+  }
 }
 
 export function loadReleaseContext(repoRoot, options = {}) {
