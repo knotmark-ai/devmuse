@@ -101,6 +101,37 @@ test("corrupt cache degrades to fresh discovery", () => {
   assert.deepEqual(readCache("{not-json"), { status: "fresh-discovery", value: null, reason: "corrupt-cache" });
 });
 
+// Covers: UC-G7, UC-G9
+test("cache reader rejects unknown, credential-bearing, and malformed fixed-schema state", () => {
+  const valid = {
+    schema_version: 1,
+    revision: 3,
+    project_id: "github:repo",
+    capability_probe: {
+      checked_at: "2026-08-22T00:00:00Z",
+      provider: "github",
+      operations: { "issue.read": { allowed: true, reason: "ok" } },
+    },
+    worktrees: {
+      main: {
+        branch: "main", work_id: "issue-62", issue: 62, pull_request: null,
+        pipeline_phase: "architecture", updated_at: "2026-08-22T00:00:00Z",
+      },
+    },
+    recovery: {},
+  };
+  assert.equal(readCache(JSON.stringify(valid)).status, "loaded");
+  for (const candidate of [
+    { ...valid, authorization: { operations: ["issue.update"] } },
+    { ...valid, token: "plain-secret-value" },
+    { ...valid, worktrees: { main: { ...valid.worktrees.main, issue: "62" } } },
+    { ...valid, capability_probe: { ...valid.capability_probe, operations: { "issue.read": { allowed: true, reason: "github_pat_11AA22BB33CC44DD55EE66FF77GG88HH99" } } } },
+    { ...valid, recovery: { attempt: { token: "plain-secret-value" } } },
+  ]) {
+    assert.deepEqual(readCache(JSON.stringify(candidate)), { status: "fresh-discovery", value: null, reason: "corrupt-cache" });
+  }
+});
+
 // Covers: UC-G3, UC-G9
 test("Windows cache uses an ACL adapter or remains memory-only", async () => {
   const calls = [];
@@ -198,6 +229,7 @@ test("an invalid tracked manifest blocks live-only identity and remote writes", 
   assert.equal(spawnSync("git", ["init", "-b", "main"], { cwd: directory }).status, 0);
   fs.mkdirSync(path.join(directory, ".devmuse"));
   fs.writeFileSync(path.join(directory, ".devmuse", "project.yaml"), "schema_version: 1\ntoken: secret\n");
+  assert.equal(spawnSync("git", ["add", ".devmuse/project.yaml"], { cwd: directory }).status, 0);
   const result = await resolveLocalProjectContext({
     cwd: directory,
     liveRepository: { id: "github:repo", repository: "github.com/org/repo" },
@@ -208,6 +240,65 @@ test("an invalid tracked manifest blocks live-only identity and remote writes", 
   assert.equal(result.collaboration_mode, "local-only");
   assert.equal(result.fallback_reason, "invalid-manifest");
   assert.deepEqual(result.conflicts, [{ type: "invalid-manifest", source: "current-branch", reason: "unknown-key" }]);
+});
+
+// Covers: UC-G8, UC-G9, UC-GR3
+test("a conflicting cache identity blocks resolution and hides its coordination pointers", async (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-resolver-conflict-"));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  for (const args of [["init", "-b", "main"], ["config", "user.email", "test@example.com"], ["config", "user.name", "Test"]]) {
+    assert.equal(spawnSync("git", args, { cwd: directory }).status, 0);
+  }
+  fs.mkdirSync(path.join(directory, ".devmuse"));
+  fs.writeFileSync(path.join(directory, ".devmuse", "project.yaml"), `schema_version: 1
+project:
+  id: "github:repo-a"
+  repository: "github.com/org/repo"
+collaboration:
+  provider: github
+  mode: github-first
+artifacts:
+  prd: null
+  architecture:
+    index: docs/architecture.md
+    domain_model: CONTEXT.md
+`);
+  spawnSync("git", ["add", ".devmuse/project.yaml"], { cwd: directory });
+  spawnSync("git", ["commit", "-m", "manifest"], { cwd: directory });
+  const cacheDirectory = path.join(directory, ".git", "devmuse");
+  fs.mkdirSync(cacheDirectory);
+  fs.writeFileSync(path.join(cacheDirectory, "project-context.v1.json"), JSON.stringify({
+    schema_version: 1, revision: 1, project_id: "github:repo-b",
+    worktrees: { main: { work_id: "other", issue: 999, pull_request: 1000 } },
+    recovery: {},
+  }));
+  const result = await resolveLocalProjectContext({
+    cwd: directory,
+    liveRepository: { id: "github:repo-a", repository: "github.com/org/repo" },
+  });
+  assert.equal(result.project_id, null);
+  assert.equal(result.identity_source, "identity-conflict");
+  assert.equal(result.fallback_reason, "identity-conflict");
+  assert.equal(result.active_issue, null);
+  assert.equal(result.active_pr, null);
+  assert.deepEqual(result.recovery_state, {});
+  assert.deepEqual(result.conflicts, [{ type: "identity-conflict", cache: "github:repo-b", resolved: "github:repo-a" }]);
+});
+
+// Covers: UC-G7, UC-G8
+test("an untracked manifest cannot establish project identity", async (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-untracked-manifest-"));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  assert.equal(spawnSync("git", ["init", "-b", "main"], { cwd: directory }).status, 0);
+  fs.mkdirSync(path.join(directory, ".devmuse"));
+  fs.writeFileSync(path.join(directory, ".devmuse", "project.yaml"), "schema_version: 1\n");
+  const result = await resolveLocalProjectContext({
+    cwd: directory,
+    liveRepository: { id: "github:repo", repository: "github.com/org/repo" },
+  });
+  assert.equal(result.project_id, null);
+  assert.equal(result.identity_source, "untracked-manifest");
+  assert.equal(result.fallback_reason, "untracked-manifest");
 });
 
 // Covers: UC-G3, UC-G8

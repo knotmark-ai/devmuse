@@ -156,6 +156,13 @@ for (const skill of ["mu-scope", "mu-arch", "mu-plan", "mu-code", "mu-review"]) 
     `${skill} lacks the packaged project-context runtime`,
   );
 }
+assert.ok(
+  fs.existsSync(path.join(
+    root,
+    "adapters/codex/skills/mu-scope/references/devmuse/knowledge/principles/artifact-succession.md",
+  )),
+  "mu-scope lacks the packaged fallback succession contract",
+);
 
 assert.match(read("adapters/codex/HOST_POLICY.md"), /native `\/plan`/);
 assert.match(read("adapters/codex/HOST_POLICY.md"), /native `\/review`/);

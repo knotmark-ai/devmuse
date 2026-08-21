@@ -11,7 +11,8 @@ function validCandidate(candidate, repositoryId) {
 
 export function authorizeMutation({ operation, repositoryId, workId, capability, grant, now, maxCapabilityAge } = {}) {
   if (!OPERATIONS.has(operation)) return { allowed: false, reason: "unknown-operation" };
-  if (!capability || capability.allowed !== true) return { allowed: false, reason: capability?.reason ?? "capability-denied" };
+  if (!capability || capability.operation !== operation) return { allowed: false, reason: "capability-operation-mismatch" };
+  if (capability.allowed !== true) return { allowed: false, reason: capability.reason ?? "capability-denied" };
   if (!Number.isFinite(capability.checkedAt) || !Number.isFinite(now) || !Number.isFinite(maxCapabilityAge) || capability.checkedAt > now || now - capability.checkedAt > maxCapabilityAge) {
     return { allowed: false, reason: "stale-capability" };
   }
@@ -27,9 +28,10 @@ export function authorizeMutation({ operation, repositoryId, workId, capability,
 export function chooseIssueCandidate(input = {}) {
   const { repositoryId, workId } = input;
   if (validCandidate(input.explicit, repositoryId)) return { action: "reuse", candidate: input.explicit, source: "explicit" };
-  if (validCandidate(input.cached, repositoryId) && input.cached.liveValidated === true) return { action: "reuse", candidate: input.cached, source: "validated-cache" };
+  if (validCandidate(input.cached, repositoryId) && input.cached.liveValidated === true && input.cached.workId === workId) return { action: "reuse", candidate: input.cached, source: "validated-cache" };
   const exact = (input.exactWork ?? []).filter((candidate) => validCandidate(candidate, repositoryId) && candidate.workId === workId);
   if (exact.length === 1) return { action: "reuse", candidate: exact[0], source: "exact-work" };
+  if (exact.length > 1) return { action: "reconcile", candidates: exact, source: "exact-work" };
   if (validCandidate(input.confirmed, repositoryId)) return { action: input.confirmed.marked ? "reuse" : "adopt", candidate: input.confirmed, source: "confirmed" };
   const semantic = (input.semantic ?? []).filter((candidate) => validCandidate(candidate, repositoryId));
   if (semantic.length > 0) return { action: "confirm", candidates: semantic };
@@ -43,9 +45,13 @@ export function chooseUpdateStrategy({ supportsConditionalUpdate, providerConfli
   return { action: "manual-or-local-fallback" };
 }
 
-function inspectPublishable(value) {
+const SENSITIVE_KEY = /^(?:access[_-]?token|api[_-]?(?:key|token)|authorization|auth(?:entication|orization)?[_-]?token|aws[_-]?secret[_-]?access[_-]?key|client[_-]?secret|credentials?|github[_-]?token|oauth[_-]?(?:cache|token)|password|private[_-]?key|refresh[_-]?token|secret|token)$/i;
+
+function inspectPublishable(value, key = null) {
+  if (key !== null && SENSITIVE_KEY.test(key) && value !== null && value !== "") return "secret-rejected";
   if (typeof value === "string") {
     if (/gh[pousr]_[A-Za-z0-9_]{20,}/.test(value)) return "secret-rejected";
+    if (/github_pat_[A-Za-z0-9_]{20,}/.test(value)) return "secret-rejected";
     if (/-----BEGIN (?:[A-Z ]+ )?PRIVATE KEY-----/.test(value) || /\bAKIA[A-Z0-9]{16}\b/.test(value)) return "secret-rejected";
     if (/(?:api[_-]?token|refresh[_-]?token|authorization)\s*[:=]\s*(?:bearer\s+)?[^\s,}]+/i.test(value)) return "secret-rejected";
     if (/\brm\s+-rf\s+\/(?:\s|$)/i.test(value)) return "untrusted-instruction";
@@ -59,8 +65,8 @@ function inspectPublishable(value) {
     return null;
   }
   if (value && typeof value === "object") {
-    for (const item of Object.values(value)) {
-      const result = inspectPublishable(item);
+    for (const [name, item] of Object.entries(value)) {
+      const result = inspectPublishable(item, name);
       if (result) return result;
     }
   }

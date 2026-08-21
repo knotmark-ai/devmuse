@@ -251,7 +251,8 @@ revision, and preserve human text. Existing approved Issue evidence needs no
 duplicate local artifact or approval turn; changed requirements return to the
 user's control gate.
 
-For an explicit local fallback, first check succession, then write
+For an explicit local fallback, first check succession with
+@../../knowledge/principles/artifact-succession.md, then write
 `docs/scope/YYYY-MM-DD-<name>.md` from
 @../../knowledge/templates/scope.md and
 @../../knowledge/principles/prose-discipline.md. Include the work ID and fallback

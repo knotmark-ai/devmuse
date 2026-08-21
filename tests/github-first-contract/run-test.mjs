@@ -13,7 +13,6 @@ const files = {
   reviewer: read("plugin/agents/mu-reviewer.md"),
 };
 
-// Covers: UC-G1 through UC-G10 and UC-GR1 through UC-GR3
 test("every pipeline stage consumes the canonical project-context contract", () => {
   for (const [name, body] of Object.entries(files)) assert.match(body, /project-context\.md/, name);
 });
@@ -22,6 +21,7 @@ test("scope and plan prefer GitHub canonical surfaces with explicit fallback", (
   assert.match(files.scope, /matching GitHub Issue/);
   assert.match(files.scope, /explicit creation approval/);
   assert.match(files.scope, /fallback reason/);
+  assert.match(files.scope, /artifact-succession\.md/);
   assert.match(files.plan, /managed plan revision/);
   assert.match(files.plan, /Draft PR/);
   assert.doesNotMatch(files.plan, /Save plans to:\*\* `docs\/plans/);

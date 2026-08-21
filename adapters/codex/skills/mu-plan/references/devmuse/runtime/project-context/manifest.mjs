@@ -45,7 +45,7 @@ function realExistingPath(file) {
 
 function safeArtifactPath(value, repoRoot) {
   if (value === null) return true;
-  if (typeof value !== "string" || value.length === 0 || value.includes("\\") || path.posix.isAbsolute(value)) return false;
+  if (typeof value !== "string" || value.length === 0 || value.includes("\\") || path.posix.isAbsolute(value) || path.win32.isAbsolute(value)) return false;
   const segments = value.split("/");
   if (segments.some((segment) => segment === "" || segment === "." || segment === "..")) return false;
   const root = realExistingPath(repoRoot);

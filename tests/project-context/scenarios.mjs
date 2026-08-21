@@ -17,7 +17,7 @@ function authorized(operation) {
     operation,
     repositoryId: "github:repo",
     workId: "issue-62",
-    capability: { allowed: true, reason: "ok", checkedAt: 100 },
+    capability: { operation, allowed: true, reason: "ok", checkedAt: 100 },
     grant: { source: "approved-workflow-step", repositoryId: "github:repo", workId: "issue-62", operations: [operation], expiresAt: 200 },
     now: 150,
     maxCapabilityAge: 100,
@@ -35,7 +35,7 @@ export const scenarios = {
   "github-read-only": async () => {
     const result = authorizeMutation({
       operation: "issue.update", repositoryId: "github:repo", workId: "issue-62",
-      capability: { allowed: false, reason: "read-only", checkedAt: 100 },
+      capability: { operation: "issue.update", allowed: false, reason: "read-only", checkedAt: 100 },
       grant: { source: "approved-workflow-step", repositoryId: "github:repo", workId: "issue-62", operations: ["issue.update"], expiresAt: 200 },
       now: 150, maxCapabilityAge: 100,
     });
@@ -49,7 +49,7 @@ export const scenarios = {
 
   // Covers: UC-G3
   "declined-publication": async () => {
-    assert.equal(authorizeMutation({ operation: "issue.create", capability: { allowed: true, checkedAt: 100 }, now: 100, maxCapabilityAge: 100 }).reason, "missing-grant");
+    assert.equal(authorizeMutation({ operation: "issue.create", capability: { operation: "issue.create", allowed: true, checkedAt: 100 }, now: 100, maxCapabilityAge: 100 }).reason, "missing-grant");
   },
 
   // Covers: UC-G1, UC-G2

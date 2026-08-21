@@ -5,8 +5,7 @@ const WORK_ID = /^[A-Za-z0-9._:-]{1,128}$/;
 const ATTRIBUTE = /^[a-z0-9_]+=[^\s]+$/;
 
 function normalizeContent(content) {
-  const normalized = String(content).replace(/\r\n?/g, "\n");
-  return normalized.endsWith("\n") ? normalized : `${normalized}\n`;
+  return `${String(content).replace(/\r\n?/g, "\n").replace(/\n+$/, "")}\n`;
 }
 
 function hashContent(content) {

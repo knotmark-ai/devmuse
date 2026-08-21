@@ -2,7 +2,89 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
+import { sanitizePublishable } from "./collaboration.mjs";
+
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
+const WORK_ID = /^[A-Za-z0-9._:-]{1,128}$/;
+const PROJECT_ID = /^(?:github:[A-Za-z0-9_-]+|uuid:[A-Fa-f0-9-]+)$/;
+const FINGERPRINT = /^sha256:[a-f0-9]{64}$/;
+const OPERATIONS = new Set([
+  "repository.read", "issue.read", "issue.create", "issue.update", "issue.comment.create",
+  "branch.push", "pull_request.read", "pull_request.create", "pull_request.update", "pull_request.comment.create",
+]);
+
+function isRecord(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function hasOnlyKeys(value, allowed) {
+  return Object.keys(value).every((key) => allowed.has(key));
+}
+
+function validText(value, { nullable = false } = {}) {
+  return (nullable && value === null)
+    || (typeof value === "string" && value.length > 0 && value.length <= 1024 && !/[\u0000-\u001f\u007f]/.test(value));
+}
+
+function validInstant(value) {
+  return validText(value) && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/.test(value) && Number.isFinite(Date.parse(value));
+}
+
+function validPointer(value) {
+  return value === null || (Number.isInteger(value) && value > 0);
+}
+
+function validCapabilityProbe(value) {
+  if (!isRecord(value) || !hasOnlyKeys(value, new Set(["checked_at", "provider", "operations"]))) return false;
+  if (!validInstant(value.checked_at) || value.provider !== "github" || !isRecord(value.operations)) return false;
+  for (const [operation, result] of Object.entries(value.operations)) {
+    if (!OPERATIONS.has(operation) || !isRecord(result) || !hasOnlyKeys(result, new Set(["allowed", "reason"]))) return false;
+    if (typeof result.allowed !== "boolean" || !validText(result.reason)) return false;
+  }
+  return true;
+}
+
+function validWorktreeEntry(value) {
+  const allowed = new Set(["branch", "work_id", "issue", "pull_request", "pipeline_phase", "updated_at", "path_hint"]);
+  if (!isRecord(value) || !hasOnlyKeys(value, allowed)) return false;
+  if (Object.hasOwn(value, "branch") && !validText(value.branch, { nullable: true })) return false;
+  if (Object.hasOwn(value, "work_id") && !WORK_ID.test(value.work_id ?? "")) return false;
+  if (Object.hasOwn(value, "issue") && !validPointer(value.issue)) return false;
+  if (Object.hasOwn(value, "pull_request") && !validPointer(value.pull_request)) return false;
+  if (Object.hasOwn(value, "pipeline_phase") && !validText(value.pipeline_phase, { nullable: true })) return false;
+  if (Object.hasOwn(value, "updated_at") && !validInstant(value.updated_at)) return false;
+  if (Object.hasOwn(value, "path_hint") && !validText(value.path_hint)) return false;
+  return true;
+}
+
+function validRecoveryRecord(key, value) {
+  const required = new Set(["operation", "attempt_id", "work_id", "object_kind", "repository_id", "request_fingerprint", "status", "started_at"]);
+  const allowed = new Set([...required, "head", "base", "last_error_code"]);
+  if (!WORK_ID.test(key) || !isRecord(value) || !hasOnlyKeys(value, allowed)) return false;
+  if ([...required].some((field) => !Object.hasOwn(value, field))) return false;
+  if (!OPERATIONS.has(value.operation) || value.attempt_id !== key || !WORK_ID.test(value.attempt_id) || !WORK_ID.test(value.work_id)) return false;
+  if (!new Set(["issue", "pull_request", "comment"]).has(value.object_kind) || !PROJECT_ID.test(value.repository_id)) return false;
+  if (!FINGERPRINT.test(value.request_fingerprint) || !new Set(["pending", "indeterminate"]).has(value.status) || !validInstant(value.started_at)) return false;
+  for (const field of ["head", "base", "last_error_code"]) {
+    if (Object.hasOwn(value, field) && !validText(value[field], { nullable: true })) return false;
+  }
+  return true;
+}
+
+function validCache(value) {
+  const allowed = new Set(["schema_version", "revision", "project_id", "capability_probe", "worktrees", "recovery"]);
+  if (!isRecord(value) || !hasOnlyKeys(value, allowed)) return false;
+  if (value.schema_version !== 1 || !Number.isInteger(value.revision) || value.revision < 1 || !PROJECT_ID.test(value.project_id ?? "")) return false;
+  if (Object.hasOwn(value, "capability_probe") && value.capability_probe !== null && !validCapabilityProbe(value.capability_probe)) return false;
+  if (!isRecord(value.worktrees) || !isRecord(value.recovery)) return false;
+  for (const [key, entry] of Object.entries(value.worktrees)) {
+    if (!validText(key) || !validWorktreeEntry(entry)) return false;
+  }
+  for (const [key, record] of Object.entries(value.recovery)) {
+    if (!validRecoveryRecord(key, record)) return false;
+  }
+  return sanitizePublishable(value).status === "safe";
+}
 
 function clone(value) {
   return structuredClone(value);
@@ -16,9 +98,7 @@ function withoutValidity(candidate) {
 export function readCache(text) {
   try {
     const value = JSON.parse(text);
-    if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("invalid cache");
-    if (value.schema_version !== 1 || !Number.isInteger(value.revision) || value.revision < 1) throw new Error("invalid cache");
-    if (typeof value.project_id !== "string" || !value.worktrees || !value.recovery) throw new Error("invalid cache");
+    if (!validCache(value)) throw new Error("invalid cache");
     return { status: "loaded", value, reason: null };
   } catch {
     return { status: "fresh-discovery", value: null, reason: "corrupt-cache" };

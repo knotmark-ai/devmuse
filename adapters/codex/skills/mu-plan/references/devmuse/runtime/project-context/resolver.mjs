@@ -47,23 +47,32 @@ export async function resolveLocalProjectContext({ cwd, liveRepository = null, d
   const relativeAdmin = path.relative(gitCommonDir, gitDirectory);
   const worktreeKey = relativeAdmin === "" ? "main" : relativeAdmin.replaceAll(path.sep, "/");
   const manifestFile = path.join(root, ".devmuse", "project.yaml");
-  const currentBranchText = fs.existsSync(manifestFile) ? fs.readFileSync(manifestFile, "utf8") : null;
+  const manifestExists = fs.existsSync(manifestFile);
+  const manifestTracked = manifestExists
+    && git(root, ["ls-files", "--error-unmatch", "--", ".devmuse/project.yaml"]) !== null;
+  const manifestRegular = manifestExists && fs.lstatSync(manifestFile).isFile();
+  let rejectedManifestReason = null;
+  if (manifestExists && !manifestTracked) rejectedManifestReason = "untracked-manifest";
+  else if (manifestExists && !manifestRegular) rejectedManifestReason = "unsafe-manifest-file";
+  const currentBranchText = manifestExists && rejectedManifestReason === null
+    ? fs.readFileSync(manifestFile, "utf8")
+    : null;
   const discoveredDefaultRef = defaultBranchRef
     ?? git(cwd, ["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"]);
   const defaultBranchText = currentBranchText === null && discoveredDefaultRef
     ? git(cwd, ["show", `${discoveredDefaultRef}:.devmuse/project.yaml`])
     : null;
   const manifestCandidate = selectManifestCandidate({ currentBranchText, defaultBranchText });
-  const manifest = manifestCandidate.status === "candidate"
-    ? parseProjectManifest(manifestCandidate.text, { repoRoot: root })
-    : null;
+  let manifest = null;
+  if (rejectedManifestReason) manifest = { status: "invalid", value: null, reason: rejectedManifestReason };
+  else if (manifestCandidate.status === "candidate") manifest = parseProjectManifest(manifestCandidate.text, { repoRoot: root });
   const manifestValue = manifest?.status === "valid" ? manifest.value : null;
   const liveId = liveRepository && typeof liveRepository === "object" ? liveRepository.id ?? null : null;
   const liveTuple = liveRepository && typeof liveRepository === "object" ? liveRepository.repository ?? null : liveRepository;
   const invalidManifest = manifest && manifest.status !== "valid";
-  const invalidManifestStatus = manifest?.status === "unsupported-schema"
-    ? "unsupported-manifest-schema"
-    : "invalid-manifest";
+  let invalidManifestStatus = "invalid-manifest";
+  if (manifest?.status === "unsupported-schema") invalidManifestStatus = "unsupported-manifest-schema";
+  else if (manifest?.reason === "untracked-manifest") invalidManifestStatus = "untracked-manifest";
   const identity = invalidManifest
     ? { status: invalidManifestStatus, projectId: null, repository: null, remoteWrites: false }
     : resolveProjectIdentity({
@@ -77,27 +86,29 @@ export async function resolveLocalProjectContext({ cwd, liveRepository = null, d
   let cache = null;
   if (fs.existsSync(cacheFile)) cache = readCache(fs.readFileSync(cacheFile, "utf8")).value;
   const conflicts = invalidManifest
-    ? [{ type: invalidManifestStatus, source: manifestCandidate.source, reason: manifest.reason }]
+    ? [{ type: invalidManifestStatus, source: rejectedManifestReason ? "current-branch" : manifestCandidate.source, reason: manifest.reason }]
     : [];
-  if (cache?.project_id && identity.projectId && cache.project_id !== identity.projectId) {
+  const cacheIdentityConflict = Boolean(cache?.project_id && identity.projectId && cache.project_id !== identity.projectId);
+  if (cacheIdentityConflict) {
     conflicts.push({ type: "identity-conflict", cache: cache.project_id, resolved: identity.projectId });
   }
-  const entry = cache?.worktrees?.[worktreeKey] ?? {};
+  const cacheBlocked = invalidManifest || identity.status === "identity-conflict" || cacheIdentityConflict;
+  const entry = cacheBlocked ? {} : cache?.worktrees?.[worktreeKey] ?? {};
   const result = {
-    project_id: identity.projectId,
-    identity_source: identity.status,
-    manifest_source: manifestCandidate.source,
+    project_id: cacheIdentityConflict ? null : identity.projectId,
+    identity_source: cacheIdentityConflict ? "identity-conflict" : identity.status,
+    manifest_source: rejectedManifestReason ? "current-branch" : manifestCandidate.source,
     collaboration_mode: manifestValue?.collaboration.mode ?? "local-only",
     provider: manifestValue?.collaboration.provider ?? null,
-    repository: identity.repository,
+    repository: cacheIdentityConflict ? null : identity.repository,
     capability: { operations: {} },
     authorization: null,
     active_issue: entry.issue ?? null,
     active_pr: entry.pull_request ?? null,
     pipeline_phase: entry.pipeline_phase ?? null,
-    fallback_reason: identity.remoteWrites ? null : identity.status,
+    fallback_reason: cacheIdentityConflict ? "identity-conflict" : identity.remoteWrites ? null : identity.status,
     conflicts,
-    recovery_state: cache?.recovery ?? {},
+    recovery_state: cacheBlocked ? {} : cache?.recovery ?? {},
     gitCommonDir,
     worktreeKey,
     artifacts: manifestValue?.artifacts ?? null,

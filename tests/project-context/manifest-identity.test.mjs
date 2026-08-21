@@ -35,6 +35,7 @@ test("manifest rejects executable YAML and unsafe artifact paths", () => {
     manifestText.replace("schema_version: 1", "schema_version: &version 1"),
     manifestText.replace("docs/architecture.md", "../architecture.md"),
     manifestText.replace("CONTEXT.md", "/tmp/CONTEXT.md"),
+    manifestText.replace("docs/architecture.md", "C:/outside/architecture.md"),
   ]) assert.notEqual(parseProjectManifest(text, { repoRoot: "/repo" }).status, "valid");
 });
 

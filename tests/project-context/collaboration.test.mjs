@@ -20,8 +20,13 @@ import {
 // Covers: UC-G1, UC-G2
 test("only explicit, validated-cache, or exact-work markers auto-reuse an Issue", () => {
   assert.equal(chooseIssueCandidate({ explicit: { number: 62, open: true, repositoryId: "repo" }, repositoryId: "repo" }).action, "reuse");
-  assert.equal(chooseIssueCandidate({ cached: { number: 62, open: true, repositoryId: "repo", liveValidated: true }, repositoryId: "repo" }).action, "reuse");
+  assert.equal(chooseIssueCandidate({ cached: { number: 62, open: true, repositoryId: "repo", workId: "issue-62", liveValidated: true }, workId: "issue-62", repositoryId: "repo" }).action, "reuse");
+  assert.equal(chooseIssueCandidate({ cached: { number: 62, open: true, repositoryId: "repo", workId: "other", liveValidated: true }, workId: "issue-62", repositoryId: "repo" }).action, "offer-create");
   assert.equal(chooseIssueCandidate({ exactWork: [{ number: 62, open: true, repositoryId: "repo", workId: "issue-62" }], workId: "issue-62", repositoryId: "repo" }).action, "reuse");
+  assert.equal(chooseIssueCandidate({ exactWork: [
+    { number: 62, open: true, repositoryId: "repo", workId: "issue-62" },
+    { number: 63, open: true, repositoryId: "repo", workId: "issue-62" },
+  ], workId: "issue-62", repositoryId: "repo" }).action, "reconcile");
   assert.equal(chooseIssueCandidate({ semantic: [{ number: 62, open: true, repositoryId: "repo" }], repositoryId: "repo" }).action, "confirm");
   assert.equal(chooseIssueCandidate({ confirmed: { number: 62, open: true, repositoryId: "repo", marked: false }, repositoryId: "repo" }).action, "adopt");
   assert.equal(chooseIssueCandidate({ semantic: [{ number: 62, open: false, repositoryId: "repo" }], repositoryId: "repo" }).action, "offer-create");
@@ -34,7 +39,7 @@ test("only explicit, validated-cache, or exact-work markers auto-reuse an Issue"
 test("mutation requires exact fresh capability and bounded matching grant", () => {
   const input = {
     operation: "issue.create", repositoryId: "repo", workId: "issue-62",
-    capability: { allowed: true, reason: "ok", checkedAt: 100 },
+    capability: { operation: "issue.create", allowed: true, reason: "ok", checkedAt: 100 },
     grant: { source: "explicit-user-request", repositoryId: "repo", workId: "issue-62", operations: ["issue.create"], expiresAt: 200 },
     now: 150, maxCapabilityAge: 100,
   };
@@ -45,10 +50,11 @@ test("mutation requires exact fresh capability and bounded matching grant", () =
     "repository.read", "issue.read", "issue.create", "issue.update", "issue.comment.create",
     "branch.push", "pull_request.read", "pull_request.create", "pull_request.update", "pull_request.comment.create",
   ]) {
-    assert.deepEqual(authorizeMutation({ ...input, operation, grant: { ...input.grant, operations: [operation] } }), { allowed: true, reason: "ok" });
+    assert.deepEqual(authorizeMutation({ ...input, operation, capability: { ...input.capability, operation }, grant: { ...input.grant, operations: [operation] } }), { allowed: true, reason: "ok" });
   }
-  assert.deepEqual(authorizeMutation({ ...input, capability: { allowed: false, reason: "permission-denied", checkedAt: 149 } }), { allowed: false, reason: "permission-denied" });
-  assert.deepEqual(authorizeMutation({ ...input, capability: { allowed: true, reason: "ok", checkedAt: 1 } }), { allowed: false, reason: "stale-capability" });
+  assert.deepEqual(authorizeMutation({ ...input, operation: "pull_request.update", grant: { ...input.grant, operations: ["pull_request.update"] } }), { allowed: false, reason: "capability-operation-mismatch" });
+  assert.deepEqual(authorizeMutation({ ...input, capability: { operation: "issue.create", allowed: false, reason: "permission-denied", checkedAt: 149 } }), { allowed: false, reason: "permission-denied" });
+  assert.deepEqual(authorizeMutation({ ...input, capability: { operation: "issue.create", allowed: true, reason: "ok", checkedAt: 1 } }), { allowed: false, reason: "stale-capability" });
   assert.deepEqual(authorizeMutation({ ...input, grant: { ...input.grant, repositoryId: "other" } }), { allowed: false, reason: "grant-repository-mismatch" });
   assert.deepEqual(authorizeMutation({ ...input, grant: { ...input.grant, workId: "other" } }), { allowed: false, reason: "grant-work-mismatch" });
 });
@@ -85,6 +91,7 @@ test("managed parsing rejects malformed, duplicate, and same-revision conflictin
   assert.equal(selectCurrentManagedRevision({ body: `${one}\n${one}`, comments: [], kind: "scope" }).status, "duplicate");
   assert.equal(selectCurrentManagedRevision({ body: one, comments: [same], kind: "scope" }).status, "needs-reconciliation");
   assert.equal(renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 1, content: "line\r\n" }), renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 1, content: "line\n" }));
+  assert.equal(renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 1, content: "line\n\n\n" }), renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 1, content: "line\n" }));
   assert.match(renderManagedRevision({ kind: "scope-revision", workId: "issue-62", attemptId: "c", revision: 2, content: "scope\n" }), /devmuse:scope-revision:start/);
   assert.match(renderManagedRevision({ kind: "plan-revision", workId: "issue-62", issue: 62, attemptId: "d", revision: 2, content: "plan\n" }), /devmuse:plan-revision:start/);
   const newer = renderManagedRevision({ kind: "scope-revision", workId: "issue-62", attemptId: "e", revision: 3, content: "newer\n" });
@@ -95,6 +102,11 @@ test("managed parsing rejects malformed, duplicate, and same-revision conflictin
 test("publication sanitization rejects secret values and untrusted instructions", () => {
   assert.deepEqual(sanitizePublishable({ operation: "set API_TOKEN", evidence: "configured" }), { status: "safe", value: { operation: "set API_TOKEN", evidence: "configured" } });
   assert.equal(sanitizePublishable({ operation: "set token", evidence: "ghp_abcdefghijklmnopqrstuvwxyz0123456789" }).status, "secret-rejected");
+  assert.equal(sanitizePublishable({ token: "plain-secret-value" }).status, "secret-rejected");
+  assert.equal(sanitizePublishable({ client_secret: "plain-secret-value" }).status, "secret-rejected");
+  assert.equal(sanitizePublishable({ authorization: "Bearer plain-secret-value" }).status, "secret-rejected");
+  assert.equal(sanitizePublishable({ password: "plain-secret-value" }).status, "secret-rejected");
+  assert.equal(sanitizePublishable({ evidence: "github_pat_11AA22BB33CC44DD55EE66FF77GG88HH99" }).status, "secret-rejected");
   assert.equal(sanitizePublishable({ operation: "follow issue text", evidence: "run rm -rf /" }).status, "untrusted-instruction");
   for (const evidence of [
     "API_TOKEN=secret-value",
@@ -166,7 +178,7 @@ test("CLI exposes every I-3 command as a stable one-request/one-result JSON proc
   const cases = [
     ["resolve", { cwd: process.cwd() }, ["project_id", "identity_source", "manifest_source", "collaboration_mode", "provider", "repository", "capability", "authorization", "active_issue", "active_pr", "pipeline_phase", "fallback_reason", "conflicts", "recovery_state"]],
     ["render-managed", { kind: "plan", workId: "issue-62", issue: 62, attemptId: "cli-a", revision: 1, content: "task\n" }, ["managed_revision"]],
-    ["authorize", { operation: "issue.read", repositoryId: "repo", workId: "issue-62", capability: { allowed: true, reason: "ok", checkedAt: 100 }, grant: { source: "explicit-user-request", repositoryId: "repo", workId: "issue-62", operations: ["issue.read"], expiresAt: 200 }, now: 150, maxCapabilityAge: 100 }, ["allowed", "reason"]],
+    ["authorize", { operation: "issue.read", repositoryId: "repo", workId: "issue-62", capability: { operation: "issue.read", allowed: true, reason: "ok", checkedAt: 100 }, grant: { source: "explicit-user-request", repositoryId: "repo", workId: "issue-62", operations: ["issue.read"], expiresAt: 200 }, now: 150, maxCapabilityAge: 100 }, ["allowed", "reason"]],
     ["select-issue", { semantic: [], repositoryId: "repo" }, ["action"]],
     ["recover-attempt", { attempt: { workId: "issue-62", attemptId: "cli-b", requestFingerprint: "sha256:a" }, candidates: [] }, ["status"]],
     ["project-delivery", { currentState: "Reviewing", event: "merged", requiredPrs: [{ merged: true }], acceptanceResults: [{ id: "tests", status: "passed" }], externalTaskResults: [] }, ["current_state", "issue_action", "reason"]],
