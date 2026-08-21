@@ -4,6 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
+import { gunzipSync, gzipSync } from "node:zlib";
 
 import { createTarGz, readTarGz } from "./archive.mjs";
 import {
@@ -19,6 +20,8 @@ export const BUILD_SCHEMA_VERSION = 1;
 const utf8Sort = (left, right) => Buffer.from(left).compare(Buffer.from(right));
 const sha256 = (body) => createHash("sha256").update(body).digest("hex");
 const sha512Integrity = (body) => `sha512-${createHash("sha512").update(body).digest("base64")}`;
+const TAR_BLOCK_SIZE = 512;
+const NPM_ARCHIVE_EPOCH = 499_162_500;
 
 function sortKeys(value) {
   if (Array.isArray(value)) return value.map(sortKeys);
@@ -95,6 +98,89 @@ function materializeTrackedTree(context) {
   return staging;
 }
 
+function readTarString(block, offset, length) {
+  const field = block.subarray(offset, offset + length);
+  const end = field.indexOf(0);
+  return field.subarray(0, end < 0 ? field.length : end).toString("utf8");
+}
+
+function readTarOctal(block, offset, length) {
+  const value = readTarString(block, offset, length).trim();
+  if (!/^[0-7]+$/.test(value)) throw new Error(`Invalid npm tar numeric field: ${JSON.stringify(value)}`);
+  return Number.parseInt(value, 8);
+}
+
+function writeNpmTarOctal(block, offset, length, value) {
+  const encoded = value.toString(8).padStart(length - 2, "0");
+  if (encoded.length !== length - 2) throw new Error(`npm tar numeric value does not fit: ${value}`);
+  block.fill(0, offset, offset + length);
+  Buffer.from(`${encoded} \0`, "ascii").copy(block, offset);
+}
+
+function verifyNpmTarChecksum(header) {
+  const expected = readTarOctal(header, 148, 8);
+  const copy = Buffer.from(header);
+  copy.fill(0x20, 148, 156);
+  const actual = copy.reduce((total, byte) => total + byte, 0);
+  if (actual !== expected) throw new Error("npm tar header checksum mismatch");
+}
+
+export function normalizeNpmTarball(input, context) {
+  if (!Buffer.isBuffer(input) || input.length > 64 * 1024 * 1024) {
+    throw new Error("npm tarball exceeds the supported size");
+  }
+  const tar = Buffer.from(gunzipSync(input, { maxOutputLength: 256 * 1024 * 1024 }));
+  if (tar.length < TAR_BLOCK_SIZE * 2 || tar.length % TAR_BLOCK_SIZE !== 0) {
+    throw new Error("npm tar archive size is invalid");
+  }
+  const trackedByPath = new Map(context.trackedFiles.map((file) => [file.path, file]));
+  const seen = new Set();
+  let offset = 0;
+  while (offset + TAR_BLOCK_SIZE <= tar.length) {
+    const header = tar.subarray(offset, offset + TAR_BLOCK_SIZE);
+    if (header.every((byte) => byte === 0)) break;
+    verifyNpmTarChecksum(header);
+    const name = readTarString(header, 0, 100);
+    const prefix = readTarString(header, 345, 155);
+    const entryPath = prefix ? `${prefix}/${name}` : name;
+    if (
+      !entryPath.startsWith("package/")
+      || entryPath.includes("\\")
+      || entryPath.split("/").some((segment) => segment === "" || segment === "." || segment === "..")
+    ) throw new Error(`Unsafe npm tar path: ${entryPath}`);
+    const relative = entryPath.slice("package/".length);
+    const tracked = trackedByPath.get(relative);
+    if (!tracked) throw new Error(`npm tar contains a non-canonical source path: ${relative}`);
+    if (seen.has(relative)) throw new Error(`npm tar contains a duplicate path: ${relative}`);
+    seen.add(relative);
+    const type = readTarString(header, 156, 1) || "0";
+    if (type !== "0") throw new Error(`npm tar contains an unsupported entry type: ${entryPath}`);
+    const size = readTarOctal(header, 124, 12);
+    const bodyStart = offset + TAR_BLOCK_SIZE;
+    const bodyEnd = bodyStart + size;
+    if (bodyEnd > tar.length) throw new Error(`npm tar entry is truncated: ${entryPath}`);
+
+    writeNpmTarOctal(header, 100, 8, tracked.mode);
+    header.fill(0, 108, 124);
+    writeNpmTarOctal(header, 136, 12, NPM_ARCHIVE_EPOCH);
+    header.fill(0, 265, 345);
+    header.fill(0, 148, 156);
+    header.fill(0x20, 148, 156);
+    const checksum = header.reduce((total, byte) => total + byte, 0);
+    writeNpmTarOctal(header, 148, 8, checksum);
+    offset = bodyStart + Math.ceil(size / TAR_BLOCK_SIZE) * TAR_BLOCK_SIZE;
+  }
+  const terminator = tar.subarray(offset);
+  if (terminator.length !== TAR_BLOCK_SIZE * 2 || !terminator.every((byte) => byte === 0)) {
+    throw new Error("npm tar archive has invalid terminators or trailing data");
+  }
+  if (seen.size === 0) throw new Error("npm tar archive is empty");
+  const gzip = Buffer.from(gzipSync(tar, { level: 9, mtime: 0 }));
+  gzip.fill(0, 4, 8);
+  gzip[9] = 255;
+  return gzip;
+}
+
 function packNpm(context, output) {
   const npm = process.platform === "win32" ? "npm.cmd" : "npm";
   const staging = materializeTrackedTree(context);
@@ -114,7 +200,8 @@ function packNpm(context, output) {
     if (!stat.isFile() || stat.isSymbolicLink()) {
       throw new Error(`npm pack output is not a regular file: ${artifact}`);
     }
-    const body = fs.readFileSync(target);
+    const body = normalizeNpmTarball(fs.readFileSync(target), context);
+    fs.writeFileSync(target, body);
     return {
       artifact,
       sha256: sha256(body),
