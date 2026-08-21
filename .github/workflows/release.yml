@@ -1,0 +1,305 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate source
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build generated host adapters
+        run: npm run build:adapters
+
+      - name: Validate deterministic contracts
+        run: |
+          npm run test:generated
+          npm run test:skills
+          npm run test:platforms
+          npm run test:routing
+          npm run test:hooks
+          npm run test:mermaid
+          npm run test:token-benchmark
+          npm run test:release
+          git diff --check
+
+  package:
+    name: Package (${{ matrix.os }})
+    needs: validate
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build generated host adapters
+        run: npm run build:adapters
+
+      - name: Build and verify release outputs
+        run: |
+          npm run release:build -- --output release-output
+          npm run release:verify -- --input release-output
+
+      - name: Upload package output
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ runner.os }}
+          path: release-output
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Summarize package
+        run: |
+          node -e "const fs=require('fs');const data=JSON.parse(fs.readFileSync('release-output/bundle-checksums.json'));fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, 'Packaged '+data.artifacts.length+' deterministic artifacts for ${{ runner.os }}\\n')"
+
+  compare:
+    name: Compare cross-OS digests
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download package outputs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: package-outputs
+
+      - name: Compare bundle checksum contracts
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import path from "node:path";
+          const directories = fs.readdirSync("package-outputs", { withFileTypes: true })
+            .filter((entry) => entry.isDirectory())
+            .map((entry) => entry.name)
+            .sort();
+          if (directories.length !== 3) throw new Error(`Expected three package outputs, got ${directories.join(", ")}`);
+          const contracts = directories.map((directory) => ({
+            directory,
+            body: fs.readFileSync(path.join("package-outputs", directory, "bundle-checksums.json")),
+          }));
+          for (const contract of contracts.slice(1)) {
+            if (!contract.body.equals(contracts[0].body)) {
+              throw new Error(`Cross-OS checksum mismatch: ${contracts[0].directory} != ${contract.directory}`);
+            }
+          }
+          const manifest = JSON.parse(contracts[0].body);
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `Cross-OS digests match for ${manifest.artifacts.length} artifacts.\n`);
+          NODE
+
+  smoke:
+    name: Smoke (${{ matrix.os }})
+    needs: compare
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download verified Linux package
+        uses: actions/download-artifact@v4
+        with:
+          name: release-Linux
+          path: release-output
+
+      - name: Verify and smoke install lifecycle
+        run: |
+          npm run release:verify -- --input release-output
+          npm run release:smoke -- --input release-output --evidence smoke-${{ runner.os }}.json
+
+      - name: Upload smoke evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-${{ runner.os }}
+          path: smoke-${{ runner.os }}.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Summarize smoke
+        run: |
+          node -e "const fs=require('fs');const data=JSON.parse(fs.readFileSync('smoke-${{ runner.os }}.json'));fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, 'Smoke passed on ${{ runner.os }}: '+Object.keys(data.gates.smoke).join(', ')+'\\n')"
+
+  finalize:
+    name: Finalize dry-run assets
+    needs: [package, compare, smoke]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download verified Linux package
+        uses: actions/download-artifact@v4
+        with:
+          name: release-Linux
+          path: release-output
+
+      - name: Download smoke evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: smoke-*
+          path: smoke-evidence
+
+      - name: Merge stable smoke evidence
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import path from "node:path";
+          function walk(root) {
+            return fs.readdirSync(root, { withFileTypes: true }).flatMap((entry) => {
+              const target = path.join(root, entry.name);
+              return entry.isDirectory() ? walk(target) : [target];
+            });
+          }
+          const files = walk("smoke-evidence").filter((file) => file.endsWith(".json")).sort();
+          if (files.length !== 3) throw new Error(`Expected three smoke evidence files, got ${files.length}`);
+          const bodies = files.map((file) => fs.readFileSync(file));
+          for (const body of bodies.slice(1)) {
+            if (!body.equals(bodies[0])) throw new Error("Cross-OS smoke evidence is not stable");
+          }
+          fs.writeFileSync("release-output/smoke-evidence.json", bodies[0]);
+          NODE
+
+      - name: Finalize release asset contract
+        run: |
+          npm run release:finalize -- --input release-output --evidence release-output/smoke-evidence.json
+          npm run release:verify -- --input release-output
+
+      - name: Upload finalized dry-run output
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-finalized
+          path: release-output
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Summarize finalization
+        run: |
+          node -e "const fs=require('fs');const data=JSON.parse(fs.readFileSync('release-output/expected-assets.json'));fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, 'Finalized DevMuse '+data.version+' at '+data.sourceCommit+' with '+Object.keys(data.assets).length+' upload assets.\\n')"
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: finalize
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Check out tagged repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download finalized output
+        uses: actions/download-artifact@v4
+        with:
+          name: release-finalized
+          path: release-output
+
+      - name: Preflight local assets and remote tag
+        run: npm run release:publish-github -- --input release-output --tag ${{ github.ref_name }} --preflight
+
+      - name: Attest checksum subjects
+        uses: actions/attest@v4
+        with:
+          subject-checksums: release-output/SHA256SUMS
+
+      - name: Create, resume, or verify GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: npm run release:publish-github -- --input release-output --tag ${{ github.ref_name }}
+
+      - name: Summarize GitHub Release
+        run: |
+          echo "GitHub Release ${{ github.ref_name }} verified and published." >> "$GITHUB_STEP_SUMMARY"
+
+  publish-npm:
+    name: Publish npm package
+    needs: publish-release
+    if: github.ref_type == 'tag' && vars.DEVMUSE_PUBLISH_NPM == 'true'
+    environment: npm-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out tagged repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install trusted-publishing npm CLI
+        run: npm install --global npm@11.5.1
+
+      - name: Download finalized output
+        uses: actions/download-artifact@v4
+        with:
+          name: release-finalized
+          path: release-output
+
+      - name: Publish or verify npm version
+        run: npm run release:publish-npm -- --input release-output
+
+      - name: Summarize npm publication
+        run: |
+          node -e "const fs=require('fs');const data=JSON.parse(fs.readFileSync('release-output/bundle-manifest.json'));fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, 'npm publication verified for '+data.packageName+'@'+data.version+'.\\n')"

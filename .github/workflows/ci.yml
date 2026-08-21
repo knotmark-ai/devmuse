@@ -52,5 +52,8 @@ jobs:
       - name: Test token benchmark summarizer
         run: npm run test:token-benchmark
 
+      - name: Test deterministic release contracts
+        run: npm run test:release
+
       - name: Reject whitespace errors
         run: git diff --check

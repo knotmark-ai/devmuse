@@ -736,7 +736,7 @@ git commit -m "feat(release): make publication retries immutable"
 - Consumes: I-5 — `release:finalize` adds `release-manifest.json`, `marketplace-submission.md`, `SHA256SUMS`, and local-only `expected-assets.json`; `expected-assets.json` schema 1 maps every uploadable asset including `SHA256SUMS` to SHA-256 and excludes itself from Task 4
 - Consumes: I-6 — `release:publish-github --input <dir> --tag v<version> --preflight` validates local assets and the remote tag without mutation; the same command without `--preflight` performs the idempotent release transaction, while `release:publish-npm --input <dir>` performs the npm transaction; both publication libraries accept injectable `run(command, args, options) -> { status, stdout, stderr }` implementations from Task 5
 
-- [ ] **Step 1: Write the failing workflow contract test**
+- [x] **Step 1: Write the failing workflow contract test**
 
 ```js
 // tests/release/workflow.test.mjs
@@ -785,17 +785,17 @@ test("workflow orders compare and smoke before finalization, attestation before 
 });
 ```
 
-- [ ] **Step 2: Run the workflow test and verify it fails**
+- [x] **Step 2: Run the workflow test and verify it fails**
 
 Run: `node --test tests/release/workflow.test.mjs`
 
 Expected: FAIL because `.github/workflows/release.yml` is missing and CI does not run `test:release`.
 
-- [ ] **Step 3: Extend PR validation**
+- [x] **Step 3: Extend PR validation**
 
 Modify `.github/workflows/ci.yml` to keep repository-wide `contents: read`, use Node.js 22, build adapters, reject drift, run existing deterministic tests, and add `npm run test:release`. Do not add a release trigger, writable permission, environment, secret, or publication command.
 
-- [ ] **Step 4: Implement the release workflow**
+- [x] **Step 4: Implement the release workflow**
 
 Constraints:
 - Trigger only on `workflow_dispatch` and pushed `v*` tags. Dispatch is always dry-run; publication jobs require `github.ref_type == 'tag'`.
@@ -808,7 +808,7 @@ Constraints:
 - Every other manual marketplace is represented only in `marketplace-submission.md`; do not create credential-bearing jobs for them.
 - Write concise `$GITHUB_STEP_SUMMARY` lines for commit, version, digest comparison, smoke targets, idempotent skips, and published URLs without dumping environment variables.
 
-- [ ] **Step 5: Run workflow contracts and complete release tests**
+- [x] **Step 5: Run workflow contracts and complete release tests**
 
 Run:
 
@@ -819,7 +819,7 @@ npm run test:release
 
 Expected: all release tests PASS.
 
-- [ ] **Step 6: Commit workflows**
+- [x] **Step 6: Commit workflows**
 
 ```bash
 git add .github/workflows package.json tests/release/workflow.test.mjs
