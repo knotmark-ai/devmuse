@@ -313,6 +313,7 @@ export function readTarGz(input, options = {}) {
 export function extractTarGz(input, destination) {
   const entries = readTarGz(input, { includeDirectories: true });
   const root = path.resolve(destination);
+  fs.mkdirSync(root, { recursive: true, mode: 0o755 });
   const targets = entries.map((entry) => {
     const target = path.resolve(root, ...entry.path.split("/"));
     if (target !== root && !target.startsWith(`${root}${path.sep}`)) {
