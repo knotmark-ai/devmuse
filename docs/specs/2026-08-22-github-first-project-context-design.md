@@ -471,9 +471,9 @@ scope merely because time passed. Existing dated artifacts remain frozen.
 Managed updates are idempotent over repository ID, work ID, object number,
 revision, and content hash. Conditional writes preserve concurrent human edits;
 unsupported conditional writes require an immutable revision comment or an
-approved merged preview. Indeterminate creates use exact-marker recovery and
-never blind retry. The cache is eventually consistent with GitHub by design:
-GitHub success plus cache failure remains success, and the next resolver pass
+explicit local/manual application. Indeterminate creates use exact-marker
+recovery and never blind retry. The cache is eventually consistent with GitHub
+by design: GitHub success plus cache failure remains success, and the next resolver pass
 rebuilds the hint. Locking, revision checks, field-level merge, and explicit
 conflicts prevent silent worktree data loss.
 
