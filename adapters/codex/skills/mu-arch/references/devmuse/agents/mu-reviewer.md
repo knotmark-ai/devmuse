@@ -177,6 +177,11 @@ Review code changes for production readiness.
 
 Detect the primary language from the diff and apply the relevant criteria alongside the universal checklist below.
 
+Load `@../knowledge/principles/code-quality.md` for the universal code-shape,
+failure-boundary, dependency, and naming checklist. Report each violated
+principle as its own finding category: repeated occurrences of one principle
+may consolidate, while different principle categories remain distinct.
+
 **Inputs:**
 - `{WHAT_WAS_IMPLEMENTED}` - What was built
 - `{PLAN_OR_REQUIREMENTS}` - What it should do

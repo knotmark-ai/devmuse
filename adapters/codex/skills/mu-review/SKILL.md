@@ -61,6 +61,11 @@ when evidence triggers them:
 When the diff changes an external-system boundary, load
 `references/devmuse/knowledge/principles/defensive-boundary.md` for the code-quality pass.
 
+For every code-quality pass, load
+`references/devmuse/knowledge/principles/code-quality.md`. Apply all categories in the
+primary language's idioms and keep each violated principle as a distinct
+finding category; consolidate repeated occurrences only within that category.
+
 For committed ranges, dispatch `references/devmuse/agents/mu-reviewer.md` in the applicable
 `review-code`, `review-coverage`, and `review-security` modes. Validate required
 inputs before dispatch. For uncommitted-only content, review the complete patch

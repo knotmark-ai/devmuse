@@ -67,6 +67,10 @@ It is always OK to stop and say "this is too hard for me." Bad work is worse tha
 
 Review your work with fresh eyes:
 
+- Load `@../knowledge/principles/code-quality.md` and apply every category to
+  the actual diff before reporting; translate each mechanism into the target
+  language and justify every retained element that the checklist probes.
+
 - **Completeness:** Did I fully implement everything in the spec? Edge cases?
 - **Quality:** Are names clear and accurate? Is the code clean and maintainable?
 - **Discipline:** Did I avoid overbuilding (YAGNI)? Only what was requested?
