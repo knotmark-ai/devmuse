@@ -169,7 +169,14 @@ export function clearRecoveryAttempt(cache, attemptId) {
 }
 
 export async function writeCacheAtomic(file, value, options = {}) {
-  if (!validCache(value)) return { status: "rejected", reason: "unsafe-cache-state" };
+  let serialized;
+  try {
+    const snapshot = clone(value);
+    if (!validCache(snapshot)) return { status: "rejected", reason: "unsafe-cache-state" };
+    serialized = `${JSON.stringify(snapshot)}\n`;
+  } catch {
+    return { status: "rejected", reason: "unsafe-cache-state" };
+  }
   const platform = options.platform ?? process.platform;
   if (platform === "win32" && typeof options.applyCurrentUserAcl !== "function") {
     return { status: "memory-only", reason: "private-acl-unavailable" };
@@ -182,7 +189,7 @@ export async function writeCacheAtomic(file, value, options = {}) {
   const temporary = `${file}.${process.pid}.${randomUUID()}.tmp`;
   await mkdir(directory, { recursive: true, mode: 0o700 });
   try {
-    await writeFile(temporary, `${JSON.stringify(value)}\n`, { encoding: "utf8", mode: 0o600, flag: "wx" });
+    await writeFile(temporary, serialized, { encoding: "utf8", mode: 0o600, flag: "wx" });
     if (platform === "win32") await options.applyCurrentUserAcl(temporary);
     await rename(temporary, file);
     if (platform !== "win32") await fs.promises.chmod(file, 0o600);

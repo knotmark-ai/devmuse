@@ -177,6 +177,18 @@ test("cache mutation and persistence reject unsafe state before touching storage
   }), { status: "rejected", reason: "unsafe-cache-state" });
   assert.deepEqual(calls, []);
 
+  const mutable = structuredClone(base);
+  let persisted = null;
+  assert.deepEqual(await writeCacheAtomic("C:\\repo\\cache.json", mutable, {
+    platform: "win32",
+    mkdir: async () => { mutable.token = "plain-secret"; },
+    writeFile: async (_file, contents) => { persisted = contents; },
+    rename: async () => {},
+    applyCurrentUserAcl: async () => {},
+  }), { status: "persisted" });
+  assert.equal(Object.hasOwn(JSON.parse(persisted), "token"), false);
+  assert.equal(readCache(persisted).status, "loaded");
+
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-reject-cache-"));
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
   const file = path.join(directory, "project-context.v1.json");
