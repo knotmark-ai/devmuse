@@ -28,6 +28,11 @@ async function readRequest() {
   return value;
 }
 
+function serializeResolution(result) {
+  const { gitCommonDir, worktreeKey, ...portable } = result;
+  return { ...portable, git_common_dir: gitCommonDir, worktree_key: worktreeKey };
+}
+
 const command = process.argv[2] ?? "summary";
 const known = new Set(["summary", "resolve", "render-managed", "authorize", "select-issue", "recover-attempt", "project-delivery"]);
 if (!known.has(command)) {
@@ -49,11 +54,12 @@ if (!known.has(command)) {
   if (input) {
     try {
       if (command === "resolve") {
-        write(await resolveLocalProjectContext({
+        const result = await resolveLocalProjectContext({
           cwd: input.cwd ?? process.cwd(),
           liveRepository: input.live_repository ?? null,
           defaultBranchRef: input.default_branch_ref ?? null,
-        }));
+        });
+        write(serializeResolution(result));
       } else if (command === "render-managed") {
         write({ managed_revision: renderManagedRevision(input) });
       } else if (command === "authorize") {

@@ -176,6 +176,7 @@ test("CLI exposes every I-3 command as a stable one-request/one-result JSON proc
     assert.equal(result.status, 0, `${command}: ${result.stderr}`);
     const output = JSON.parse(result.stdout);
     for (const field of fields) assert.equal(Object.hasOwn(output, field), true, `${command}:${field}`);
+    for (const field of Object.keys(output)) assert.match(field, /^[a-z][a-z0-9_]*$/, `${command}:${field}`);
   }
   const invalid = spawnSync(process.execPath, [cli, "unknown"], { input: "{}", encoding: "utf8" });
   assert.equal(invalid.status, 2);
