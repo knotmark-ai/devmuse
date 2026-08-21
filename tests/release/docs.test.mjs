@@ -14,6 +14,7 @@ test("UC-9: English and Chinese platform docs use the smallest release archives"
     }
     assert.match(body, /SHA256SUMS/);
     assert.match(body, /marketplace-submission\.md/);
+    assert.match(body, /(?:no repository clone is required|无需克隆仓库)/i);
     assert.doesNotMatch(body, /Known distribution gap|已知分发缺口/);
   }
 });

@@ -96,6 +96,19 @@ test("UC-3: context rejects dirty npm metadata that would escape source provenan
   assert.throws(() => loadReleaseContext(root), /modified release input.*README\.md/i);
 });
 
+test("UC-3: context rejects ignored npm metadata that would escape source provenance", () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-model-ignored-npm-"));
+  execFileSync("git", ["init", "-q"], { cwd: root });
+  execFileSync("git", ["config", "user.email", "test@example.com"], { cwd: root });
+  execFileSync("git", ["config", "user.name", "Test"], { cwd: root });
+  fs.writeFileSync(path.join(root, ".gitignore"), "README.local\nLICENSE.local\n");
+  fs.writeFileSync(path.join(root, "README.md"), "committed\n");
+  execFileSync("git", ["add", "."], { cwd: root });
+  execFileSync("git", ["commit", "-qm", "fixture"], { cwd: root });
+  fs.writeFileSync(path.join(root, "README.local"), "ignored\n");
+  assert.throws(() => loadReleaseContext(root), /ignored release input.*README\.local/i);
+});
+
 test("UC-3: release provenance requires a clean tracked checkout", () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-model-clean-"));
   execFileSync("git", ["init", "-q"], { cwd: root });

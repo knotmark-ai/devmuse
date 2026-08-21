@@ -23,12 +23,18 @@ test("UC-2 UC-3 UC-7 UC-R1 UC-R4: release workflow has pure dry run and gated mu
   for (const command of ["release:build", "release:verify", "release:smoke", "release:finalize"]) {
     assert.match(workflow, new RegExp(command.replace(":", "\\:")));
   }
-  assert.match(workflow, /actions\/attest@v4/);
+  assert.match(workflow, /actions\/attest@[0-9a-f]{40}/);
   assert.match(workflow, /release:publish-github/);
   assert.match(workflow, /environment:\s*npm-production/);
   assert.match(workflow, /release:publish-npm/);
-  assert.match(workflow, /if:\s*github\.ref_type == 'tag'/);
+  assert.equal(
+    (workflow.match(/if:\s*github\.event_name == 'push' && github\.ref_type == 'tag'/g) ?? []).length,
+    2,
+  );
   assert.match(workflow, /vars\.DEVMUSE_PUBLISH_NPM == 'true'/);
+  assert.match(workflow, /RELEASE_TAG:\s*\$\{\{ github\.ref_name \}\}/);
+  assert.doesNotMatch(workflow, /--tag\s+\$\{\{ github\.ref_name \}\}/);
+  assert.doesNotMatch(workflow, /uses:\s*[^\s]+@v\d+/);
   assert.doesNotMatch(workflow, /--clobber|NODE_AUTH_TOKEN|NPM_TOKEN/);
 });
 
@@ -40,7 +46,7 @@ test("UC-4 UC-5 UC-6 UC-R3: workflow orders every release boundary", () => {
   assert.match(workflow, /publish-release:[\s\S]*needs:\s*finalize/);
   assert.match(workflow, /publish-npm:[\s\S]*needs:\s*publish-release/);
   const preflight = workflow.indexOf("release:publish-github -- --input release-output --tag", workflow.indexOf("publish-release:"));
-  const attest = workflow.indexOf("actions/attest@v4", preflight);
+  const attest = workflow.indexOf("actions/attest@", preflight);
   const publish = workflow.indexOf("release:publish-github -- --input release-output --tag", preflight + 1);
   assert.ok(preflight > 0 && workflow.slice(preflight, attest).includes("--preflight"));
   assert.ok(attest > preflight && publish > attest);
@@ -51,4 +57,12 @@ test("UC-6 UC-R3: only the release job receives write permissions", () => {
   assert.equal((workflow.match(/contents:\s*write/g) ?? []).length, 1);
   assert.equal((workflow.match(/attestations:\s*write/g) ?? []).length, 1);
   assert.equal((workflow.match(/id-token:\s*write/g) ?? []).length, 2);
+});
+
+test("UC-R4: registry publication is a read-only sibling after GitHub Release", () => {
+  const workflow = read(".github/workflows/release.yml");
+  const npmJob = workflow.slice(workflow.indexOf("  publish-npm:"));
+  assert.match(npmJob, /needs:\s*publish-release/);
+  assert.match(npmJob, /permissions:\s*\n\s*contents:\s*read\s*\n\s*id-token:\s*write/);
+  assert.doesNotMatch(npmJob, /contents:\s*write|release:publish-github/);
 });

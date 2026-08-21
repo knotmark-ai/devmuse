@@ -40,7 +40,15 @@ test("UC-6 UC-8 UC-R3: finalization is deterministic and has no checksum self-re
     new Set(sums.trim().split("\n").map((line) => line.slice(66))),
     new Set(Object.keys(expected.assets).filter((name) => name !== "SHA256SUMS")),
   );
-  assert.match(fs.readFileSync(path.join(first, "marketplace-submission.md"), "utf8"), /OpenClaw[\s\S]*Claude/);
+  const packet = fs.readFileSync(path.join(first, "marketplace-submission.md"), "utf8");
+  assert.match(packet, /Validation evidence:/);
+  for (const target of ["claude", "codex", "gemini", "hermes"]) {
+    const bundle = JSON.parse(fs.readFileSync(path.join(first, "bundle-manifest.json"), "utf8")).bundles[target];
+    assert.match(packet, new RegExp(bundle.artifact.replaceAll(".", "\\.")));
+    assert.match(packet, new RegExp(bundle.sha256));
+  }
+  assert.equal((packet.match(/Human submission steps:/g) ?? []).length, 5);
+  assert.match(packet, /OpenClaw[\s\S]*Claude/);
 });
 
 test("UC-R3: finalizer rejects unstable or incomplete evidence", async () => {
