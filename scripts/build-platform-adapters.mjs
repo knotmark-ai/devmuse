@@ -49,11 +49,37 @@ function rewritePortableText(text, skillName) {
 
 function collectExternalReferences(skillRoot) {
   const references = new Set();
-  for (const file of walkFiles(skillRoot)) {
-    if (!file.endsWith(".md")) continue;
+  const pending = walkFiles(skillRoot).filter((file) => file.endsWith(".md"));
+  const visited = new Set();
+
+  while (pending.length > 0) {
+    const file = pending.pop();
+    if (visited.has(file)) continue;
+    visited.add(file);
+
     const text = fs.readFileSync(file, "utf8");
-    const pattern = /@\.\.\/\.\.\/(knowledge|agents)\/([A-Za-z0-9._/-]+\.md)/g;
-    for (const match of text.matchAll(pattern)) references.add(`${match[1]}/${match[2]}`);
+    const pattern = /@((?:\.\.\/|\.\/)+[A-Za-z0-9._/-]+\.md)/g;
+    for (const match of text.matchAll(pattern)) {
+      const source = path.resolve(path.dirname(file), match[1]);
+      const sourceRelative = path.relative(sourcePluginRoot, source);
+      const skillRelative = path.relative(skillRoot, source);
+
+      if (skillRelative !== ".." && !skillRelative.startsWith(`..${path.sep}`) && !path.isAbsolute(skillRelative)) {
+        continue;
+      }
+      if (sourceRelative === ".." || sourceRelative.startsWith(`..${path.sep}`) || path.isAbsolute(sourceRelative)) {
+        throw new Error(`${path.relative(repoRoot, file)} references file outside plugin root: ${match[1]}`);
+      }
+      if (!/^(knowledge|agents)[/\\]/.test(sourceRelative)) {
+        throw new Error(`${path.relative(repoRoot, file)} references unsupported plugin path: ${match[1]}`);
+      }
+      if (!fs.existsSync(source)) {
+        throw new Error(`${path.relative(repoRoot, file)} references missing file ${sourceRelative}`);
+      }
+
+      references.add(sourceRelative);
+      pending.push(source);
+    }
   }
   return [...references].sort();
 }

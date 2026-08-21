@@ -28,6 +28,20 @@ function skillNames(relativeRoot) {
     .sort();
 }
 
+function assertPackagedReference(skill, skillRoot, file, reference, target) {
+  const packagedPath = path.relative(skillRoot, target);
+  assert.ok(
+    packagedPath !== ".."
+      && !packagedPath.startsWith(`..${path.sep}`)
+      && !path.isAbsolute(packagedPath),
+    `${skill}: reference escapes skill package: ${reference} from ${path.relative(skillRoot, file)}`,
+  );
+  assert.ok(
+    fs.existsSync(target),
+    `${skill}: missing packaged reference ${reference} from ${path.relative(skillRoot, file)}`,
+  );
+}
+
 for (const file of [
   ".agents/plugins/marketplace.json",
   "adapters/codex/.codex-plugin/plugin.json",
@@ -73,8 +87,19 @@ for (const skill of codexSkills) {
   assert.ok(fs.existsSync(path.join(skillRoot, "agents/openai.yaml")), `${skill} lacks agents/openai.yaml`);
   for (const file of walk(skillRoot).filter((entry) => entry.endsWith(".md"))) {
     const body = fs.readFileSync(file, "utf8");
-    for (const match of body.matchAll(/@?(references\/devmuse\/[A-Za-z0-9._/-]+\.md)/g)) {
-      assert.ok(fs.existsSync(path.join(skillRoot, match[1])), `${skill} lacks ${match[1]}`);
+    for (const match of body.matchAll(/@((?:\.\.\/|\.\/)+[A-Za-z0-9._/-]+\.md)/g)) {
+      assertPackagedReference(
+        skill,
+        skillRoot,
+        file,
+        match[1],
+        path.resolve(path.dirname(file), match[1]),
+      );
+    }
+    for (const match of body.matchAll(
+      /(?:^|[^A-Za-z0-9._/-])(references\/devmuse\/[A-Za-z0-9._/-]+\.md)/gm,
+    )) {
+      assertPackagedReference(skill, skillRoot, file, match[1], path.join(skillRoot, match[1]));
     }
   }
 }
