@@ -18,6 +18,8 @@ if (index >= 0) {
     .filter((file) => file.endsWith(".test.mjs"))
     .sort()
     .map((file) => path.join(directory, file));
+  const githubFirstContract = path.join(root, "tests/github-first-contract/run-test.mjs");
+  if (fs.existsSync(githubFirstContract)) files.push(githubFirstContract);
   const result = spawnSync(process.execPath, ["--test", ...files], { cwd: root, stdio: "inherit" });
   process.exitCode = result.status ?? 1;
 }
