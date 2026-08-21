@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 
 import { readCache } from "./cache.mjs";
 import { resolveProjectIdentity } from "./identity.mjs";
-import { parseProjectManifest } from "./manifest.mjs";
+import { parseProjectManifest, selectManifestCandidate } from "./manifest.mjs";
 
 function git(cwd, args) {
   const result = spawnSync("git", args, { cwd, encoding: "utf8" });
@@ -36,7 +36,7 @@ function emptyResult(reason) {
   };
 }
 
-export async function resolveLocalProjectContext({ cwd, liveRepository = null } = {}) {
+export async function resolveLocalProjectContext({ cwd, liveRepository = null, defaultBranchRef = null } = {}) {
   const root = git(cwd, ["rev-parse", "--show-toplevel"]);
   const commonRaw = git(cwd, ["rev-parse", "--git-common-dir"]);
   const gitDirRaw = git(cwd, ["rev-parse", "--git-dir"]);
@@ -47,22 +47,38 @@ export async function resolveLocalProjectContext({ cwd, liveRepository = null } 
   const relativeAdmin = path.relative(gitCommonDir, gitDirectory);
   const worktreeKey = relativeAdmin === "" ? "main" : relativeAdmin.replaceAll(path.sep, "/");
   const manifestFile = path.join(root, ".devmuse", "project.yaml");
-  let manifest = null;
-  if (fs.existsSync(manifestFile)) manifest = parseProjectManifest(fs.readFileSync(manifestFile, "utf8"), { repoRoot: root });
+  const currentBranchText = fs.existsSync(manifestFile) ? fs.readFileSync(manifestFile, "utf8") : null;
+  const discoveredDefaultRef = defaultBranchRef
+    ?? git(cwd, ["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"]);
+  const defaultBranchText = currentBranchText === null && discoveredDefaultRef
+    ? git(cwd, ["show", `${discoveredDefaultRef}:.devmuse/project.yaml`])
+    : null;
+  const manifestCandidate = selectManifestCandidate({ currentBranchText, defaultBranchText });
+  const manifest = manifestCandidate.status === "candidate"
+    ? parseProjectManifest(manifestCandidate.text, { repoRoot: root })
+    : null;
   const manifestValue = manifest?.status === "valid" ? manifest.value : null;
   const liveId = liveRepository && typeof liveRepository === "object" ? liveRepository.id ?? null : null;
   const liveTuple = liveRepository && typeof liveRepository === "object" ? liveRepository.repository ?? null : liveRepository;
-  const identity = resolveProjectIdentity({
-    manifestId: manifestValue?.project.id ?? null,
-    manifestRepository: manifestValue?.project.repository ?? null,
-    liveRepositoryId: liveId,
-    liveRepository: liveTuple,
-  });
+  const invalidManifest = manifest && manifest.status !== "valid";
+  const invalidManifestStatus = manifest?.status === "unsupported-schema"
+    ? "unsupported-manifest-schema"
+    : "invalid-manifest";
+  const identity = invalidManifest
+    ? { status: invalidManifestStatus, projectId: null, repository: null, remoteWrites: false }
+    : resolveProjectIdentity({
+      manifestId: manifestValue?.project.id ?? null,
+      manifestRepository: manifestValue?.project.repository ?? null,
+      liveRepositoryId: liveId,
+      liveRepository: liveTuple,
+    });
 
   const cacheFile = path.join(gitCommonDir, "devmuse", "project-context.v1.json");
   let cache = null;
   if (fs.existsSync(cacheFile)) cache = readCache(fs.readFileSync(cacheFile, "utf8")).value;
-  const conflicts = [];
+  const conflicts = invalidManifest
+    ? [{ type: invalidManifestStatus, source: manifestCandidate.source, reason: manifest.reason }]
+    : [];
   if (cache?.project_id && identity.projectId && cache.project_id !== identity.projectId) {
     conflicts.push({ type: "identity-conflict", cache: cache.project_id, resolved: identity.projectId });
   }
@@ -70,7 +86,7 @@ export async function resolveLocalProjectContext({ cwd, liveRepository = null } 
   const result = {
     project_id: identity.projectId,
     identity_source: identity.status,
-    manifest_source: manifestValue ? "current-branch" : null,
+    manifest_source: manifestCandidate.source,
     collaboration_mode: manifestValue?.collaboration.mode ?? "local-only",
     provider: manifestValue?.collaboration.provider ?? null,
     repository: identity.repository,

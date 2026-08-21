@@ -149,6 +149,67 @@ test("linked worktrees share one Git-common cache but retain distinct keys", asy
   assert.notEqual(a.worktreeKey, b.worktreeKey);
 });
 
+// Covers: UC-G8, UC-GR3
+test("a branch predating the manifest resolves a read-only default-branch candidate", async (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-default-manifest-"));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  for (const args of [["init", "-b", "main"], ["config", "user.email", "test@example.com"], ["config", "user.name", "Test"]]) {
+    assert.equal(spawnSync("git", args, { cwd: directory }).status, 0);
+  }
+  fs.writeFileSync(path.join(directory, "README.md"), "fixture\n");
+  spawnSync("git", ["add", "README.md"], { cwd: directory });
+  spawnSync("git", ["commit", "-m", "fixture"], { cwd: directory });
+  assert.equal(spawnSync("git", ["switch", "-c", "legacy"], { cwd: directory }).status, 0);
+  assert.equal(spawnSync("git", ["switch", "main"], { cwd: directory }).status, 0);
+  fs.mkdirSync(path.join(directory, ".devmuse"));
+  fs.writeFileSync(path.join(directory, ".devmuse", "project.yaml"), `schema_version: 1
+project:
+  id: "github:repo"
+  repository: "github.com/org/repo"
+collaboration:
+  provider: github
+  mode: github-first
+artifacts:
+  prd: null
+  architecture:
+    index: docs/architecture.md
+    domain_model: CONTEXT.md
+`);
+  spawnSync("git", ["add", ".devmuse/project.yaml"], { cwd: directory });
+  spawnSync("git", ["commit", "-m", "manifest"], { cwd: directory });
+  assert.equal(spawnSync("git", ["switch", "legacy"], { cwd: directory }).status, 0);
+
+  const result = await resolveLocalProjectContext({
+    cwd: directory,
+    defaultBranchRef: "main",
+    liveRepository: { id: "github:repo", repository: "github.com/org/repo" },
+  });
+  assert.equal(result.project_id, "github:repo");
+  assert.equal(result.identity_source, "verified");
+  assert.equal(result.manifest_source, "default-branch");
+  assert.equal(result.collaboration_mode, "github-first");
+  assert.equal(fs.existsSync(path.join(directory, ".devmuse", "project.yaml")), false);
+});
+
+// Covers: UC-G7, UC-G8
+test("an invalid tracked manifest blocks live-only identity and remote writes", async (t) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-invalid-manifest-"));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  assert.equal(spawnSync("git", ["init", "-b", "main"], { cwd: directory }).status, 0);
+  fs.mkdirSync(path.join(directory, ".devmuse"));
+  fs.writeFileSync(path.join(directory, ".devmuse", "project.yaml"), "schema_version: 1\ntoken: secret\n");
+  const result = await resolveLocalProjectContext({
+    cwd: directory,
+    liveRepository: { id: "github:repo", repository: "github.com/org/repo" },
+  });
+  assert.equal(result.project_id, null);
+  assert.equal(result.identity_source, "invalid-manifest");
+  assert.equal(result.manifest_source, "current-branch");
+  assert.equal(result.collaboration_mode, "local-only");
+  assert.equal(result.fallback_reason, "invalid-manifest");
+  assert.deepEqual(result.conflicts, [{ type: "invalid-manifest", source: "current-branch", reason: "unknown-key" }]);
+});
+
 // Covers: UC-G3, UC-G8
 test("SessionStart injects a sanitized local summary and remains read-only", () => {
   const result = spawnSync("bash", ["plugin/hooks/session-start"], { cwd: process.cwd(), encoding: "utf8" });

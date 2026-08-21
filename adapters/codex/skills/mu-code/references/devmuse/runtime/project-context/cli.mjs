@@ -49,7 +49,11 @@ if (!known.has(command)) {
   if (input) {
     try {
       if (command === "resolve") {
-        write(await resolveLocalProjectContext({ cwd: input.cwd ?? process.cwd(), liveRepository: input.live_repository ?? null }));
+        write(await resolveLocalProjectContext({
+          cwd: input.cwd ?? process.cwd(),
+          liveRepository: input.live_repository ?? null,
+          defaultBranchRef: input.default_branch_ref ?? null,
+        }));
       } else if (command === "render-managed") {
         write({ managed_revision: renderManagedRevision(input) });
       } else if (command === "authorize") {
