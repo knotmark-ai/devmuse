@@ -32,6 +32,8 @@ DevMuse 是一套按风险分配流程深度的软件开发工作流，支持 Cl
 
 Codex、OpenClaw、Hermes Agent、Gemini CLI、Cursor、GitHub Copilot CLI、OpenCode 和其他 Agent Skills 宿主使用原生或生成的适配器。准确安装命令和能力差异见[平台支持与安装指南](docs/platform-support_cn.md)。
 
+已发布版本还提供不含仓库文档与测试的宿主专用发布归档。请选择对应宿主的最小制品，用 `SHA256SUMS` 校验后，再按[平台支持与安装指南](docs/platform-support_cn.md#安装)完成安装。
+
 ### 验证安装
 
 启动新会话，请求一些应该触发技能的操作（例如，"梳理这个行为变更的范围"或"让我们调试这个问题"）。自动触发策略因宿主而异：Codex 与 Gemini 会在匹配时自动触发 scope、architecture、debug；只有当用户要求执行已识别的 DevMuse contract 或 approved plan 时，code 才能自动接棒。普通规划和审查交给宿主原生能力。

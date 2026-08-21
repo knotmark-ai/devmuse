@@ -6,22 +6,10 @@ when changing descriptions, trigger boundaries, or model versions.
 
 ## Test Structure
 
-```
-tests/
-├── routing-policy/          Static routing, duplication, and artifact-owner contract
-├── hooks/                   Deterministic hook tests
-├── platform-compat/         Generated adapter, manifest, and host-policy contracts
-├── mermaid-compat/          Strict Mermaid authoring subset checks
-├── skill-validation/        Skill metadata and description-budget checks
-├── task-transition/         Live inspect-to-design routing regression
-├── token-benchmark/         Repeatable vanilla/DevMuse usage measurement
-├── skill-triggering/        Live automatic-invocation probes
-├── explicit-skill-requests/ Live explicit-invocation probes for current skills
-├── claude-code/             Live mu-code behavior/documentation checks
-├── prd-state-modeling/      Stateful product and bootstrap pressure scenarios
-├── subagent-driven-dev/     Manual architectural mu-code E2E projects
-└── brainstorm-server/       Visual companion server tests
-```
+See the `tests/` directory for the current suites. Deterministic checks cover
+routing, hooks, host packaging, release behavior, metadata, Mermaid, and token
+accounting; live suites cover model-trigger and end-to-end agent behavior. This
+document groups them by execution cost instead of copying a directory listing.
 
 ## Fast Deterministic Checks
 
@@ -33,6 +21,7 @@ npm run test:routing
 npm run test:hooks
 npm run test:mermaid
 npm run test:token-benchmark
+npm run test:release
 git diff --check
 ```
 
@@ -45,6 +34,28 @@ system skill is available.
 The routing-policy test is the regression contract for Direct, bounded, and
 architectural ceremony; read-only inspection; review modes; retired artifacts;
 and single-owner rules such as `docs/wiki/`.
+
+## Release Verification
+
+`npm run test:release` exercises the release model, deterministic archive
+writer, two-build comparison, safe extraction, host lifecycle smoke,
+finalization, publication retry boundaries, workflow permissions, and
+documentation contracts without contacting GitHub Releases or npm.
+
+Run a complete local dry run with a temporary output directory:
+
+```bash
+release_root="$(mktemp -d)/release"
+npm run release:build -- --output "$release_root"
+npm run release:verify -- --input "$release_root"
+npm run release:smoke -- --input "$release_root" --evidence "$release_root/smoke-evidence.json"
+npm run release:finalize -- --input "$release_root" --evidence "$release_root/smoke-evidence.json"
+```
+
+The tag workflow repeats packaging and smoke on Linux, macOS, and Windows,
+compares the build-stage checksum contract, and finalizes one verified output.
+Manual dispatch stops there. Only a matching remote version tag can reach
+attestation, GitHub Release mutation, or the isolated optional npm job.
 
 ## Live Trigger Checks
 
