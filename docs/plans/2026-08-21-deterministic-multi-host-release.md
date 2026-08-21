@@ -394,7 +394,7 @@ git commit -m "feat(release): build deterministic host archives"
 - Consumes: I-3 — `release:build` directory containing `devmuse-<version>-{claude,codex,gemini,hermes}.tar.gz`, `devmuse-<version>.tgz`, `bundle-manifest.json`, `bundle-checksums.json`, `source-provenance.json`, and `submission-inputs.json`; `release:verify` accepts exactly that contract from Task 2
 - Produces: I-4 — evidence JSON `{ schemaVersion: 1, sourceCommit: string, gates: { verify: "passed", smoke: { claude: "passed", codex: "passed", gemini: "passed", hermes: "passed", openclaw: "passed" } } }` for Tasks 4 and 6
 
-- [ ] **Step 1: Write the failing lifecycle smoke test**
+- [x] **Step 1: Write the failing lifecycle smoke test**
 
 ```js
 // tests/release/smoke.test.mjs
@@ -438,13 +438,13 @@ test("a failed staged move restores the previous installation", async () => {
 });
 ```
 
-- [ ] **Step 2: Run the smoke test and verify the missing module failure**
+- [x] **Step 2: Run the smoke test and verify the missing module failure**
 
 Run: `node --test tests/release/smoke.test.mjs`
 
 Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `smoke-lib.mjs`.
 
-- [ ] **Step 3: Implement lifecycle smoke and host layout oracles**
+- [x] **Step 3: Implement lifecycle smoke and host layout oracles**
 
 Signatures:
 - `runSmoke({ repoRoot, input, tempRoot?, targets?, keep?, move? }) -> SmokeEvidence`
@@ -459,7 +459,7 @@ Constraints:
 - Verify installed digests against `bundle-manifest.json`, prove the sentinel is gone, uninstall only the target directory, and prove the sibling canary remains.
 - Evidence contains only schema version, source commit, and named stable gate results; no path, OS, time, run ID, or URL.
 
-- [ ] **Step 4: Run tests and command smoke**
+- [x] **Step 4: Run tests and command smoke**
 
 Run:
 
@@ -472,7 +472,7 @@ npm run release:smoke -- --input "$out" --evidence "$out/smoke-evidence.json"
 
 Expected: lifecycle tests PASS and evidence names all five passing targets.
 
-- [ ] **Step 5: Add package command and commit**
+- [x] **Step 5: Add package command and commit**
 
 ```bash
 git add package.json scripts/release/smoke-lib.mjs scripts/release/smoke.mjs tests/release/smoke.test.mjs
