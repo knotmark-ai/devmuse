@@ -11,7 +11,7 @@ const MAX_ENTRIES = 10_000;
 
 const utf8Sort = (left, right) => Buffer.from(left).compare(Buffer.from(right));
 
-function assertSafeArchivePath(entryPath) {
+function assertSafeArchivePath(entryPath, { directory = false } = {}) {
   if (
     typeof entryPath !== "string"
     || entryPath.length === 0
@@ -25,7 +25,7 @@ function assertSafeArchivePath(entryPath) {
   if (segments.some((segment) => segment === "" || segment === "." || segment === "..")) {
     throw new Error(`Unsafe archive path: ${entryPath}`);
   }
-  if (segments[0] !== "devmuse" || segments.length < 2) {
+  if (segments[0] !== "devmuse" || (!directory && segments.length < 2)) {
     throw new Error(`Unsafe archive path outside devmuse root: ${entryPath}`);
   }
 }
@@ -114,6 +114,7 @@ function archiveParts(entry, index, sourceEpoch) {
       mode: entry.mode,
       size: entry.body.length,
       mtime: sourceEpoch,
+      type: entry.type,
     }),
     padBody(entry.body),
   );
@@ -125,18 +126,31 @@ export function createTarGz(entries, options) {
   if (!Number.isSafeInteger(sourceEpoch) || sourceEpoch < 0) {
     throw new Error(`Invalid source epoch: ${sourceEpoch}`);
   }
-  const normalized = entries.map((entry) => {
+  const files = entries.map((entry) => {
     assertSafeArchivePath(entry.path);
     if (entry.mode !== 0o644 && entry.mode !== 0o755) {
       throw new Error(`Unsupported archive mode for ${entry.path}: ${entry.mode}`);
     }
-    return { path: entry.path, mode: entry.mode, body: Buffer.from(entry.body) };
-  }).sort((left, right) => utf8Sort(left.path, right.path));
+    return { path: entry.path, mode: entry.mode, body: Buffer.from(entry.body), type: "0" };
+  });
 
   if (!options?.allowDuplicateFixture) {
-    const paths = normalized.map((entry) => entry.path);
+    const paths = files.map((entry) => entry.path);
     if (new Set(paths).size !== paths.length) throw new Error("Duplicate archive path");
   }
+
+  const directoryPaths = new Set();
+  for (const entry of files) {
+    const segments = entry.path.split("/");
+    for (let length = 1; length < segments.length; length += 1) {
+      directoryPaths.add(segments.slice(0, length).join("/"));
+    }
+  }
+  const directories = [...directoryPaths].map((entryPath) => {
+    assertSafeArchivePath(entryPath, { directory: true });
+    return { path: entryPath, mode: 0o755, body: Buffer.alloc(0), type: "5" };
+  });
+  const normalized = [...directories, ...files].sort((left, right) => utf8Sort(left.path, right.path));
 
   const tar = Buffer.concat([
     ...normalized.flatMap((entry, index) => archiveParts(entry, index, sourceEpoch)),
@@ -190,7 +204,7 @@ function parsePax(body) {
   return values;
 }
 
-export function readTarGz(input) {
+export function readTarGz(input, options = {}) {
   if (!Buffer.isBuffer(input) || input.length > MAX_COMPRESSED_SIZE) {
     throw new Error("Compressed archive exceeds the supported size");
   }
@@ -209,10 +223,12 @@ export function readTarGz(input) {
     throw new Error("Tar archive size or terminator is invalid");
   }
   const entries = [];
+  const directories = [];
   const seen = new Set();
   let offset = 0;
   let pax = null;
   let terminated = false;
+  let previousPath = null;
   while (offset + BLOCK_SIZE <= tar.length) {
     const header = tar.subarray(offset, offset + BLOCK_SIZE);
     if (header.every((byte) => byte === 0)) {
@@ -252,26 +268,50 @@ export function readTarGz(input) {
 
     if (type === "x") {
       if (pax) throw new Error("Consecutive PAX records are unsupported");
+      if (!/^PaxHeaders\/[0-9]{6}$/.test(headerPath) || mode !== 0o644) {
+        throw new Error(`Non-canonical PAX header: ${headerPath}`);
+      }
       pax = parsePax(body);
       continue;
     }
-    if (type !== "0") throw new Error(`Unsupported archive link or entry type ${type}: ${headerPath}`);
+    if (type !== "0" && type !== "5") throw new Error(`Unsupported archive link or entry type ${type}: ${headerPath}`);
     const entryPath = pax?.path ?? headerPath;
     pax = null;
-    assertSafeArchivePath(entryPath);
+    assertSafeArchivePath(entryPath, { directory: type === "5" });
     if (seen.has(entryPath)) throw new Error(`Duplicate archive path: ${entryPath}`);
     seen.add(entryPath);
+    if (previousPath !== null && utf8Sort(previousPath, entryPath) >= 0) {
+      throw new Error(`Archive paths are not in canonical order: ${entryPath}`);
+    }
+    previousPath = entryPath;
+    if (type === "5") {
+      if (size !== 0 || mode !== 0o755) throw new Error(`Invalid archive directory metadata: ${entryPath}`);
+      directories.push({ path: entryPath, mode, mtime, body, type: "directory" });
+      continue;
+    }
     if (mode !== 0o644 && mode !== 0o755) throw new Error(`Unsupported archive mode: ${entryPath}`);
-    entries.push({ path: entryPath, mode, mtime, body });
+    entries.push({ path: entryPath, mode, mtime, body, type: "file" });
     if (entries.length > MAX_ENTRIES) throw new Error("Archive contains too many entries");
   }
   if (!terminated) throw new Error("Tar archive has no exact end marker");
   if (pax) throw new Error("PAX record has no following file");
-  return entries;
+  const expectedDirectories = new Set();
+  for (const entry of entries) {
+    const segments = entry.path.split("/");
+    for (let length = 1; length < segments.length; length += 1) {
+      expectedDirectories.add(segments.slice(0, length).join("/"));
+    }
+  }
+  const actualDirectories = directories.map((entry) => entry.path);
+  if (
+    expectedDirectories.size !== actualDirectories.length
+    || actualDirectories.some((entryPath) => !expectedDirectories.has(entryPath))
+  ) throw new Error("Archive directory set is not canonical");
+  return options.includeDirectories ? [...directories, ...entries].sort((left, right) => utf8Sort(left.path, right.path)) : entries;
 }
 
 export function extractTarGz(input, destination) {
-  const entries = readTarGz(input);
+  const entries = readTarGz(input, { includeDirectories: true });
   const root = path.resolve(destination);
   const targets = entries.map((entry) => {
     const target = path.resolve(root, ...entry.path.split("/"));
@@ -280,10 +320,13 @@ export function extractTarGz(input, destination) {
     }
     return { ...entry, target };
   });
-  for (const entry of targets) {
-    fs.mkdirSync(path.dirname(entry.target), { recursive: true });
+  for (const entry of targets.filter(({ type }) => type === "directory")) {
+    fs.mkdirSync(entry.target, { recursive: false, mode: entry.mode });
+    fs.chmodSync(entry.target, entry.mode);
+  }
+  for (const entry of targets.filter(({ type }) => type === "file")) {
     fs.writeFileSync(entry.target, entry.body, { mode: entry.mode, flag: "wx" });
     fs.chmodSync(entry.target, entry.mode);
   }
-  return targets.map((entry) => entry.target);
+  return targets.filter(({ type }) => type === "file").map((entry) => entry.target);
 }
