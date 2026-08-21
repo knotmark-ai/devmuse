@@ -591,7 +591,7 @@ git commit -m "feat(release): finalize verified release assets"
 - Consumes: I-5 — `release:finalize` adds `release-manifest.json`, `marketplace-submission.md`, `SHA256SUMS`, and local-only `expected-assets.json`; `expected-assets.json` schema 1 maps every uploadable asset including `SHA256SUMS` to SHA-256 and excludes itself from Task 4
 - Produces: I-6 — `release:publish-github --input <dir> --tag v<version> --preflight` validates local assets and the remote tag without mutation; the same command without `--preflight` performs the idempotent release transaction, while `release:publish-npm --input <dir>` performs the npm transaction; both publication libraries accept injectable `run(command, args, options) -> { status, stdout, stderr }` implementations for Task 6
 
-- [ ] **Step 1: Write fake-boundary publication tests**
+- [x] **Step 1: Write fake-boundary publication tests**
 
 ```js
 // tests/release/publish.test.mjs
@@ -677,13 +677,13 @@ test("npm absence publishes exact tarball; matching integrity no-ops; mismatch f
 });
 ```
 
-- [ ] **Step 2: Run publication tests and verify missing module failures**
+- [x] **Step 2: Run publication tests and verify missing module failures**
 
 Run: `node --test tests/release/publish.test.mjs`
 
 Expected: FAIL with `ERR_MODULE_NOT_FOUND` for a publication library.
 
-- [ ] **Step 3: Implement GitHub Release transaction**
+- [x] **Step 3: Implement GitHub Release transaction**
 
 Signatures:
 - `preflightGitHubRelease({ input, tag, sourceCommit, verifyRemoteTag? }) -> { action: "verified", assets: string[] }`
@@ -696,7 +696,7 @@ Constraints:
 - Publish a draft only after downloading/rechecking the complete expected set. A published release may execute view/download only.
 - The attestation call is not owned here; workflow ordering must run preflight first, attestation second, and the mutating invocation last.
 
-- [ ] **Step 4: Implement npm integrity transaction**
+- [x] **Step 4: Implement npm integrity transaction**
 
 Signature: `publishNpm({ input, name, version, run? }) -> { action: "published" | "matched" }`
 
@@ -706,7 +706,7 @@ Constraints:
 - Matching integrity is success without publish; different integrity is a hard failure; all non-not-found provider errors are preserved and fail.
 - Never accept or read an npm token argument.
 
-- [ ] **Step 5: Run tests, add package commands, and commit**
+- [x] **Step 5: Run tests, add package commands, and commit**
 
 Run: `node --test tests/release/publish.test.mjs`
 
