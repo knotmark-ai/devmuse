@@ -86,6 +86,27 @@ skill 和 agent 通过 `@` 相对路径引用插件内的 knowledge 文件：
 适配层边界是刻意的：共享工作流内容，而调用、子 Agent、hook、记忆和安全语义
 仍以宿主原生能力为准。
 
+## 项目上下文运行时
+
+宿主无关的决策契约位于 `plugin/knowledge/principles/project-context.md`，可执行
+解析位于 `plugin/runtime/project-context/`。解析器把受版本控制的
+`.devmuse/project.yaml`、Git 身份、可用时的实时平台读取以及 Git-common 可恢复
+提示合并成一份带权威边界的结果，供工作流 skill 使用。checkout 路径只用于诊断。
+缓存可以加速多个 linked worktree 之间的发现，但绝不保存凭据、授权 grant 或写
+权限。
+
+```text
+受版本控制的 manifest ─┐
+Git 身份 ────────────────┼─→ project-context 解析器 ─→ scope / arch / plan / code / review
+实时平台 ────────────────┤
+Git-common 提示 ─────────┘
+```
+
+Claude 的 SessionStart hook 只注入经过清理的只读摘要，作为启动优化；任何有后果
+的工作流都会重新解析，每次 GitHub 写入也都检查精确操作的能力与当前授权。其他
+宿主按需解析。生成的 Codex skill 携带同一份决策契约和运行时，因此缺少 Claude
+hook 只会改变加载机制，不会改变协作语义。
+
 ---
 
 ## 内容清单

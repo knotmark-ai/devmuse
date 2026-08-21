@@ -9,6 +9,10 @@ PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 # Read bootstrap rule content
 bootstrap_content=$(cat "${PLUGIN_ROOT}/rules/bootstrap.md" 2>&1 || echo "Error reading bootstrap")
+project_context=""
+if command -v node >/dev/null 2>&1 && [ -f "${PLUGIN_ROOT}/runtime/project-context/cli.mjs" ]; then
+    project_context=$(node "${PLUGIN_ROOT}/runtime/project-context/cli.mjs" summary 2>/dev/null || true)
+fi
 
 # Escape string for JSON embedding using bash parameter substitution.
 # Each ${s//old/new} is a single C-level pass - orders of magnitude
@@ -24,7 +28,8 @@ escape_for_json() {
 }
 
 bootstrap_escaped=$(escape_for_json "$bootstrap_content")
-session_context="<devmuse-bootstrap>\n**Below is your bootstrap skill. For all other skills, use the Skill tool.**\n\n${bootstrap_escaped}\n</devmuse-bootstrap>"
+project_context_escaped=$(escape_for_json "$project_context")
+session_context="<devmuse-bootstrap>\n**Below is your bootstrap skill. For all other skills, use the Skill tool.**\n\n${bootstrap_escaped}\n</devmuse-bootstrap>\n${project_context_escaped}"
 
 # Output context injection as JSON for Claude Code.
 #

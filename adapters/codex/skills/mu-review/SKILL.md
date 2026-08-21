@@ -28,6 +28,20 @@ discard work. Those actions require an explicit request.
 
 Announce the selected mode before inspection.
 
+## Project Context Binding
+
+Read `references/devmuse/knowledge/principles/project-context.md`. For Pipeline final, run
+`resolve`, then publish sanitized review evidence with `render-managed` only
+after `authorize` succeeds for the exact Issue/PR operation. Apply the packaged
+`project-context/cli.mjs`, or the same contract through host-native tools with
+the binding recorded when executable support is absent.
+
+Run `project-delivery` with the required PR set, acceptance evidence, and every
+external work item. Consume its canonical `current_state`, `issue_action`, and
+`reason`: merge evidence with pending human/platform work keeps the Issue open.
+Close it only when `issue_action` is `close` and the exact `issue.update`
+operation has fresh capability plus an active grant.
+
 ## Process
 
 ### 1. Resolve review scope
@@ -125,6 +139,10 @@ Fresh evidence precedes every completion claim:
 5. Report exact commands and results, including pre-existing or unresolved
    failures.
 
+For Pipeline final, record the final review disposition and sanitized command
+evidence in the managed PR revision. Keep Issue-owned external work linked,
+without duplicating its state into the PR.
+
 Standalone review may run safe diagnostic tests when useful, but its primary
 completion criterion is exhaustive diff coverage rather than a passing build.
 Review and fix / Pipeline final requires verification of the changed behavior.
@@ -161,5 +179,5 @@ Review and fix / Pipeline final requires verification of the changed behavior.
 - Uses `references/devmuse/agents/mu-reviewer.md` for committed-range review passes.
 - Refactoring/removal review applies
   `references/devmuse/knowledge/principles/chestertons-fence.md`.
-- Terminal state is a report or verified fixes; repository integration is a
-  separate explicit action.
+- Terminal state is a report or verified fixes plus the Delivery projection;
+  repository integration remains a separate explicit action.

@@ -11,8 +11,8 @@ Execute the evidence already selected by mu-scope:
 
 - **Bounded:** an inline contract with affected files, 1–3 use cases, and a
   verification command.
-- **Architectural:** an approved implementation plan, normally under
-  `docs/plans/`, with task and UC traceability.
+- **Architectural:** approved implementation plan evidence from a managed Draft
+  PR revision or dated local fallback, with task and UC traceability.
 
 The implementation loop owns coding, tests, and task-level self-checks.
 Independent review has one owner: bounded work gets one combined main-thread
@@ -21,6 +21,20 @@ review; architectural work gets one final mu-review after all tasks integrate.
 **Core principle:** tight implementation loop, one review boundary.
 
 Announce the selected path at the start.
+
+## Project Context Binding
+
+Read `references/devmuse/knowledge/principles/project-context.md` and run `resolve` before
+architectural execution. In GitHub-first mode, the first meaningful commit
+binds the exact-work Draft PR. Before each remote evidence change, run
+`authorize`; update task/UC progress and verification with `render-managed`, and
+run `recover-attempt` for an indeterminate create/comment. Human or platform
+tasks and the required PR set remain in the Issue. Run `project-delivery` from
+verified facts at handoff; a merge is not delivery completion.
+
+Use the packaged `project-context/cli.mjs`. When it is unavailable, apply the
+same decisions with host-native tools and record the binding. Cached capability
+never substitutes for a fresh operation check and active grant.
 
 ## Entry Gate
 
@@ -121,6 +135,10 @@ For each task:
    UC is present, no unrequested behavior was added, and changed files stay
    inside the stated write set.
 5. Record files, commands, results, and concerns; then mark the task complete.
+
+When GitHub is canonical, publish that record as the next managed plan revision
+without copying Issue-owned external work into the PR. A local fallback updates
+its existing plan evidence under the same work ID.
 
 When a task receives input from or sends output to an external system, apply
 `references/devmuse/knowledge/principles/defensive-boundary.md` before implementing that
