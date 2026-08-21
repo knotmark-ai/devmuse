@@ -221,8 +221,8 @@ export function readTrackedFile(context, file) {
     const objectIds = [...new Set(context.trackedFiles.map((tracked) => tracked.objectId))];
     const output = execFileSync("git", ["cat-file", "--batch"], {
       cwd: context.repoRoot,
-      input: `${objectIds.join("\n")}\n`,
-      encoding: "buffer",
+      input: Buffer.from(`${objectIds.join("\n")}\n`),
+      encoding: null,
       maxBuffer: 64 * 1024 * 1024,
     });
     blobs = new Map();
