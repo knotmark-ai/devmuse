@@ -257,7 +257,7 @@ git commit -m "feat(release): define portable bundle model"
 - Consumes: I-2 — `BUNDLE_CATALOG` with exactly four archive targets and `COMPATIBILITY_TARGETS.openclaw === "claude"` from Task 1
 - Produces: I-3 — `release:build` directory containing `devmuse-<version>-{claude,codex,gemini,hermes}.tar.gz`, `devmuse-<version>.tgz`, `bundle-manifest.json`, `bundle-checksums.json`, `source-provenance.json`, and `submission-inputs.json`; `release:verify` accepts exactly that contract for Tasks 3, 4, and 6
 
-- [ ] **Step 1: Write the failing archive and pipeline tests**
+- [x] **Step 1: Write the failing archive and pipeline tests**
 
 ```js
 // tests/release/artifacts.test.mjs
@@ -318,13 +318,13 @@ test("verification rejects changed bytes and an unknown option", async () => {
 });
 ```
 
-- [ ] **Step 2: Run the artifact test and verify missing module failures**
+- [x] **Step 2: Run the artifact test and verify missing module failures**
 
 Run: `node --test tests/release/artifacts.test.mjs`
 
 Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `archive.mjs` or `artifacts.mjs`.
 
-- [ ] **Step 3: Implement deterministic tar/gzip encoding and safe extraction**
+- [x] **Step 3: Implement deterministic tar/gzip encoding and safe extraction**
 
 Signatures:
 - `createTarGz(entries: ArchiveEntry[], { sourceEpoch: number, allowDuplicateFixture?: boolean }) -> Buffer`
@@ -338,7 +338,7 @@ Constraints:
 - Reject absolute, drive-prefixed, backslash, NUL, empty-segment, `.`/`..`, link, device, unsupported type, duplicate, and extraction-root escape cases before writing a file.
 - The duplicate-fixture flag exists only to build a negative test archive and is never accepted by release code.
 
-- [ ] **Step 4: Implement build and verify**
+- [x] **Step 4: Implement build and verify**
 
 Signatures:
 - `buildRelease({ repoRoot, output }) -> Promise<BuildResult>`
@@ -354,7 +354,7 @@ Constraints:
 - `verifyRelease` independently recomputes tracked selections, archive contents, file digests, archive/npm digests, sizes, versions, source provenance, and every deterministic JSON document.
 - Both CLIs reject unknown options, missing values, mutable-ref version inference, and invalid paths with a nonzero exit.
 
-- [ ] **Step 5: Run artifact tests and public command smoke**
+- [x] **Step 5: Run artifact tests and public command smoke**
 
 Run:
 
@@ -367,7 +367,7 @@ npm run release:verify -- --input "$out"
 
 Expected: tests PASS; build prints stable artifact summaries; verify exits 0.
 
-- [ ] **Step 6: Add package commands and commit**
+- [x] **Step 6: Add package commands and commit**
 
 Add `release:build`, `release:verify`, and `test:release` (`node --test tests/release/*.test.mjs`) scripts.
 
