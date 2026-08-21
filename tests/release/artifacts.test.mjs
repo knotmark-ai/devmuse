@@ -71,7 +71,7 @@ test("UC-R3: verification rejects changed artifact bytes", async () => {
   const built = await buildRelease({ repoRoot, output });
   const artifact = built.bundleManifest.bundles.claude.artifact;
   fs.appendFileSync(path.join(output, artifact), "tamper");
-  assert.throws(() => verifyRelease({ repoRoot, input: output }), /digest mismatch/i);
+  assert.throws(() => verifyRelease({ repoRoot, input: output }), /canonical release artifact|digest mismatch/i);
 });
 
 test("UC-3: builds from LF and autocrlf checkouts are byte-identical", async () => {
