@@ -497,7 +497,7 @@ git commit -m "feat(release): smoke host install lifecycles"
 - Consumes: I-4 — evidence JSON `{ schemaVersion: 1, sourceCommit: string, gates: { verify: "passed", smoke: { claude: "passed", codex: "passed", gemini: "passed", hermes: "passed", openclaw: "passed" } } }` from Task 3
 - Produces: I-5 — `release:finalize` adds `release-manifest.json`, `marketplace-submission.md`, `SHA256SUMS`, and local-only `expected-assets.json`; `expected-assets.json` schema 1 maps every uploadable asset including `SHA256SUMS` to SHA-256 and excludes itself for Tasks 5 and 6
 
-- [ ] **Step 1: Write the failing finalizer tests**
+- [x] **Step 1: Write the failing finalizer tests**
 
 ```js
 // tests/release/finalize.test.mjs
@@ -542,13 +542,13 @@ test("finalizer rejects unstable or incomplete evidence", async () => {
 });
 ```
 
-- [ ] **Step 2: Run the finalizer tests and verify the missing module failure**
+- [x] **Step 2: Run the finalizer tests and verify the missing module failure**
 
 Run: `node --test tests/release/finalize.test.mjs`
 
 Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `finalize-lib.mjs`.
 
-- [ ] **Step 3: Implement stable finalization**
+- [x] **Step 3: Implement stable finalization**
 
 Signature: `finalizeRelease({ repoRoot, input, evidence }) -> FinalizeResult`
 
@@ -560,13 +560,13 @@ Constraints:
 - Write sorted `SHA256SUMS` over upload assets except itself, then compute its digest and write `expected-assets.json` containing the complete upload set including `SHA256SUMS`. Never upload `bundle-checksums.json`, smoke evidence, or `expected-assets.json`.
 - Refuse to overwrite a final file whose bytes differ; accept an exact rerun as an idempotent no-op.
 
-- [ ] **Step 4: Run finalizer tests and public command**
+- [x] **Step 4: Run finalizer tests and public command**
 
 Run: `node --test tests/release/finalize.test.mjs`
 
 Expected: all finalizer tests PASS.
 
-- [ ] **Step 5: Add package command and commit**
+- [x] **Step 5: Add package command and commit**
 
 ```bash
 git add package.json scripts/release/finalize-lib.mjs scripts/release/finalize.mjs tests/release/finalize.test.mjs

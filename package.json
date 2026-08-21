@@ -6,6 +6,7 @@
   "scripts": {
     "build:adapters": "node scripts/build-platform-adapters.mjs",
     "release:build": "node scripts/release/build.mjs",
+    "release:finalize": "node scripts/release/finalize.mjs",
     "release:smoke": "node scripts/release/smoke.mjs",
     "release:verify": "node scripts/release/verify.mjs",
     "test:generated": "node scripts/check-generated-drift.mjs",
