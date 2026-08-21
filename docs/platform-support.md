@@ -6,12 +6,12 @@ DevMuse uses one workflow source and thin host adapters. It does not try to make
 
 | Host | Distribution | Invocation policy | Host-native capabilities kept authoritative |
 |---|---|---|---|
-| Claude Code | Claude marketplace bundle in `plugin/` | Bootstrap routes direct, bounded, and architectural work; six product/meta skills stay explicit | Claude agents and `PreToolUse` hook |
-| Codex CLI / ChatGPT Work | Codex plugin in `adapters/codex/` | `mu-scope`, `mu-arch`, and `mu-debug` may invoke on a description match; `mu-code` additionally requires an execution request plus a recognized DevMuse contract; the rest are explicit `$mu-*` skills | Native `/plan`, `/review`, task tracking, subagents, sandbox, and approvals |
-| OpenClaw | Installs the Claude or Codex directory as a compatible bundle | Uses skill metadata; manual skills remain manual in the Claude bundle | OpenClaw approvals, sandbox, agents, and skill allowlists |
-| Hermes Agent CLI / Desktop | Hermes plugin at repository root | Plugin skills are explicit and namespaced as `devmuse:mu-*` by default | Hermes `plan` skill, learning loop, memory, tool permissions, and plugin lifecycle |
-| Gemini CLI | Gemini extension metadata in `plugin/` | Lightweight `GEMINI.md` allows scope, architecture, and debug on a description match, plus contract-gated code execution | Native Plan Mode, task tracking, validation, hooks, and approvals |
-| Cursor, GitHub Copilot CLI, OpenCode, Cline, Windsurf, Goose, and other Agent Skills hosts | Portable pack generated in `adapters/codex/skills/` | Host decides activation; OpenAI policy metadata is ignored by non-Codex hosts | Each host's planning, review, agents, and permissions |
+| Claude Code | Claude release archive or marketplace bundle | Bootstrap routes direct, bounded, and architectural work; product/meta skills stay explicit | Claude agents and `PreToolUse` hook |
+| Codex CLI / ChatGPT Work | Codex release archive | `mu-scope`, `mu-arch`, and `mu-debug` may invoke on a description match; `mu-code` additionally requires an execution request plus a recognized DevMuse contract; the rest are explicit `$mu-*` skills | Native `/plan`, `/review`, task tracking, subagents, sandbox, and approvals |
+| OpenClaw | Claude release archive as a compatible bundle | Uses skill metadata; manual skills remain manual in the Claude bundle | OpenClaw approvals, sandbox, agents, and skill allowlists |
+| Hermes Agent CLI / Desktop | Hermes release archive | Plugin skills are explicit and namespaced as `devmuse:mu-*` by default | Hermes `plan` skill, learning loop, memory, tool permissions, and plugin lifecycle |
+| Gemini CLI | Gemini release archive | Lightweight `GEMINI.md` allows scope, architecture, and debug on a description match, plus contract-gated code execution | Native Plan Mode, task tracking, validation, hooks, and approvals |
+| Cursor, GitHub Copilot CLI, OpenCode, Cline, Windsurf, Goose, and other Agent Skills hosts | Portable pack in the Codex release archive | Host decides activation; OpenAI policy metadata is ignored by non-Codex hosts | Each host's planning, review, agents, and permissions |
 
 The portable pack follows the [Agent Skills specification](https://agentskills.io/specification). Its support files are vendored into each skill, so copying one skill does not break DevMuse's knowledge or reviewer references.
 
@@ -50,29 +50,43 @@ its actual coverage instead of implying that every tool path is intercepted.
 
 ## Install
 
+Published versions are available from [GitHub Releases](https://github.com/knotmark-ai/devmuse/releases). Download `SHA256SUMS` with the chosen archive and compare the archive's host-native SHA-256 before extraction. The same release contains `marketplace-submission.md`, which records the artifact, checksum, validation gates, and manual marketplace steps. No repository clone is required for normal installation; source checkout remains a development path, while a release archive is the smallest normal installation path.
+
 ### Claude Code
+
+Download `devmuse-<version>-claude.tar.gz`, extract it, and register the extracted `devmuse/` directory as a local marketplace:
+
+```bash
+VERSION=x.y.z
+tar -xzf "devmuse-${VERSION}-claude.tar.gz"
+```
+
+```text
+/plugin marketplace add /absolute/path/to/devmuse
+/plugin install devmuse@devmuse
+```
+
+The archive contains only marketplace metadata and the Claude runtime. Repository docs, tests, and historical artifacts are absent. The managed marketplace remains available as an update-oriented alternative:
 
 ```text
 /plugin marketplace add knotmark-ai/devmuse
 /plugin install devmuse@devmuse
 ```
 
-Only `plugin/` is installed from the marketplace entry; repository `docs/` and `tests/` are not part of the Claude runtime.
-
 ### Codex CLI and ChatGPT Work
 
-Add the repository marketplace with a sparse checkout, then install DevMuse from `/plugins` in a new Codex session:
+Download and extract `devmuse-<version>-codex.tar.gz`, then add the extracted directory as a local marketplace:
 
 ```bash
-codex plugin marketplace add knotmark-ai/devmuse \
-  --sparse .agents/plugins \
-  --sparse adapters/codex
+VERSION=x.y.z
+tar -xzf "devmuse-${VERSION}-codex.tar.gz"
+codex plugin marketplace add /absolute/path/to/devmuse
 codex
 ```
 
 Then enter `/plugins`, select the `devmuse` marketplace, and install DevMuse. Invoke an explicit skill with `$mu-plan`, `$mu-review`, and so on. `$mu-code` may be named explicitly, but it can also take over after a qualifying DevMuse execution contract.
 
-For local development:
+For source-based development, add the repository checkout instead and rebuild the adapter before restarting Codex:
 
 ```bash
 codex plugin marketplace add /absolute/path/to/devmuse
@@ -82,26 +96,32 @@ Restart the session after rebuilding the adapter.
 
 ### OpenClaw
 
-OpenClaw can install Claude-compatible marketplaces directly:
+OpenClaw uses the Claude archive `devmuse-<version>-claude.tar.gz`; there is no separate OpenClaw archive. Extract it and link its runtime:
 
 ```bash
-openclaw plugins install devmuse --marketplace knotmark-ai/devmuse
+VERSION=x.y.z
+tar -xzf "devmuse-${VERSION}-claude.tar.gz"
+openclaw plugins install --link /absolute/path/to/devmuse/plugin
 openclaw plugins inspect devmuse
 openclaw gateway restart
 ```
 
-For local development, link the runtime directory:
+The managed Claude-compatible marketplace remains an alternative:
 
 ```bash
-openclaw plugins install --link /absolute/path/to/devmuse/plugin
+openclaw plugins install devmuse --marketplace knotmark-ai/devmuse
 ```
 
 OpenClaw maps skills, but it only detects Claude `agents/` and `hooks/hooks.json`; it does not execute them. DevMuse therefore relies on OpenClaw's native safety and agent facilities, as defined in the safety boundary above.
 
 ### Hermes Agent CLI and Desktop
 
+Download and extract `devmuse-<version>-hermes.tar.gz`, then install the extracted plugin root:
+
 ```bash
-hermes plugins install knotmark-ai/devmuse --enable
+VERSION=x.y.z
+tar -xzf "devmuse-${VERSION}-hermes.tar.gz"
+hermes plugins install /absolute/path/to/devmuse --enable
 ```
 
 The default lightweight mode registers explicit namespaced skills without adding all descriptions to the startup prompt. Ask Hermes, for example:
@@ -122,14 +142,15 @@ This integrated mode lets Hermes modify external skills if the directory is writ
 
 ### Gemini CLI
 
-Gemini installs an extension from a directory or Git repository root. DevMuse's Gemini root is the runtime subdirectory, so clone once and install that path:
+Download and extract `devmuse-<version>-gemini.tar.gz`, then install its runtime subdirectory:
 
 ```bash
-git clone https://github.com/knotmark-ai/devmuse.git
-gemini extensions install ./devmuse/plugin
+VERSION=x.y.z
+tar -xzf "devmuse-${VERSION}-gemini.tar.gz"
+gemini extensions install /absolute/path/to/devmuse/plugin
 ```
 
-For live local development:
+For live source development, link the checkout's runtime subdirectory:
 
 ```bash
 gemini extensions link /absolute/path/to/devmuse/plugin
@@ -139,11 +160,12 @@ Restart Gemini CLI after installation. `GEMINI.md` is intentionally small; the f
 
 ### Cursor, GitHub Copilot CLI, OpenCode, Windsurf, and other Agent Skills hosts
 
-With GitHub CLI 2.90 or newer, clone the repository and install the generated portable pack for the target host:
+These hosts use the portable pack inside `devmuse-<version>-codex.tar.gz`. With GitHub CLI 2.90 or newer:
 
 ```bash
-git clone https://github.com/knotmark-ai/devmuse.git
-gh skill install ./devmuse/adapters/codex --from-local --agent cursor --scope user
+VERSION=x.y.z
+tar -xzf "devmuse-${VERSION}-codex.tar.gz"
+gh skill install /absolute/path/to/devmuse/adapters/codex --from-local --agent cursor --scope user
 ```
 
 Select the DevMuse skills you want when prompted. Replace `cursor` with
@@ -163,9 +185,11 @@ npm run test:platforms
 
 The build strips Claude-only invocation frontmatter, vendors every cross-root dependency into the skill, and creates Codex `agents/openai.yaml` policy. Validation checks inventory parity, portable references, host policy, manifests, and the official Codex ingestion contract.
 
-## Known distribution gap
+## Release and registry lifecycle
 
-Claude and Codex marketplace installs can select only the runtime subtree. Hermes Git installs and the current Gemini clone-first flow may fetch the repository documentation and tests too. Platform-specific release archives and registry submissions are tracked in [#49](https://github.com/knotmark-ai/devmuse/issues/49).
+Pull requests and ordinary `main` pushes validate release behavior but never publish. Manual workflow dispatch runs the cross-OS package, digest comparison, lifecycle smoke, and finalization path as a dry run. A matching remote `v<package-version>` tag may publish the verified immutable assets after checksum attestation.
+
+npm publication is optional and runs only when the repository enables its protected OIDC environment. Other marketplaces remain manual until they expose a compatible authenticated API; use the release's `marketplace-submission.md` packet for those submissions.
 
 ## Primary format references
 
