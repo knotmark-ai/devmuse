@@ -34,7 +34,7 @@
 - Produces: I-1 — `loadReleaseContext(repoRoot: string, options?: { output?: string }) -> { version: string, commit: string, epoch: number, trackedFiles: TrackedFile[] }` and `selectBundleFiles(context: ReleaseContext, bundleName: "claude" | "codex" | "gemini" | "hermes") -> TrackedFile[]` for Tasks 2 and 3
 - Produces: I-2 — `BUNDLE_CATALOG` with exactly four archive targets and `COMPATIBILITY_TARGETS.openclaw === "claude"` for Tasks 2, 3, 4, and 6
 
-- [ ] **Step 1: Write the failing release-model test**
+- [x] **Step 1: Write the failing release-model test**
 
 ```js
 // tests/release/model.test.mjs
@@ -103,13 +103,13 @@ test("context rejects symlinks, untracked bundle inputs, and output nested in a 
 });
 ```
 
-- [ ] **Step 2: Run the model test and verify the missing module failure**
+- [x] **Step 2: Run the model test and verify the missing module failure**
 
 Run: `node --test tests/release/model.test.mjs`
 
 Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `scripts/release/model.mjs`.
 
-- [ ] **Step 3: Implement the canonical model**
+- [x] **Step 3: Implement the canonical model**
 
 Signatures:
 - `readVersionSources(repoRoot: string) -> Record<string, string>`
@@ -123,13 +123,13 @@ Constraints:
 - Claude includes its marketplace metadata and `plugin/` except Gemini-only root metadata; Codex includes its marketplace metadata and generated adapter; Gemini and Hermes include canonical skills, agents, and knowledge but exclude Claude hooks and marketplaces.
 - Keep the catalog declarative. Do not add a fifth OpenClaw archive entry.
 
-- [ ] **Step 4: Run the model test and verify it passes**
+- [x] **Step 4: Run the model test and verify it passes**
 
 Run: `node --test tests/release/model.test.mjs`
 
 Expected: all model tests PASS.
 
-- [ ] **Step 5: Port the existing platform contract to Node**
+- [x] **Step 5: Port the existing platform contract to Node**
 
 Create `tests/platform-compat/run-test.mjs` with the same observable assertions as the removed shell test:
 
@@ -223,7 +223,7 @@ assert.equal(result.status, 0, result.stderr);
 console.log("PASS: cross-platform plugin contract");
 ```
 
-- [ ] **Step 6: Point the package script at Node and run the portable contract**
+- [x] **Step 6: Point the package script at Node and run the portable contract**
 
 Modify `test:platforms` to `node tests/platform-compat/run-test.mjs`.
 
@@ -231,7 +231,7 @@ Run: `npm run test:platforms`
 
 Expected: `PASS: cross-platform plugin contract`, including on the system default Bash because the command no longer invokes Bash, `mapfile`, or `rg`.
 
-- [ ] **Step 7: Commit the release model and platform portability fix**
+- [x] **Step 7: Commit the release model and platform portability fix**
 
 ```bash
 git add package.json scripts/release/model.mjs tests/release/model.test.mjs tests/platform-compat
