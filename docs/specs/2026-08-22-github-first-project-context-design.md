@@ -73,7 +73,7 @@ graph LR
 | Project context contract | Source precedence, schema, identity, capability, conflict, and fallback decisions | Host-specific tool syntax or credentials |
 | Tracked manifest | Stable identity, collaboration preference, and canonical artifact paths | Issue, PR, session, authentication, or worktree progress |
 | Git-common cache | Recoverable capability probes, worktree coordination pointers, and interrupted-run hints | Durable project truth or write authorization |
-| Live collaboration probe | Current repository identity and read/write capability with a reason | Persisted credentials or assumed consent |
+| Live collaboration probe | Current repository identity and operation-scoped capability with a reason | Persisted credentials or assumed consent |
 | Artifact router | Selection among Issue, Draft PR, living documents, ADRs, and local fallback | Duplicated content across those homes |
 | Claude SessionStart hook | Safe, read-only preloading of resolved facts when available | The only resolver implementation or authority |
 | Adapter generator | Self-contained vendoring of the canonical contract into generated skills | Independent Codex or portable semantics |
@@ -172,10 +172,12 @@ Its logical schema is:
       "issue.read": {"allowed": true, "reason": "ok"},
       "issue.create": {"allowed": false, "reason": "authentication-required"},
       "issue.update": {"allowed": false, "reason": "authentication-required"},
+      "issue.comment.create": {"allowed": false, "reason": "authentication-required"},
       "branch.push": {"allowed": false, "reason": "authentication-required"},
       "pull_request.read": {"allowed": true, "reason": "ok"},
       "pull_request.create": {"allowed": false, "reason": "authentication-required"},
-      "pull_request.update": {"allowed": false, "reason": "authentication-required"}
+      "pull_request.update": {"allowed": false, "reason": "authentication-required"},
+      "pull_request.comment.create": {"allowed": false, "reason": "authentication-required"}
     }
   },
   "worktrees": {
@@ -189,9 +191,15 @@ Its logical schema is:
     }
   },
   "recovery": {
-    "issue-62": {
+    "7deba3e4-8fd5-4cda-a287-6675be601234": {
       "operation": "pull_request.create",
       "attempt_id": "7deba3e4-8fd5-4cda-a287-6675be601234",
+      "work_id": "issue-62",
+      "object_kind": "pull_request",
+      "repository_id": "github:R_kgDOExample",
+      "head": "feat/62-github-first-context",
+      "base": "main",
+      "request_fingerprint": "sha256:2f7c000000000000000000000000000000000000000000000000000000000000",
       "status": "indeterminate",
       "started_at": "2026-08-22T00:00:00Z",
       "last_error_code": "transport-timeout"
@@ -204,13 +212,18 @@ The worktree key comes from Git's worktree administration record, not the
 checkout path. A path may appear only as a diagnostic hint. Capability results
 may accelerate discovery but never authorize a write.
 
-`recovery` contains only sanitized, resumable mutation metadata and is removed
-when the outcome is resolved. Cache mutation acquires a lock in the same
-Git-common namespace, rereads the current revision inside the lock, merges
-disjoint worktree entries, and writes a private temporary file before atomic
-rename. POSIX hosts require mode `0600`; Windows hosts require a current-user-
-only ACL when supported and otherwise keep the private cache in memory and use
-fresh discovery next time.
+`recovery` is keyed by `attempt_id`, so concurrent Issue, PR, and comment
+mutations for one work ID cannot overwrite each other. Each record carries the
+work ID, object kind, immutable repository ID, and a canonical request
+fingerprint; PR creates also carry normalized head and base refs. The
+fingerprint covers repository ID, work ID, object kind, head/base when present,
+title when present, and managed-content hash. Records contain only sanitized,
+resumable mutation metadata and are removed independently when their outcome
+is resolved. Cache mutation acquires a lock in the same Git-common namespace,
+rereads the current revision inside the lock, merges disjoint worktree entries,
+and writes a private temporary file before atomic rename. POSIX hosts require
+mode `0600`; Windows hosts require a current-user-only ACL when supported and otherwise keep
+the private cache in memory and use fresh discovery next time.
 
 A same-entry conflict retains both candidates and returns
 `needs-reconciliation`. The resolver revalidates each candidate against Git
@@ -278,8 +291,8 @@ DevMuse edits only a marked block and preserves all human-authored text around
 it:
 
 ```markdown
-<!-- devmuse:scope:start schema=1 work_id=issue-62 revision=1 content_sha256=<64-hex> -->
-Goal, use cases, acceptance criteria, dependencies, ownership, and external work
+<!-- devmuse:scope:start schema=1 work_id=issue-62 attempt_id=<uuid> revision=1 content_sha256=<64-hex> -->
+Goal, use cases, acceptance criteria, required PR set, dependencies, ownership, and external work
 <!-- devmuse:scope:end -->
 ```
 
@@ -294,7 +307,8 @@ well-formed marker pair is allowed. Unknown schemas, duplicates, or malformed
 pairs are read-only and require repair. Repeating discovery or publication
 with the same work ID is an update, not a second Issue. A fallback artifact
 records the same work ID in its header so later publication can adopt the
-existing delivery without duplication.
+existing delivery without duplication. `attempt_id` identifies the original
+create or adoption attempt and remains stable across managed updates.
 
 ### Draft PR plan and progress
 
@@ -310,7 +324,7 @@ identity, app-store, console, and secret-manager changes remain owned by the
 Issue. The PR links to those tasks instead of copying their status.
 
 ```markdown
-<!-- devmuse:plan:start schema=1 work_id=issue-62 issue=62 revision=1 content_sha256=<64-hex> -->
+<!-- devmuse:plan:start schema=1 work_id=issue-62 issue=62 attempt_id=<uuid> revision=1 content_sha256=<64-hex> -->
 Requirements Reference, required PR set, UC-tagged tasks, progress, and evidence
 <!-- devmuse:plan:end -->
 ```
@@ -335,17 +349,35 @@ provider revision or ETag, validates the single managed block, and merges the
 new block into the latest human-authored body. `conditional_update` carries
 the expected remote revision. A provider conflict causes refetch and explicit
 reconciliation, never overwrite. If the provider cannot guarantee a
-conditional update, DevMuse does not automatically overwrite the object body;
-it either appends an immutable, versioned managed-revision comment or asks the
-user to approve a merged-body preview.
+conditional update, DevMuse never writes the object body automatically. With
+fresh `issue.comment.create` or `pull_request.comment.create` capability and a
+grant for that exact operation, it may append one immutable managed-revision
+comment; otherwise it routes to local fallback or presents content for manual
+application.
 
-Create operations generate `work_id` and `attempt_id` before the write. A
-timeout or lost response is indeterminate and is never blindly retried. The
-resolver searches recent same-repository objects for the exact work-ID marker:
-one result is adopted, several require reconciliation, and no result leaves a
-pending recovery record for a later probe or user-approved retry. Only a
-definite no-side-effect failure may retry while the operation grant remains
-active, and provider `retry-after` guidance is honored.
+```markdown
+<!-- devmuse:plan-revision:start schema=1 work_id=issue-62 issue=62 attempt_id=<uuid> revision=2 content_sha256=<64-hex> -->
+Complete replacement for the prior managed plan revision
+<!-- devmuse:plan-revision:end -->
+```
+
+The Issue form uses `scope-revision` with the same fields. Revision comments
+follow the same normalization, single-pair, authorization, recovery, and secret
+rules as body blocks. Their `attempt_id` identifies the comment creation rather
+than the original object creation. They are append-only; the highest valid
+managed revision across the body block and revision comments is current. Two
+different hashes at the same highest revision require reconciliation. Human
+comments remain untouched.
+
+Create operations generate `work_id` and unique `attempt_id` before the write,
+embed both in the remote marker, and persist recovery by attempt. A timeout or
+lost response is indeterminate and is never blindly retried. The resolver
+searches recent same-repository objects or comments for the exact work-ID and
+attempt-ID pair, then validates the request fingerprint: one result is adopted,
+several require reconciliation, and no result leaves that attempt pending for
+a later probe or user-approved new attempt. Only a definite no-side-effect
+failure may retry the same attempt while the operation grant remains active,
+and provider `retry-after` guidance is honored.
 
 ### Delivery lifecycle
 
@@ -502,12 +534,13 @@ the document-template implementation.
 | GitHub unavailable, unauthenticated, read-only, or declined | Select local fallback and record a bounded reason | Local fallback artifact and repository truth |
 | Several Issues or PRs plausibly match | Ask one choice; do not create or update until resolved | Existing GitHub objects |
 | Managed marker malformed or duplicated | Refuse automatic replacement and show the conflicting ranges | Human-authored object body |
+| Provider cannot conditionally update an object body | Never automate a body overwrite; append an authorized immutable managed-revision comment or use local/manual fallback | Human-authored object body |
 | Secret-like content reaches publication boundary | Stop the remote write and present a redacted preview | Local source and existing remote object |
 | Cache missing or corrupt | Ignore it and reconstruct from manifest, Git, and GitHub | Manifest and GitHub |
 | Concurrent cache entries conflict | Revalidate candidates, merge disjoint facts, ask on valid conflicts, then revision-check the chosen write | Manifest and GitHub |
 | Provider rejects expected remote revision | Preserve both bodies, refetch, and reconcile; never overwrite | Latest remote human-authored body |
 | Provider rate-limits a definite no-side-effect operation | Keep the grant bounded, honor `retry-after`, and report an operation-specific reason if it expires | Existing remote object or absence |
-| Create response is lost or times out | Record indeterminate recovery, search exact work-ID markers, and do not blind retry | Provider result when discoverable; otherwise pending recovery |
+| Create response is lost or times out | Record recovery by attempt, search exact work-ID plus attempt-ID markers and fingerprint, and do not blind retry | Provider result when discoverable; otherwise pending recovery |
 | Issue creation succeeds but cache update fails | Report success plus recoverable cache warning | Created Issue |
 | Provider reports a delivery event | Feed the fact and required-PR set to the canonical lifecycle projector, then apply its `issue_action` | `CONTEXT.md` lifecycle and provider evidence |
 
@@ -517,10 +550,10 @@ the document-template implementation.
 |---|---|
 | Manifest fixtures for valid schema, unknown version, unsafe path, symlink escape, and forbidden secret fields | UC-G7, UC-G8, UC-G9, UC-GR3 |
 | Temporary Git repositories with two linked worktrees, SSH/HTTPS remotes, a branch missing the manifest, and identity conflicts | UC-G8, UC-G9, UC-GR3 |
-| Cache fixtures for lock/revision merge, deterministic reconciliation, recovery cleanup, corruption recovery, POSIX `0600`, Windows ACL fallback, and atomic replacement | UC-G8, UC-G9 |
-| Fake collaboration adapter for every operation capability, denial reason, fresh re-probe, authorization scope, and grant expiry | UC-G2, UC-G3, UC-G7, UC-GR1 |
-| Managed-block fixtures for exact Issue/PR syntax, schema and duplicate rejection, content hash, conditional conflict, human-text preservation, and byte-stable repeat update | UC-G1, UC-G2, UC-G4 |
-| Create fixtures for definite failure, rate limit, timeout, lost response, one/many/no exact-marker recovery result, and no blind retry | UC-G2, UC-G4, UC-G8 |
+| Cache fixtures for lock/revision merge, deterministic reconciliation, concurrent per-attempt recovery, independent cleanup, corruption recovery, POSIX `0600`, Windows ACL fallback, and atomic replacement | UC-G8, UC-G9 |
+| Fake collaboration adapter for every object and comment operation capability, denial reason, fresh re-probe, authorization scope, and grant expiry | UC-G2, UC-G3, UC-G7, UC-GR1 |
+| Managed-block fixtures for exact Issue/PR body and revision-comment syntax, schema and duplicate rejection, content hash, highest-revision selection, same-revision conflict, conditional conflict, unsupported-conditional fallback, human-text preservation, and byte-stable repeat update | UC-G1, UC-G2, UC-G4 |
+| Create fixtures for concurrent attempts under one work ID, canonical fingerprints, definite failure, rate limit, timeout, lost response, one/many/no exact work-and-attempt marker result, and no blind retry | UC-G2, UC-G4, UC-G8, UC-G9 |
 | Matching fixtures for explicit object, valid cache, exact work ID, confirmed unmarked semantic candidates, and ambiguous candidates | UC-G1, UC-G2 |
 | Lifecycle-projector tests feed canonical events for external work, unmerged PR closure, required multi-PR aggregation, waiver, cancellation, and final completion | UC-G4, UC-G5, UC-G6, UC-GR2 |
 | Routing and skill contract tests for bootstrap, mu-scope, mu-arch, mu-plan, mu-code, and mu-review | UC-G1 through UC-G6, UC-G10, UC-GR1, UC-GR2 |
