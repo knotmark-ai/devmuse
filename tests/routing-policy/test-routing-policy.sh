@@ -96,6 +96,22 @@ assert_contains "rules/bootstrap.md" "Review and fix"
 assert_contains "rules/bootstrap.md" "briefly name the exclusion"
 assert_contains "rules/bootstrap.md" "upgrade"
 
+# Exact operational bindings are execution, not architecture: an additive,
+# reversible hostname binding to an unchanged service stays Direct, while
+# destructive or policy-changing DNS work still enters scope.
+assert_contains "rules/bootstrap.md" "Exact operational binding"
+assert_contains "rules/bootstrap.md" "additive and safely reversible binding to an unchanged existing service"
+assert_contains "rules/bootstrap.md" "narrow live-state preflight"
+assert_contains "rules/bootstrap.md" "DNS/custom-domain binding"
+assert_contains "rules/bootstrap.md" "replacing or deleting an existing"
+assert_contains "rules/bootstrap.md" "production DNS record"
+assert_contains "rules/bootstrap.md" "DNSSEC, certificate policy, proxy/WAF"
+assert_contains "rules/bootstrap.md" "auth/security, or traffic policy"
+assert_contains "rules/bootstrap.md" 'Map `api.example.com` to the existing `api` service'
+assert_contains "rules/bootstrap.md" "Replace the production DNS record and cut traffic to a"
+assert_contains "adapters/codex/HOST_POLICY.md" "exact operational bindings Direct under the canonical bootstrap criteria"
+assert_contains "adapters/codex/HOST_POLICY.md" "Destructive DNS changes and policy changes"
+
 # Read-only understanding must not manufacture a workflow artifact. Persistent
 # architecture knowledge has one home and is generated only on explicit demand.
 assert_contains "rules/bootstrap.md" "Read-only inspection"
