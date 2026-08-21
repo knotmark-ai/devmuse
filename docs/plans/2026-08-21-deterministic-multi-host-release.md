@@ -908,7 +908,7 @@ git diff --check
 
 Expected: every command PASS and generated adapter status is clean.
 
-- [ ] **Step 5: Run a clean end-to-end dry run locally**
+- [x] **Step 5: Run a clean end-to-end dry run locally**
 
 Run:
 
@@ -938,25 +938,25 @@ git commit -m "docs(release): document minimal host artifacts"
 **Files:**
 - Inspect: all files changed by Tasks 1–7
 
-- [ ] **Step 1: Confirm plan progress and commit boundaries**
+- [x] **Step 1: Confirm plan progress and commit boundaries**
 
 Run: `git log --oneline origin/main..HEAD && git status --short`
 
 Expected: focused commits for model/platform, archive build, smoke, finalization, publication, workflows, and docs; only intentional plan checkbox edits may remain.
 
-- [ ] **Step 2: Inspect release output contents rather than trusting summaries**
+- [x] **Step 2: Inspect release output contents rather than trusting summaries**
 
 Run: `npm run release:verify -- --input "$release_root" && sed -n '1,240p' "$release_root/expected-assets.json" && sed -n '1,240p' "$release_root/SHA256SUMS"`
 
 Expected: exact asset agreement, no OpenClaw archive, no docs/tests in runtime archives, and no checksum self-reference.
 
-- [ ] **Step 3: Re-run branch-level checks after the final diff**
+- [x] **Step 3: Re-run branch-level checks after the final diff**
 
 Run: `npm run test:release && npm run test:platforms && npm run test:generated && git diff --check origin/main...HEAD`
 
 Expected: all checks PASS.
 
-- [ ] **Step 4: Commit completed plan tracking if checkboxes were updated**
+- [x] **Step 4: Commit completed plan tracking if checkboxes were updated**
 
 ```bash
 git add docs/plans/2026-08-21-deterministic-multi-host-release.md
