@@ -169,6 +169,12 @@ GREEN:    write the minimum implementation and run it to green
 REFACTOR: improve structure while the same tests stay green
 ```
 
+During REFACTOR, read `@../../knowledge/principles/code-quality.md` and sweep
+the actual diff through every category. Translate mechanisms and examples into
+the repository's language. REFACTOR is complete when every changed element has
+either the prescribed correction or concrete evidence that its current shape
+is earned.
+
 Configuration-only, generated-code, or throwaway-prototype exceptions require
 the user's explicit approval. A test that passes before implementation is not a
 red test; correct it until it fails for the missing behavior.
