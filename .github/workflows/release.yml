@@ -20,10 +20,12 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
 
@@ -56,10 +58,12 @@ jobs:
           - windows-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
 
@@ -72,7 +76,7 @@ jobs:
           npm run release:verify -- --input release-output
 
       - name: Upload package output
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release-${{ runner.os }}
           path: release-output
@@ -90,7 +94,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Download package outputs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: release-*
           path: package-outputs
@@ -132,15 +136,17 @@ jobs:
           - windows-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
 
       - name: Download verified Linux package
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: release-Linux
           path: release-output
@@ -151,7 +157,7 @@ jobs:
           npm run release:smoke -- --input release-output --evidence smoke-${{ runner.os }}.json
 
       - name: Upload smoke evidence
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: smoke-${{ runner.os }}
           path: smoke-${{ runner.os }}.json
@@ -169,21 +175,23 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
 
       - name: Download verified Linux package
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: release-Linux
           path: release-output
 
       - name: Download smoke evidence
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: smoke-*
           path: smoke-evidence
@@ -214,7 +222,7 @@ jobs:
           npm run release:verify -- --input release-output
 
       - name: Upload finalized dry-run output
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release-finalized
           path: release-output
@@ -225,54 +233,96 @@ jobs:
         run: |
           node -e "const fs=require('fs');const data=JSON.parse(fs.readFileSync('release-output/expected-assets.json'));fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, 'Finalized DevMuse '+data.version+' at '+data.sourceCommit+' with '+Object.keys(data.assets).length+' upload assets.\\n')"
 
-  publish-release:
-    name: Publish GitHub Release
+  attest:
+    name: Attest verified checksums
     needs: finalize
-    if: github.ref_type == 'tag'
+    if: github.event_name == 'push' && github.ref_type == 'tag'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      contents: write
+      contents: read
       id-token: write
       attestations: write
     steps:
       - name: Check out tagged repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
 
       - name: Download finalized output
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: release-finalized
           path: release-output
 
-      - name: Preflight local assets and remote tag
-        run: npm run release:publish-github -- --input release-output --tag ${{ github.ref_name }} --preflight
+      - name: Reverify finalized bytes and remote tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          npm run release:verify -- --input release-output
+          npm run release:finalize -- --input release-output --evidence release-output/smoke-evidence.json
+          npm run release:publish-github -- --input release-output --tag "$RELEASE_TAG" --preflight
 
       - name: Attest checksum subjects
-        uses: actions/attest@v4
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
         with:
           subject-checksums: release-output/SHA256SUMS
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [finalize, attest]
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Check out tagged repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+
+      - name: Download finalized output
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-finalized
+          path: release-output
+
+      - name: Reverify finalized bytes and remote tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          npm run release:verify -- --input release-output
+          npm run release:finalize -- --input release-output --evidence release-output/smoke-evidence.json
+          npm run release:publish-github -- --input release-output --tag "$RELEASE_TAG" --preflight
 
       - name: Create, resume, or verify GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: npm run release:publish-github -- --input release-output --tag ${{ github.ref_name }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: npm run release:publish-github -- --input release-output --tag "$RELEASE_TAG"
 
       - name: Summarize GitHub Release
-        run: |
-          echo "GitHub Release ${{ github.ref_name }} verified and published." >> "$GITHUB_STEP_SUMMARY"
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node -e "require('fs').appendFileSync(process.env.GITHUB_STEP_SUMMARY, 'GitHub Release '+process.env.RELEASE_TAG+' verified and published.\\n')"
 
   publish-npm:
     name: Publish npm package
     needs: publish-release
-    if: github.ref_type == 'tag' && vars.DEVMUSE_PUBLISH_NPM == 'true'
+    if: github.event_name == 'push' && github.ref_type == 'tag' && vars.DEVMUSE_PUBLISH_NPM == 'true'
     environment: npm-production
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -281,21 +331,28 @@ jobs:
       id-token: write
     steps:
       - name: Check out tagged repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
 
       - name: Install trusted-publishing npm CLI
-        run: npm install --global npm@11.5.1
+        run: npm install --global --ignore-scripts npm@11.5.1
 
       - name: Download finalized output
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: release-finalized
           path: release-output
+
+      - name: Reverify finalized bytes
+        run: |
+          npm run release:verify -- --input release-output
+          npm run release:finalize -- --input release-output --evidence release-output/smoke-evidence.json
 
       - name: Publish or verify npm version
         run: npm run release:publish-npm -- --input release-output

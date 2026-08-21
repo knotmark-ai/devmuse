@@ -5,7 +5,8 @@ import os from "node:os";
 import path from "node:path";
 
 const sha256 = (body) => createHash("sha256").update(body).digest("hex");
-const safeAssetName = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const safeAssetName = /^[A-Za-z0-9][A-Za-z0-9._+-]*$/;
+const semver = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 
 function exactKeys(value, keys, label) {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${label} must be an object`);
@@ -20,7 +21,7 @@ function loadExpectedAssets(input) {
   const contract = JSON.parse(fs.readFileSync(contractFile, "utf8"));
   exactKeys(contract, ["schemaVersion", "version", "sourceCommit", "assets"], "Expected assets contract");
   if (contract.schemaVersion !== 1) throw new Error(`Unsupported expected assets schema: ${contract.schemaVersion}`);
-  if (typeof contract.version !== "string" || !/^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/.test(contract.version)) {
+  if (typeof contract.version !== "string" || !semver.test(contract.version)) {
     throw new Error(`Expected assets version is invalid: ${contract.version}`);
   }
   if (typeof contract.sourceCommit !== "string" || !/^[0-9a-f]{40,64}$/.test(contract.sourceCommit)) {

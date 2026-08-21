@@ -2,7 +2,10 @@
 
 import { execFileSync } from "node:child_process";
 
-import { parseArgs } from "./artifacts.mjs";
+import path from "node:path";
+
+import { defaultRepoRoot, parseArgs, verifyRelease } from "./artifacts.mjs";
+import { finalizeRelease } from "./finalize-lib.mjs";
 import { preflightGitHubRelease, publishGitHubRelease } from "./publish-github-lib.mjs";
 
 try {
@@ -10,6 +13,13 @@ try {
     input: { required: true },
     tag: { required: true },
     preflight: { boolean: true },
+  });
+  const repoRoot = defaultRepoRoot(import.meta.url);
+  verifyRelease({ repoRoot, input: args.input });
+  finalizeRelease({
+    repoRoot,
+    input: args.input,
+    evidence: path.join(args.input, "smoke-evidence.json"),
   });
   const sourceCommit = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
   const result = args.preflight

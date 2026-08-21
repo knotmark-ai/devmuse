@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const utf8Sort = (left, right) => Buffer.from(left).compare(Buffer.from(right));
+const trackedBlobCache = new WeakMap();
 
 const runtimeRoots = [
   ".agents/plugins/marketplace.json",
@@ -184,10 +185,10 @@ function rejectDirtyCheckout(repoRoot, output) {
 
   const ignoredBundleInputs = [...new Set(ignored.map((file) => file.replaceAll("\\", "/")))]
     .filter(outsideOutput)
-    .filter(isRuntimePath)
+    .filter(isReleaseInput)
     .sort(utf8Sort);
   if (ignoredBundleInputs.length > 0) {
-    throw new Error(`Ignored bundle input must be removed or committed: ${ignoredBundleInputs.join(", ")}`);
+    throw new Error(`Ignored release input must be removed or committed: ${ignoredBundleInputs.join(", ")}`);
   }
 }
 
@@ -209,4 +210,41 @@ export function selectBundleFiles(context, bundleName) {
   const definition = BUNDLE_CATALOG[bundleName];
   if (!definition) throw new Error(`Unknown release bundle: ${bundleName}`);
   return context.trackedFiles.filter((file) => matchesBundle(file.path, definition));
+}
+
+export function readTrackedFile(context, file) {
+  if (!context?.repoRoot || !file?.objectId || !context.trackedFiles.includes(file)) {
+    throw new Error("Tracked release file does not belong to this context");
+  }
+  let blobs = trackedBlobCache.get(context);
+  if (!blobs) {
+    const objectIds = [...new Set(context.trackedFiles.map((tracked) => tracked.objectId))];
+    const output = execFileSync("git", ["cat-file", "--batch"], {
+      cwd: context.repoRoot,
+      input: `${objectIds.join("\n")}\n`,
+      encoding: "buffer",
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    blobs = new Map();
+    let offset = 0;
+    for (const objectId of objectIds) {
+      const newline = output.indexOf(0x0a, offset);
+      if (newline < 0) throw new Error(`Git omitted blob header for ${objectId}`);
+      const header = output.subarray(offset, newline).toString("ascii").split(" ");
+      const size = Number(header[2]);
+      if (header[0] !== objectId || header[1] !== "blob" || !Number.isSafeInteger(size) || size < 0) {
+        throw new Error(`Git returned an invalid blob header for ${objectId}`);
+      }
+      const start = newline + 1;
+      const end = start + size;
+      if (end >= output.length || output[end] !== 0x0a) throw new Error(`Git returned a truncated blob for ${objectId}`);
+      blobs.set(objectId, Buffer.from(output.subarray(start, end)));
+      offset = end + 1;
+    }
+    if (offset !== output.length) throw new Error("Git returned unexpected trailing blob data");
+    trackedBlobCache.set(context, blobs);
+  }
+  const body = blobs.get(file.objectId);
+  if (!body) throw new Error(`Tracked blob is unavailable: ${file.path}`);
+  return Buffer.from(body);
 }

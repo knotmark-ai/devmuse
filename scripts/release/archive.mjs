@@ -4,6 +4,10 @@ import { gunzipSync, gzipSync } from "node:zlib";
 
 const BLOCK_SIZE = 512;
 const ZERO_BLOCKS = Buffer.alloc(BLOCK_SIZE * 2);
+const MAX_COMPRESSED_SIZE = 64 * 1024 * 1024;
+const MAX_EXPANDED_SIZE = 256 * 1024 * 1024;
+const MAX_ENTRY_SIZE = 64 * 1024 * 1024;
+const MAX_ENTRIES = 10_000;
 
 const utf8Sort = (left, right) => Buffer.from(left).compare(Buffer.from(right));
 
@@ -178,27 +182,66 @@ function parsePax(body) {
     if (!record.endsWith("\n")) throw new Error("Malformed PAX record terminator");
     const separator = record.indexOf("=");
     if (separator < 1) throw new Error("Malformed PAX record value");
-    values[record.slice(0, separator)] = record.slice(separator + 1, -1);
+    const key = record.slice(0, separator);
+    if (key !== "path" || Object.hasOwn(values, key)) throw new Error(`Unsupported or duplicate PAX field: ${key}`);
+    values[key] = record.slice(separator + 1, -1);
     offset += length;
   }
   return values;
 }
 
 export function readTarGz(input) {
-  const tar = gunzipSync(input);
+  if (!Buffer.isBuffer(input) || input.length > MAX_COMPRESSED_SIZE) {
+    throw new Error("Compressed archive exceeds the supported size");
+  }
+  if (
+    input.length < 18
+    || input[0] !== 0x1f
+    || input[1] !== 0x8b
+    || input[2] !== 8
+    || input[3] !== 0
+    || !input.subarray(4, 8).every((byte) => byte === 0)
+    || input[8] !== 2
+    || input[9] !== 255
+  ) throw new Error("Archive gzip header is not canonical");
+  const tar = gunzipSync(input, { maxOutputLength: MAX_EXPANDED_SIZE });
+  if (tar.length < ZERO_BLOCKS.length || tar.length % BLOCK_SIZE !== 0) {
+    throw new Error("Tar archive size or terminator is invalid");
+  }
   const entries = [];
   const seen = new Set();
   let offset = 0;
   let pax = null;
+  let terminated = false;
   while (offset + BLOCK_SIZE <= tar.length) {
     const header = tar.subarray(offset, offset + BLOCK_SIZE);
-    if (header.every((byte) => byte === 0)) break;
+    if (header.every((byte) => byte === 0)) {
+      const remainder = tar.subarray(offset);
+      if (remainder.length !== ZERO_BLOCKS.length || !remainder.every((byte) => byte === 0)) {
+        throw new Error("Tar archive has invalid terminators or trailing data");
+      }
+      terminated = true;
+      offset = tar.length;
+      break;
+    }
     verifyHeaderChecksum(header);
+    if (readString(header, 257, 6) !== "ustar" || readString(header, 263, 2) !== "00") {
+      throw new Error("Tar archive is not canonical ustar");
+    }
+    if (readOctal(header, 108, 8) !== 0 || readOctal(header, 116, 8) !== 0) {
+      throw new Error("Tar ownership must be numeric zero");
+    }
+    for (const [start, end, label] of [[157, 257, "link"], [265, 329, "owner name"], [329, 345, "group name"], [500, 512, "device"]]) {
+      if (!header.subarray(start, end).every((byte) => byte === 0)) {
+        throw new Error(`Tar ${label} metadata must be empty`);
+      }
+    }
     const name = readString(header, 0, 100);
     const prefix = readString(header, 345, 155);
     const headerPath = prefix ? `${prefix}/${name}` : name;
     const type = readString(header, 156, 1) || "0";
     const size = readOctal(header, 124, 12);
+    if (size > MAX_ENTRY_SIZE) throw new Error(`Tar entry exceeds the supported size: ${headerPath}`);
     const mtime = readOctal(header, 136, 12);
     const mode = readOctal(header, 100, 8) & 0o777;
     const bodyStart = offset + BLOCK_SIZE;
@@ -208,6 +251,7 @@ export function readTarGz(input) {
     offset = bodyStart + Math.ceil(size / BLOCK_SIZE) * BLOCK_SIZE;
 
     if (type === "x") {
+      if (pax) throw new Error("Consecutive PAX records are unsupported");
       pax = parsePax(body);
       continue;
     }
@@ -219,7 +263,9 @@ export function readTarGz(input) {
     seen.add(entryPath);
     if (mode !== 0o644 && mode !== 0o755) throw new Error(`Unsupported archive mode: ${entryPath}`);
     entries.push({ path: entryPath, mode, mtime, body });
+    if (entries.length > MAX_ENTRIES) throw new Error("Archive contains too many entries");
   }
+  if (!terminated) throw new Error("Tar archive has no exact end marker");
   if (pax) throw new Error("PAX record has no following file");
   return entries;
 }

@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const npmName = /^(?:@[a-z0-9._-]+\/)?[a-z0-9._-]+$/;
-const semver = /^\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?$/;
+const semver = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 const integrityPattern = /^sha512-[A-Za-z0-9+/]+={0,2}$/;
 
 function defaultRun(command, args, options = {}) {

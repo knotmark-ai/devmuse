@@ -50,14 +50,14 @@ its actual coverage instead of implying that every tool path is intercepted.
 
 ## Install
 
-Published versions are available from [GitHub Releases](https://github.com/knotmark-ai/devmuse/releases). Download `SHA256SUMS` with the chosen archive and compare the archive's host-native SHA-256 before extraction. The same release contains `marketplace-submission.md`, which records the artifact, checksum, validation gates, and manual marketplace steps. Source checkout remains a development path; a release archive is the smallest normal installation path.
+Published versions are available from [GitHub Releases](https://github.com/knotmark-ai/devmuse/releases). Download `SHA256SUMS` with the chosen archive and compare the archive's host-native SHA-256 before extraction. The same release contains `marketplace-submission.md`, which records the artifact, checksum, validation gates, and manual marketplace steps. No repository clone is required for normal installation; source checkout remains a development path, while a release archive is the smallest normal installation path.
 
 ### Claude Code
 
 Download `devmuse-<version>-claude.tar.gz`, extract it, and register the extracted `devmuse/` directory as a local marketplace:
 
 ```bash
-VERSION=2.2.0
+VERSION=x.y.z
 tar -xzf "devmuse-${VERSION}-claude.tar.gz"
 ```
 
@@ -78,7 +78,7 @@ The archive contains only marketplace metadata and the Claude runtime. Repositor
 Download and extract `devmuse-<version>-codex.tar.gz`, then add the extracted directory as a local marketplace:
 
 ```bash
-VERSION=2.2.0
+VERSION=x.y.z
 tar -xzf "devmuse-${VERSION}-codex.tar.gz"
 codex plugin marketplace add /absolute/path/to/devmuse
 codex
@@ -99,7 +99,7 @@ Restart the session after rebuilding the adapter.
 OpenClaw uses the Claude archive `devmuse-<version>-claude.tar.gz`; there is no separate OpenClaw archive. Extract it and link its runtime:
 
 ```bash
-VERSION=2.2.0
+VERSION=x.y.z
 tar -xzf "devmuse-${VERSION}-claude.tar.gz"
 openclaw plugins install --link /absolute/path/to/devmuse/plugin
 openclaw plugins inspect devmuse
@@ -119,7 +119,7 @@ OpenClaw maps skills, but it only detects Claude `agents/` and `hooks/hooks.json
 Download and extract `devmuse-<version>-hermes.tar.gz`, then install the extracted plugin root:
 
 ```bash
-VERSION=2.2.0
+VERSION=x.y.z
 tar -xzf "devmuse-${VERSION}-hermes.tar.gz"
 hermes plugins install /absolute/path/to/devmuse --enable
 ```
@@ -145,7 +145,7 @@ This integrated mode lets Hermes modify external skills if the directory is writ
 Download and extract `devmuse-<version>-gemini.tar.gz`, then install its runtime subdirectory:
 
 ```bash
-VERSION=2.2.0
+VERSION=x.y.z
 tar -xzf "devmuse-${VERSION}-gemini.tar.gz"
 gemini extensions install /absolute/path/to/devmuse/plugin
 ```
@@ -163,7 +163,7 @@ Restart Gemini CLI after installation. `GEMINI.md` is intentionally small; the f
 These hosts use the portable pack inside `devmuse-<version>-codex.tar.gz`. With GitHub CLI 2.90 or newer:
 
 ```bash
-VERSION=2.2.0
+VERSION=x.y.z
 tar -xzf "devmuse-${VERSION}-codex.tar.gz"
 gh skill install /absolute/path/to/devmuse/adapters/codex --from-local --agent cursor --scope user
 ```

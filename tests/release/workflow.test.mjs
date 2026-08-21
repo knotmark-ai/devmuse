@@ -29,7 +29,7 @@ test("UC-2 UC-3 UC-7 UC-R1 UC-R4: release workflow has pure dry run and gated mu
   assert.match(workflow, /release:publish-npm/);
   assert.equal(
     (workflow.match(/if:\s*github\.event_name == 'push' && github\.ref_type == 'tag'/g) ?? []).length,
-    2,
+    3,
   );
   assert.match(workflow, /vars\.DEVMUSE_PUBLISH_NPM == 'true'/);
   assert.match(workflow, /RELEASE_TAG:\s*\$\{\{ github\.ref_name \}\}/);
@@ -43,13 +43,13 @@ test("UC-4 UC-5 UC-6 UC-R3: workflow orders every release boundary", () => {
   assert.match(workflow, /compare:[\s\S]*needs:\s*package/);
   assert.match(workflow, /smoke:[\s\S]*needs:\s*compare/);
   assert.match(workflow, /finalize:[\s\S]*needs:[^\n]*smoke/);
-  assert.match(workflow, /publish-release:[\s\S]*needs:\s*finalize/);
+  assert.match(workflow, /attest:[\s\S]*needs:\s*finalize/);
+  assert.match(workflow, /publish-release:[\s\S]*needs:\s*\[finalize, attest\]/);
   assert.match(workflow, /publish-npm:[\s\S]*needs:\s*publish-release/);
-  const preflight = workflow.indexOf("release:publish-github -- --input release-output --tag", workflow.indexOf("publish-release:"));
-  const attest = workflow.indexOf("actions/attest@", preflight);
-  const publish = workflow.indexOf("release:publish-github -- --input release-output --tag", preflight + 1);
-  assert.ok(preflight > 0 && workflow.slice(preflight, attest).includes("--preflight"));
-  assert.ok(attest > preflight && publish > attest);
+  const attestJob = workflow.slice(workflow.indexOf("  attest:"), workflow.indexOf("  publish-release:"));
+  assert.match(attestJob, /release:verify[\s\S]*release:finalize[\s\S]*--preflight[\s\S]*actions\/attest@/);
+  const publishJob = workflow.slice(workflow.indexOf("  publish-release:"), workflow.indexOf("  publish-npm:"));
+  assert.match(publishJob, /release:verify[\s\S]*release:finalize[\s\S]*--preflight[\s\S]*release:publish-github/);
 });
 
 test("UC-6 UC-R3: only the release job receives write permissions", () => {

@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { isDeepStrictEqual } from "node:util";
 
@@ -9,6 +10,7 @@ import {
   BUNDLE_CATALOG,
   COMPATIBILITY_TARGETS,
   loadReleaseContext,
+  readTrackedFile,
   selectBundleFiles,
 } from "./model.mjs";
 
@@ -55,9 +57,9 @@ function artifactRecord(directory, name) {
   return { name, sha256: sha256(body), size: body.length };
 }
 
-function sourceFileRecords(files) {
+function sourceFileRecords(context, files) {
   return files.map((file) => {
-    const body = fs.readFileSync(file.absolutePath);
+    const body = readTrackedFile(context, file);
     return {
       path: file.path,
       mode: file.mode,
@@ -82,28 +84,46 @@ function submissionInputs(context, bundles) {
   };
 }
 
-function packNpm(repoRoot, output, version) {
-  const npm = process.platform === "win32" ? "npm.cmd" : "npm";
-  const stdout = execFileSync(
-    npm,
-    ["pack", "--json", "--pack-destination", output],
-    { cwd: repoRoot, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
-  );
-  const result = JSON.parse(stdout);
-  if (!Array.isArray(result) || result.length !== 1 || !result[0]?.filename) {
-    throw new Error(`npm pack returned an unexpected result: ${stdout}`);
+function materializeTrackedTree(context) {
+  const staging = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-npm-stage-"));
+  for (const file of context.trackedFiles) {
+    const target = path.join(staging, ...file.path.split("/"));
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.writeFileSync(target, readTrackedFile(context, file), { flag: "wx", mode: file.mode });
+    fs.chmodSync(target, file.mode);
   }
-  const source = path.join(output, result[0].filename);
-  const artifact = `devmuse-${version}.tgz`;
-  const target = path.join(output, artifact);
-  if (path.resolve(source) !== path.resolve(target)) fs.renameSync(source, target);
-  const body = fs.readFileSync(target);
-  return {
-    artifact,
-    sha256: sha256(body),
-    integrity: sha512Integrity(body),
-    size: body.length,
-  };
+  return staging;
+}
+
+function packNpm(context, output) {
+  const npm = process.platform === "win32" ? "npm.cmd" : "npm";
+  const staging = materializeTrackedTree(context);
+  try {
+    const stdout = execFileSync(
+      npm,
+      ["pack", "--ignore-scripts", "--json", "--pack-destination", output],
+      { cwd: staging, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+    );
+    const result = JSON.parse(stdout);
+    const artifact = `devmuse-${context.version}.tgz`;
+    if (!Array.isArray(result) || result.length !== 1 || result[0]?.filename !== artifact) {
+      throw new Error(`npm pack returned an unexpected artifact: ${stdout}`);
+    }
+    const target = path.join(output, artifact);
+    const stat = fs.lstatSync(target);
+    if (!stat.isFile() || stat.isSymbolicLink()) {
+      throw new Error(`npm pack output is not a regular file: ${artifact}`);
+    }
+    const body = fs.readFileSync(target);
+    return {
+      artifact,
+      sha256: sha256(body),
+      integrity: sha512Integrity(body),
+      size: body.length,
+    };
+  } finally {
+    fs.rmSync(staging, { recursive: true, force: true });
+  }
 }
 
 function assertSourceRef(repoRoot, sourceRef, commit) {
@@ -134,55 +154,7 @@ export async function buildRelease({ repoRoot, output, sourceRef } = {}) {
   assertSourceRef(context.repoRoot, sourceRef, context.commit);
   const { target, temporary } = prepareOutput(output);
   try {
-    const bundles = {};
-    for (const bundleName of Object.keys(BUNDLE_CATALOG)) {
-      const files = selectBundleFiles(context, bundleName);
-      const archive = `devmuse-${context.version}-${bundleName}.tar.gz`;
-      const entries = files.map((file) => ({
-        path: `devmuse/${file.path}`,
-        mode: file.mode,
-        body: fs.readFileSync(file.absolutePath),
-      }));
-      const body = createTarGz(entries, { sourceEpoch: context.epoch });
-      fs.writeFileSync(path.join(temporary, archive), body, { flag: "wx" });
-      bundles[bundleName] = {
-        artifact: archive,
-        sha256: sha256(body),
-        size: body.length,
-        files: sourceFileRecords(files),
-      };
-    }
-
-    const npm = packNpm(context.repoRoot, temporary, context.version);
-    const bundleManifest = {
-      schemaVersion: BUILD_SCHEMA_VERSION,
-      packageName: "devmuse",
-      version: context.version,
-      source: { commit: context.commit, epoch: context.epoch },
-      compatibilityTargets: COMPATIBILITY_TARGETS,
-      bundles,
-      npm,
-    };
-    const bundleChecksums = {
-      schemaVersion: BUILD_SCHEMA_VERSION,
-      artifacts: [
-        ...Object.values(bundles).map(({ artifact: name, sha256: digest, size }) => ({ name, sha256: digest, size })),
-        { name: npm.artifact, sha256: npm.sha256, size: npm.size },
-      ].sort((left, right) => utf8Sort(left.name, right.name)),
-    };
-    const provenance = {
-      schemaVersion: BUILD_SCHEMA_VERSION,
-      packageName: "devmuse",
-      version: context.version,
-      sourceCommit: context.commit,
-      sourceEpoch: context.epoch,
-    };
-    const submissions = submissionInputs(context, bundles);
-
-    writeStableJson(temporary, "bundle-manifest.json", bundleManifest);
-    writeStableJson(temporary, "bundle-checksums.json", bundleChecksums);
-    writeStableJson(temporary, "source-provenance.json", provenance);
-    writeStableJson(temporary, "submission-inputs.json", submissions);
+    const { bundleManifest, bundleChecksums } = buildCanonicalArtifacts(context, temporary);
 
     if (fs.existsSync(target)) fs.rmdirSync(target);
     fs.renameSync(temporary, target);
@@ -191,6 +163,56 @@ export async function buildRelease({ repoRoot, output, sourceRef } = {}) {
     fs.rmSync(temporary, { recursive: true, force: true });
     throw error;
   }
+}
+
+function buildCanonicalArtifacts(context, output) {
+  const bundles = {};
+  for (const bundleName of Object.keys(BUNDLE_CATALOG)) {
+    const files = selectBundleFiles(context, bundleName);
+    const archive = `devmuse-${context.version}-${bundleName}.tar.gz`;
+    const entries = files.map((file) => ({
+      path: `devmuse/${file.path}`,
+      mode: file.mode,
+      body: readTrackedFile(context, file),
+    }));
+    const body = createTarGz(entries, { sourceEpoch: context.epoch });
+    fs.writeFileSync(path.join(output, archive), body, { flag: "wx" });
+    bundles[bundleName] = {
+      artifact: archive,
+      sha256: sha256(body),
+      size: body.length,
+      files: sourceFileRecords(context, files),
+    };
+  }
+
+  const npm = packNpm(context, output);
+  const bundleManifest = {
+    schemaVersion: BUILD_SCHEMA_VERSION,
+    packageName: "devmuse",
+    version: context.version,
+    source: { commit: context.commit, epoch: context.epoch },
+    compatibilityTargets: COMPATIBILITY_TARGETS,
+    bundles,
+    npm,
+  };
+  const bundleChecksums = {
+    schemaVersion: BUILD_SCHEMA_VERSION,
+    artifacts: [
+      ...Object.values(bundles).map(({ artifact: name, sha256: digest, size }) => ({ name, sha256: digest, size })),
+      { name: npm.artifact, sha256: npm.sha256, size: npm.size },
+    ].sort((left, right) => utf8Sort(left.name, right.name)),
+  };
+  writeStableJson(output, "bundle-manifest.json", bundleManifest);
+  writeStableJson(output, "bundle-checksums.json", bundleChecksums);
+  writeStableJson(output, "source-provenance.json", {
+    schemaVersion: BUILD_SCHEMA_VERSION,
+    packageName: "devmuse",
+    version: context.version,
+    sourceCommit: context.commit,
+    sourceEpoch: context.epoch,
+  });
+  writeStableJson(output, "submission-inputs.json", submissionInputs(context, bundles));
+  return { bundleManifest, bundleChecksums };
 }
 
 function assertEqual(actual, expected, label) {
@@ -206,7 +228,7 @@ function verifyArchive(input, context, bundleName, manifestBundle) {
   if (body.length !== manifestBundle.size) throw new Error(`${artifact} size mismatch`);
 
   const selected = selectBundleFiles(context, bundleName);
-  const expectedFiles = sourceFileRecords(selected);
+  const expectedFiles = sourceFileRecords(context, selected);
   assertEqual(manifestBundle.files, expectedFiles, `${bundleName} file manifest`);
   const entries = readTarGz(body);
   if (entries.length !== selected.length) throw new Error(`${artifact} file set mismatch`);
@@ -217,7 +239,7 @@ function verifyArchive(input, context, bundleName, manifestBundle) {
     if (entry.path !== expectedPath) throw new Error(`${artifact} path mismatch: ${entry.path}`);
     if (entry.mode !== source.mode) throw new Error(`${artifact} mode mismatch: ${entry.path}`);
     if (entry.mtime !== context.epoch) throw new Error(`${artifact} mtime mismatch: ${entry.path}`);
-    if (!entry.body.equals(fs.readFileSync(source.absolutePath))) {
+    if (!entry.body.equals(readTrackedFile(context, source))) {
       throw new Error(`${artifact} content mismatch: ${entry.path}`);
     }
   }
@@ -228,6 +250,17 @@ export function verifyRelease({ repoRoot, input } = {}) {
   if (!repoRoot || !input) throw new Error("verifyRelease requires repoRoot and input");
   const directory = path.resolve(input);
   const context = loadReleaseContext(repoRoot, { output: directory });
+  const canonical = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-release-verify-"));
+  try {
+    buildCanonicalArtifacts(context, canonical);
+    for (const name of fs.readdirSync(canonical).sort(utf8Sort)) {
+      const actual = fs.readFileSync(path.join(directory, name));
+      const expected = fs.readFileSync(path.join(canonical, name));
+      if (!actual.equals(expected)) throw new Error(`Canonical release artifact mismatch: ${name}`);
+    }
+  } finally {
+    fs.rmSync(canonical, { recursive: true, force: true });
+  }
   const manifest = readJsonFile(directory, "bundle-manifest.json");
   if (manifest.schemaVersion !== BUILD_SCHEMA_VERSION) throw new Error("Unsupported bundle manifest schema");
 
@@ -242,7 +275,7 @@ export function verifyRelease({ repoRoot, input } = {}) {
       artifact: record.artifact,
       sha256: record.sha256,
       size: record.size,
-      files: sourceFileRecords(selectBundleFiles(context, bundleName)),
+      files: sourceFileRecords(context, selectBundleFiles(context, bundleName)),
     };
   }
 

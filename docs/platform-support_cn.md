@@ -44,14 +44,14 @@ DevMuse 不承诺让 Claude 的防破坏命令 guard 在所有宿主上行为一
 
 ## 安装
 
-已发布版本见 [GitHub Releases](https://github.com/knotmark-ai/devmuse/releases)。下载所选归档时一并下载 `SHA256SUMS`，用宿主系统的 SHA-256 工具比对后再解压。同一 Release 中的 `marketplace-submission.md` 会记录制品、校验值、验证门禁与人工市场提交步骤。源码 checkout 只用于开发；日常安装应选择体积最小的宿主归档。
+已发布版本见 [GitHub Releases](https://github.com/knotmark-ai/devmuse/releases)。下载所选归档时一并下载 `SHA256SUMS`，用宿主系统的 SHA-256 工具比对后再解压。同一 Release 中的 `marketplace-submission.md` 会记录制品、校验值、验证门禁与人工市场提交步骤。日常安装无需克隆仓库；源码 checkout 只用于开发，日常安装应选择体积最小的宿主归档。
 
 ### Claude Code
 
 下载 `devmuse-<version>-claude.tar.gz`，解压后把其中的 `devmuse/` 注册为本地 marketplace：
 
 ```bash
-VERSION=2.2.0
+VERSION=x.y.z
 tar -xzf "devmuse-${VERSION}-claude.tar.gz"
 ```
 
@@ -72,7 +72,7 @@ tar -xzf "devmuse-${VERSION}-claude.tar.gz"
 下载并解压 `devmuse-<version>-codex.tar.gz`，再把解压目录作为本地 marketplace：
 
 ```bash
-VERSION=2.2.0
+VERSION=x.y.z
 tar -xzf "devmuse-${VERSION}-codex.tar.gz"
 codex plugin marketplace add /absolute/path/to/devmuse
 codex
@@ -93,7 +93,7 @@ codex plugin marketplace add /absolute/path/to/devmuse
 OpenClaw 使用 Claude 归档 `devmuse-<version>-claude.tar.gz`，不生成单独的 OpenClaw 归档。解压后链接其运行时：
 
 ```bash
-VERSION=2.2.0
+VERSION=x.y.z
 tar -xzf "devmuse-${VERSION}-claude.tar.gz"
 openclaw plugins install --link /absolute/path/to/devmuse/plugin
 openclaw plugins inspect devmuse
@@ -113,7 +113,7 @@ OpenClaw 会映射 skills，但只检测 Claude `agents/` 和 `hooks/hooks.json`
 下载并解压 `devmuse-<version>-hermes.tar.gz`，再安装解压后的插件根目录：
 
 ```bash
-VERSION=2.2.0
+VERSION=x.y.z
 tar -xzf "devmuse-${VERSION}-hermes.tar.gz"
 hermes plugins install /absolute/path/to/devmuse --enable
 ```
@@ -139,7 +139,7 @@ skills:
 下载并解压 `devmuse-<version>-gemini.tar.gz`，再安装其中的运行时子目录：
 
 ```bash
-VERSION=2.2.0
+VERSION=x.y.z
 tar -xzf "devmuse-${VERSION}-gemini.tar.gz"
 gemini extensions install /absolute/path/to/devmuse/plugin
 ```
@@ -157,7 +157,7 @@ gemini extensions link /absolute/path/to/devmuse/plugin
 这些宿主使用 `devmuse-<version>-codex.tar.gz` 中的可移植包。使用 GitHub CLI 2.90 或更新版本：
 
 ```bash
-VERSION=2.2.0
+VERSION=x.y.z
 tar -xzf "devmuse-${VERSION}-codex.tar.gz"
 gh skill install /absolute/path/to/devmuse/adapters/codex --from-local --agent cursor --scope user
 ```
