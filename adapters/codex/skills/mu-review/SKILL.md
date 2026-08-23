@@ -89,9 +89,32 @@ directly; never invent a SHA range that omits it.
 If a reviewer reports files not reviewed, continue with a fresh pass over only
 those files until every file is reviewed or its limitation is explicit.
 
-Optional cross-review by another model occurs only when the user explicitly
-requests it, or after a high-risk signal is presented and the user accepts the
-extra cost. Tool absence is silent; do not turn it into an installation flow.
+#### Host-aware reciprocal cross-review
+
+Cross-review means an independent **different-model-family** review, not "always
+run Codex." The reviewer is chosen relative to this host — reviewer direction:
+`Codex -> Claude Code`. Codex delegates to Claude Code; another host uses an
+explicitly configured different-family reviewer or has no capability. The current
+host is never its own reviewer, and a reviewer subprocess never starts a second
+cross-review (depth 1).
+
+It runs **only** when the user explicitly requests it, or after a high-risk
+signal is presented and the user accepts the extra cost. Tool absence, expired
+auth, timeout, or malformed output is silent and never blocks the primary
+review; do not turn a missing CLI into an installation flow.
+
+Do not hand-build the reviewer command. The runtime constructs a read-only,
+ephemeral, project-scoped invocation with quoted argument arrays (no `eval`, no
+shell, no aliases) and prefers an existing local subscription/session login over
+an API key. Claude skills invoke
+`references/devmuse/runtime/cross-review/cli.mjs`; portable skills invoke
+their vendored `references/devmuse/runtime/cross-review/cli.mjs`:
+
+- `plan` with `{"current_host":"codex", "project_dir":"…", "refs":["<base>...HEAD"], "output_path":"…"}` returns the reviewer argv/env, or a typed denial (`unavailable`, `same-family`, `recursion-blocked`).
+- `run` executes it under a bounded timeout and returns normalized findings or a typed `fallback`.
+- `normalize`/`merge` map reviewer output into DevMuse severities and surface contradictions side by side, preserving reviewer provenance. Validate structured output rather than trusting exit code 0; never print, copy, or commit OAuth caches, API keys, or tokens.
+
+Present contradictory conclusions side by side; do not silently choose one.
 
 ### 3. Produce anchored findings
 

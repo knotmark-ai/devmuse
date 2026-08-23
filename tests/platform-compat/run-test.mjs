@@ -163,6 +163,21 @@ assert.ok(
   "mu-scope lacks the packaged fallback succession contract",
 );
 
+// Cross-review runtime is vendored into mu-review, and the reviewer direction is
+// reciprocal: the generated Codex adapter reviews with Claude Code, never Codex.
+assert.ok(
+  fs.existsSync(path.join(root, "adapters/codex/skills/mu-review/references/devmuse/runtime/cross-review/cli.mjs")),
+  "mu-review lacks the packaged cross-review runtime",
+);
+const codexReview = read("adapters/codex/skills/mu-review/SKILL.md");
+assert.match(codexReview, /`Codex -> Claude Code`/);
+assert.doesNotMatch(codexReview, /`Claude Code -> Codex`/);
+assert.match(codexReview, /"current_host":"codex"/);
+assert.doesNotMatch(codexReview, /"current_host":"claude"/);
+const claudeReview = read("plugin/skills/mu-review/SKILL.md");
+assert.match(claudeReview, /`Claude Code -> Codex`/);
+assert.match(claudeReview, /"current_host":"claude"/);
+
 assert.match(read("adapters/codex/HOST_POLICY.md"), /native `\/plan`/);
 assert.match(read("adapters/codex/HOST_POLICY.md"), /native `\/review`/);
 assert.match(read("adapters/codex/HOST_POLICY.md"), /GitHub-first/);

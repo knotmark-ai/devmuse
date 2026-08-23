@@ -60,6 +60,9 @@ jobs:
       - name: Test regression auto-judge harness
         run: npm run test:regression-judge
 
+      - name: Test cross-review runtime
+        run: npm run test:cross-review
+
       - name: Test destructive-command guard
         run: npm run test:hooks
 

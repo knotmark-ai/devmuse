@@ -14,6 +14,8 @@ const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, "package.json
 const implicitSkills = new Set(["mu-scope", "mu-arch", "mu-code", "mu-debug"]);
 const projectContextConsumers = new Set(["mu-scope", "mu-arch", "mu-plan", "mu-code", "mu-review"]);
 const projectContextRuntimeRoot = path.join(sourcePluginRoot, "runtime", "project-context");
+const crossReviewConsumers = new Set(["mu-review"]);
+const crossReviewRuntimeRoot = path.join(sourcePluginRoot, "runtime", "cross-review");
 
 const ui = {
   "mu-arch": ["DevMuse Architecture", "Design bounded technical architecture", "design the architecture for an approved scope"],
@@ -53,6 +55,16 @@ function rewritePortableText(text, skillName) {
       "${CLAUDE_PLUGIN_ROOT}/runtime/project-context/cli.mjs",
       "references/devmuse/runtime/project-context/cli.mjs",
     )
+    .replaceAll(
+      "${CLAUDE_PLUGIN_ROOT}/runtime/cross-review/cli.mjs",
+      "references/devmuse/runtime/cross-review/cli.mjs",
+    )
+    // Reciprocal cross-review host identity: the canonical skill is authored for
+    // Claude Code (reviewer = Codex); the generated Codex adapter reviews with
+    // Claude Code instead. Both tokens are single-line so rewriting is wrap-proof.
+    .replaceAll("reviewer direction:\n`Claude Code -> Codex`", "reviewer direction:\n`Codex -> Claude Code`")
+    .replaceAll("`Claude Code -> Codex`", "`Codex -> Claude Code`")
+    .replaceAll('`{"current_host":"claude"', '`{"current_host":"codex"')
     .replaceAll(`skills/${skillName}/`, "");
 }
 
@@ -135,6 +147,14 @@ for (const skillName of skillNames) {
     fs.cpSync(
       projectContextRuntimeRoot,
       path.join(targetRoot, "references", "devmuse", "runtime", "project-context"),
+      { recursive: true },
+    );
+  }
+
+  if (crossReviewConsumers.has(skillName)) {
+    fs.cpSync(
+      crossReviewRuntimeRoot,
+      path.join(targetRoot, "references", "devmuse", "runtime", "cross-review"),
       { recursive: true },
     );
   }
