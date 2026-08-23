@@ -24,6 +24,7 @@ DevMuse 的价值在于产品澄清、风险分类、可追溯架构、系统化
 - `mu-code` 不介入普通 Codex 实现。只有当用户要求执行 mu-scope 的 `bounded execution` contract 或已批准的 DevMuse plan 时，它才能自动接棒；一般编码请求、设计文档或未批准 spec 都不能通过入口条件。
 - Hermes 默认不把插件技能塞进启动索引，保留其渐进加载和学习模型。
 - Claude 保留完整 bootstrap，因为目前只有该适配层的路由、子 Agent 和防破坏 hook 在本仓库中经过行为测试。
+- Codex 的 `HOST_POLICY.md` 含一个**可选加入（opt-in）**的段落，指出 DevMuse 工作在何处可分解（相互独立的 `mu-code` 任务、`mu-review` 的多个审查视角、`mu-scope` 的探针），供用户据此派发并发的 Codex worker。该段落未在 Codex 上做行为测试，也不宣称与 Claude 的并行扇出对等；宿主 manager 始终具有权威。
 
 这些默认值刻意保持保守。`mu-code` 的自动接棒受 contract 门控；需要恢复流程或主动覆盖路由时，用户仍可显式调用。
 
