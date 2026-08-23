@@ -109,7 +109,6 @@ for (const skill of [
   "mu-model",
   "mu-prd",
   "mu-wiki",
-  "mu-retro",
   "mu-grill",
   "mu-plan",
   "mu-review",

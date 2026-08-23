@@ -1,6 +1,0 @@
-interface:
-  display_name: "DevMuse Retro"
-  short_description: "Run an evidence-based retrospective"
-  default_prompt: "Use $mu-retro to run a repository retrospective for the requested period."
-policy:
-  allow_implicit_invocation: false

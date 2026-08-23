@@ -273,7 +273,7 @@ _Avoid_: side skill, utility skill
 
 ### On-demand skill
 
-A skill that is never auto-routed and runs only via explicit slash invocation (mu-mrd, mu-model, mu-prd, mu-wiki, mu-retro, mu-grill); the routing rules answer matching intents with a pointer, not an invocation.
+A skill that is never auto-routed and runs only via explicit slash invocation (mu-mrd, mu-model, mu-prd, mu-wiki, mu-grill); the routing rules answer matching intents with a pointer, not an invocation.
 
 _Avoid_: slash-only skill, manual skill
 
