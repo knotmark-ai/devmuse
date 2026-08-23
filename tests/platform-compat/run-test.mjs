@@ -172,6 +172,14 @@ assert.match(
   read("adapters/codex/HOST_POLICY.md"),
   /sandbox, approval, and administrator policy authoritative/,
 );
+// Opt-in concurrent-dispatch guidance must stay opt-in, untested-on-Codex, and
+// non-overriding — the constraints carried over from #50/#54.
+const hostPolicy = read("adapters/codex/HOST_POLICY.md");
+assert.match(hostPolicy, /concurrent subagent dispatch \(opt-in\)/);
+assert.match(hostPolicy, /not\*\* behavior-tested on Codex/);
+assert.match(hostPolicy, /claims no parity with the Claude adapter/);
+assert.match(hostPolicy, /never overrides the host's manager/);
+assert.match(hostPolicy, /manager\/worker model with git-worktree isolation/);
 assert.ok(!fs.existsSync(path.join(root, "adapters/codex/hooks")));
 assert.match(read("plugin/GEMINI.md"), /native Plan Mode/);
 assert.match(read("plugin/GEMINI.md"), /policy engine and approval mode authoritative/);
