@@ -19,6 +19,8 @@ Based on ISO/IEC 25010 quality model and practical software engineering experien
 | 9 | **Portability** | Environment adaptability, deployment flexibility, platform independence | Multi-cloud deployment; on-prem + cloud; containerization; OS-specific dependencies |
 | 10 | **Compliance** | Regulatory requirements, audit trails, data retention/deletion | GDPR/CCPA data; healthcare (HIPAA); financial data; audit logging requirements |
 | 11 | **Migration** | Data migration, rollback strategy, feature flags, blue-green deployment | Schema changes on existing data; changing existing behavior; large user base; zero-downtime requirement |
+| 12 | **AI / tool boundary** | Model/provider selection, prompt and tool-call contracts, evaluation, guardrails, cost/latency envelope, non-determinism handling | LLM or model calls; tool/function calling; agent or multi-agent orchestration; RAG or retrieval; untrusted model output reaching a tool or the user |
+| 13 | **Accessibility & localization** | Keyboard/screen-reader access, contrast, i18n/l10n, right-to-left, time-zone and locale handling | User-facing UI; public content; multi-region or multi-language users; regulatory accessibility requirements |
 
 ## How to Use in mu-arch
 
