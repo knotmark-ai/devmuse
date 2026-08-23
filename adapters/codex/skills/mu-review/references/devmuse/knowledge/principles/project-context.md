@@ -154,37 +154,39 @@ The exact body forms are:
 
 Immutable comment replacements use `scope-revision` or `plan-revision` in both
 marker names with the same attributes. `work_id` and `attempt_id` use
-`[A-Za-z0-9._:-]{1,128}`. Encode content as UTF-8, normalize CRLF/CR to LF,
-preserve all other bytes, ensure one terminal LF, then hash the normalized
-content. Revision is monotonic. Exactly one pair per body/comment is valid.
-Unknown schema, malformed/duplicate pairs, content-hash failure, or different
-hashes at the same highest revision require reconciliation and remain
-read-only. Replace only the marked block and preserve surrounding human text
-byte-for-byte.
+`[A-Za-z0-9._:-]{1,128}`. Revision is monotonic. Exactly one pair per
+body/comment is valid. Unknown schema, malformed/duplicate pairs, content-hash
+failure, or different hashes at the same highest revision require reconciliation
+and remain read-only.
 
-Before body update, read the complete current object and provider revision.
-Use conditional update. A conflict returns refetch-and-reconcile. When the
-provider cannot guarantee conditional body update, append an authorized
-immutable revision comment; otherwise choose local/manual fallback. Automated
-unconditional body overwrite is not an option.
+Do not hash, splice, or hand-format these blocks — the operations a language
+model performs unreliably are exactly the ones the CLI owns. Build a block with
+`render-managed` (it normalizes and hashes the content, and refuses to publish a
+secret); pick the current revision with `select-managed` (it verifies
+`content_sha256`); write it back with `replace-managed`, which replaces only the
+marked block and preserves surrounding human text byte-for-byte.
+
+Before body update, read the complete current object and provider revision, then
+call `update-strategy`: it returns conditional-body-update, refetch-and-reconcile
+on conflict, an authorized immutable revision comment when the provider cannot
+guarantee conditional update, or local/manual fallback. Automated unconditional
+body overwrite is not an option.
 
 ## Recovery
 
 Generate `work_id` and unique `attempt_id` before create/adoption and persist a
-recovery record. The canonical request fingerprint is `sha256:` plus lowercase
-SHA-256 of the UTF-8 bytes of:
-
-```text
-JSON.stringify([repositoryId, workId, objectKind, title ?? null,
-                head ?? null, base ?? null, contentHash])
-```
+recovery record with `update-cache` (its write target is the Git-common cache,
+resolved from the repository, never a caller-supplied path). Compute the
+canonical request fingerprint with `fingerprint-create`; do not assemble the
+SHA-256 by hand.
 
 A timeout or lost response is indeterminate. Run `recover-attempt`: search the
 same repository for the exact work ID, attempt ID, and fingerprint. Adopt one
-result, reconcile several, and leave none pending. Only a definite
-no-side-effect failure may retry the same attempt while its grant remains
-active; honor provider retry-after. Clear one resolved attempt without
-overwriting concurrent attempts.
+result, reconcile several, and leave none pending. Decide whether to retry with
+`plan-retry`: only a definite no-side-effect failure retries the same attempt
+while its grant remains active, and it honors provider retry-after. Clear one
+resolved attempt (again through `update-cache`) without overwriting concurrent
+attempts.
 
 ## Delivery Projection
 

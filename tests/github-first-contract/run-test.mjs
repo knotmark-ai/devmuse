@@ -34,6 +34,19 @@ test("code and review preserve delivery beyond merge", () => {
   assert.match(files.review, /issue_action/);
 });
 
+// Covers: UC-GR2
+test("architecture design and ADRs stay authoritative repository files, not PR-owned", () => {
+  assert.match(files.arch, /technical design and ADRs remain repository/);
+});
+
+// Covers: UC-G1
+test("scope writes a dated local file only as an explicit fallback, never by default", () => {
+  const fallbackAt = files.scope.indexOf("explicit local fallback");
+  const datedAt = files.scope.indexOf("docs/scope/");
+  assert.ok(fallbackAt > 0, "explicit local fallback framing is present");
+  assert.ok(datedAt > fallbackAt, "the dated scope path appears only within the fallback gate");
+});
+
 test("review agents accept GitHub evidence without requiring a local plan or scope file", () => {
   assert.match(files.reviewer, /PLAN_EVIDENCE_URL/);
   assert.match(files.reviewer, /SCOPE_EVIDENCE_URL/);

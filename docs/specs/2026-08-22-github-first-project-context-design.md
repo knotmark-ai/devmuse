@@ -208,9 +208,13 @@ Its logical schema is:
 }
 ```
 
-The worktree key comes from Git's worktree administration record, not the
-checkout path. A path may appear only as a diagnostic hint. Capability results
-may accelerate discovery but never authorize a write.
+The worktree key comes from Git's worktree administration record (the path of
+`git-dir` relative to `git-common-dir`), not the checkout path, so it is stable
+across branch switches. The primary worktree has no administration subdirectory
+— its relative path is empty — and takes the reserved key `main`; linked
+worktrees take their `worktrees/<name>` administration path. A checkout path may
+appear only as a diagnostic hint. Capability results may accelerate discovery
+but never authorize a write.
 
 `recovery` is keyed by `attempt_id`, so concurrent Issue, PR, and comment
 mutations for one work ID cannot overwrite each other. Each record carries the
@@ -260,6 +264,26 @@ The canonical knowledge contract defines those fields and decisions. Claude's
 session hook may preload a safe subset. Codex and other Agent Skills hosts run
 the same resolution through host-native Git, filesystem, and collaboration
 tools. A missing hook, connector, or helper changes capability, not semantics.
+
+The cross-host fields draw from closed value sets so three independent
+implementations cannot invent divergent strings:
+
+- `identity_source`: `verified`, `verified-renamed`, `verified-live`,
+  `manifest-unverified`, `identity-conflict`, `unresolved`, plus the
+  invalid-manifest reasons (`invalid-manifest`, `unsupported-manifest-schema`,
+  `untracked-manifest`).
+- `manifest_source`: `current-branch`, `default-branch`, or `null`.
+- `collaboration_mode`: `github-first`, `local-first`, or `local-only`.
+- `fallback_reason`: `null` when remote writes are available, otherwise the
+  `identity_source` that blocked them or `identity-conflict`.
+- `recovery_state`: an object keyed by `attempt_id`, empty when unavailable.
+
+Resolution never fills `capability.operations` or `authorization`: a mutation's
+capability comes from a fresh live probe at write time and its authorization
+from an explicit grant, and grants are never cached. Both stay empty in a
+resolver result by design; `identity_repair` carries the suggested manifest
+repair (`adopt-current-repository`, `update-manifest-repository`,
+`offer-manifest`) or `null`.
 
 Capability is operation-scoped rather than a single read/write level. Every
 remote mutation requires both a fresh `allowed` result for its exact operation
@@ -316,6 +340,12 @@ The first meaningful commit causes DevMuse to find a PR by exact repository,
 work ID, and head branch, then reuse it or create a Draft PR. A meaningful
 commit changes the approved work product, tests, implementation, living truth,
 or ADR; an empty marker commit does not qualify.
+
+Creating a Draft PR is a remote mutation like Issue creation: it needs a fresh
+`branch.push` capability (a Draft PR cannot exist without a pushed head) and a
+fresh `pull_request.create` capability, each gated by the same probe-plus-grant
+protocol as `issue.create`. Push denied while `pull_request.create` is allowed,
+or the reverse, records a fallback reason and does not partially publish.
 
 The managed PR block owns Requirements Reference, UC-tagged implementation
 tasks, current progress, verification results, living-document changes, and
@@ -498,7 +528,12 @@ loses the contract or carries an independently edited copy.
 
 GitHub-first is capability-based rather than mandatory. Non-GitHub,
 unauthenticated, read-only, declined, and no-hook hosts preserve full local
-fallback. Repository identity is independent of checkout path and remote URL
+fallback. The tracked manifest is a GitHub-collaboration artifact: its
+`project.id` is a `github:` id and its `collaboration.provider` is `github`. A
+non-GitHub or local-only project therefore runs without a manifest — identity
+comes from the live repository or is unresolved, and `collaboration_mode`
+degrades to `local-only` — rather than through a manifest form the parser would
+reject. Repository identity is independent of checkout path and remote URL
 syntax, while schema versions provide an explicit compatibility boundary.
 Private cache persistence uses POSIX mode `0600` or a current-user-only Windows
 ACL; hosts that cannot enforce either use memory plus fresh discovery.
@@ -587,4 +622,5 @@ regression.
 | Date | Commit | Change |
 |---|---|---|
 | 2026-08-22 | 2a19598 | Initial creation: selected GitHub-first coordination, a tracked stable manifest, a Git-common recoverable cache, repository-identity resolution, managed Issue and Draft PR blocks, and delivery completion after external verification |
-| 2026-08-22 | — (uncommitted) | Closed independent-review gaps in identity binding, conflict recovery, work correlation, operation authorization, discovery safety, concurrent mutation, lifecycle authority, and cross-platform cache privacy |
+| 2026-08-22 | d9e606e, f0e3885, 34a415f | Closed independent-review gaps in identity binding, conflict recovery, work correlation, operation authorization, discovery safety, concurrent mutation, lifecycle authority, and cross-platform cache privacy |
+| 2026-08-24 | (this revision) | Implementation-hardening review round: fail-closed identity binding in the authorization gate and issue/attempt selection, CLI snake_case normalization, capability-freshness ceiling, manifest character-set defense against session-context injection, `git show` argument-injection guard and git hardening flags, managed-publisher secret gate, stale-lock breaking, delivery-vocabulary validation, and the deterministic hash/splice/sanitize/cache-write CLI commands wired into the principle; added the security-hardening test suite and the `test:project-context` CI step; clarified the primary-worktree key, resolver value enumerations, Draft PR push/grant prerequisites, and non-GitHub manifest handling |

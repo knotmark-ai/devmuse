@@ -5,20 +5,36 @@ const OPERATIONS = new Set([
   "branch.push", "pull_request.read", "pull_request.create", "pull_request.update", "pull_request.comment.create",
 ]);
 
+// Upper bound on how old a capability probe may be, regardless of the value a
+// caller supplies. A caller cannot widen its own freshness window; see
+// project-context.md ("a fresh live `allowed` result").
+const MAX_CAPABILITY_AGE_CEILING_MS = 15 * 60 * 1000;
+
+// A repository/work binding is only satisfied when both sides are present and
+// equal. Absent-equals-absent must never authorize: `undefined === undefined`
+// would otherwise bind a grant to no repository and no work item.
+function boundMatch(expected, actual) {
+  return typeof expected === "string" && expected.length > 0 && expected === actual;
+}
+
 function validCandidate(candidate, repositoryId) {
-  return candidate?.open === true && candidate.repositoryId === repositoryId;
+  return candidate?.open === true && boundMatch(repositoryId, candidate.repositoryId);
 }
 
 export function authorizeMutation({ operation, repositoryId, workId, capability, grant, now, maxCapabilityAge } = {}) {
   if (!OPERATIONS.has(operation)) return { allowed: false, reason: "unknown-operation" };
+  if (typeof repositoryId !== "string" || repositoryId.length === 0 || typeof workId !== "string" || workId.length === 0) {
+    return { allowed: false, reason: "unbound-request" };
+  }
   if (!capability || capability.operation !== operation) return { allowed: false, reason: "capability-operation-mismatch" };
   if (capability.allowed !== true) return { allowed: false, reason: capability.reason ?? "capability-denied" };
-  if (!Number.isFinite(capability.checkedAt) || !Number.isFinite(now) || !Number.isFinite(maxCapabilityAge) || capability.checkedAt > now || now - capability.checkedAt > maxCapabilityAge) {
+  const effectiveMaxAge = Number.isFinite(maxCapabilityAge) ? Math.min(Math.max(maxCapabilityAge, 0), MAX_CAPABILITY_AGE_CEILING_MS) : NaN;
+  if (!Number.isFinite(capability.checkedAt) || !Number.isFinite(now) || !Number.isFinite(effectiveMaxAge) || capability.checkedAt > now || now - capability.checkedAt > effectiveMaxAge) {
     return { allowed: false, reason: "stale-capability" };
   }
   if (!grant || !Array.isArray(grant.operations)) return { allowed: false, reason: "missing-grant" };
-  if (grant.repositoryId !== repositoryId) return { allowed: false, reason: "grant-repository-mismatch" };
-  if (grant.workId !== workId) return { allowed: false, reason: "grant-work-mismatch" };
+  if (!boundMatch(repositoryId, grant.repositoryId)) return { allowed: false, reason: "grant-repository-mismatch" };
+  if (!boundMatch(workId, grant.workId)) return { allowed: false, reason: "grant-work-mismatch" };
   if (!grant.operations.includes(operation)) return { allowed: false, reason: "grant-operation-mismatch" };
   if (!Number.isFinite(grant.expiresAt) || grant.expiresAt < now) return { allowed: false, reason: "grant-expired" };
   if (!new Set(["explicit-user-request", "approved-workflow-step"]).has(grant.source)) return { allowed: false, reason: "invalid-grant-source" };
@@ -28,8 +44,8 @@ export function authorizeMutation({ operation, repositoryId, workId, capability,
 export function chooseIssueCandidate(input = {}) {
   const { repositoryId, workId } = input;
   if (validCandidate(input.explicit, repositoryId)) return { action: "reuse", candidate: input.explicit, source: "explicit" };
-  if (validCandidate(input.cached, repositoryId) && input.cached.liveValidated === true && input.cached.workId === workId) return { action: "reuse", candidate: input.cached, source: "validated-cache" };
-  const exact = (input.exactWork ?? []).filter((candidate) => validCandidate(candidate, repositoryId) && candidate.workId === workId);
+  if (validCandidate(input.cached, repositoryId) && input.cached.liveValidated === true && boundMatch(workId, input.cached.workId)) return { action: "reuse", candidate: input.cached, source: "validated-cache" };
+  const exact = (input.exactWork ?? []).filter((candidate) => validCandidate(candidate, repositoryId) && boundMatch(workId, candidate.workId));
   if (exact.length === 1) return { action: "reuse", candidate: exact[0], source: "exact-work" };
   if (exact.length > 1) return { action: "reconcile", candidates: exact, source: "exact-work" };
   if (validCandidate(input.confirmed, repositoryId)) return { action: input.confirmed.marked ? "reuse" : "adopt", candidate: input.confirmed, source: "confirmed" };
@@ -86,10 +102,15 @@ export function fingerprintCreateRequest({ repositoryId, workId, objectKind, tit
   return `sha256:${createHash("sha256").update(serialized, "utf8").digest("hex")}`;
 }
 
-export function recoverCreateAttempt(attempt, candidates = []) {
-  const exact = candidates.filter((candidate) => candidate.workId === attempt.workId
-    && candidate.attemptId === attempt.attemptId
-    && candidate.requestFingerprint === attempt.requestFingerprint);
+export function recoverCreateAttempt(attempt = {}, candidates = []) {
+  // A recovery match must be positively identified by all three bindings;
+  // an attempt missing any of them can never adopt an existing object.
+  if (![attempt.workId, attempt.attemptId, attempt.requestFingerprint].every((value) => typeof value === "string" && value.length > 0)) {
+    return { status: "pending" };
+  }
+  const exact = candidates.filter((candidate) => boundMatch(attempt.workId, candidate.workId)
+    && boundMatch(attempt.attemptId, candidate.attemptId)
+    && boundMatch(attempt.requestFingerprint, candidate.requestFingerprint));
   if (exact.length === 0) return { status: "pending" };
   if (exact.length === 1) return { status: "adopted", candidate: exact[0] };
   return { status: "needs-reconciliation", candidates: exact };

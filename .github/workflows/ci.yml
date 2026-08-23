@@ -48,6 +48,9 @@ jobs:
       - name: Validate routing policy
         run: npm run test:routing
 
+      - name: Test GitHub-first project context runtime
+        run: npm run test:project-context
+
       - name: Test destructive-command guard
         run: npm run test:hooks
 

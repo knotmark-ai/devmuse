@@ -13,6 +13,23 @@ const LEAVES = new Set([
   "artifacts.architecture.domain_model",
 ]);
 
+// Detect C0 control characters and DEL. `allowStructuralWhitespace` keeps tab,
+// newline and carriage return (which the multi-line manifest grammar handles
+// itself) while still rejecting NUL and the rest; scalar values allow none.
+function hasControlChar(text, { allowStructuralWhitespace = false } = {}) {
+  for (let i = 0; i < text.length; i += 1) {
+    const code = text.charCodeAt(i);
+    if (code === 0x7f || (code <= 0x1f && !(allowStructuralWhitespace && (code === 0x09 || code === 0x0a || code === 0x0d)))) {
+      return true;
+    }
+  }
+  return false;
+}
+// Each artifact-path segment is limited to this set. It is everything the
+// documented schema needs; forbidding the rest keeps manifest-controlled text
+// (spaces, angle brackets, quotes) out of the injected session summary.
+const ARTIFACT_SEGMENT = /^[A-Za-z0-9._-]+$/;
+
 function invalid(reason) {
   return { status: "invalid", value: null, reason };
 }
@@ -23,7 +40,11 @@ function parseScalar(raw) {
   if (raw.startsWith('"') && raw.endsWith('"')) {
     try {
       const value = JSON.parse(raw);
-      return typeof value === "string" ? value : undefined;
+      // A double-quoted scalar decodes escapes, so the raw-text control screen
+      // above does not cover the decoded result. Re-check it, otherwise a
+      // manifest can smuggle a control character into injected session context.
+      if (typeof value !== "string" || hasControlChar(value)) return undefined;
+      return value;
     } catch {
       return undefined;
     }
@@ -47,7 +68,7 @@ function safeArtifactPath(value, repoRoot) {
   if (value === null) return true;
   if (typeof value !== "string" || value.length === 0 || value.includes("\\") || path.posix.isAbsolute(value) || path.win32.isAbsolute(value)) return false;
   const segments = value.split("/");
-  if (segments.some((segment) => segment === "" || segment === "." || segment === "..")) return false;
+  if (segments.some((segment) => !ARTIFACT_SEGMENT.test(segment) || segment === "." || segment === "..")) return false;
   const root = realExistingPath(repoRoot);
   const resolved = realExistingPath(path.resolve(repoRoot, ...segments));
   return resolved === root || resolved.startsWith(`${root}${path.sep}`);
@@ -61,7 +82,7 @@ function setNested(target, dotted, value) {
 }
 
 export function parseProjectManifest(text, { repoRoot } = {}) {
-  if (typeof text !== "string" || typeof repoRoot !== "string" || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(text)) {
+  if (typeof text !== "string" || typeof repoRoot !== "string" || hasControlChar(text, { allowStructuralWhitespace: true })) {
     return invalid("invalid-input");
   }
   if (/(^|[\s:])[&*!][^\s]*/m.test(text) || /[{}[\]]/.test(text)) return invalid("unsupported-yaml-feature");

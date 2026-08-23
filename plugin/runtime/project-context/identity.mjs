@@ -27,7 +27,9 @@ export function resolveProjectIdentity({ manifestId = null, manifestRepository =
     if (manifestId !== liveRepositoryId) {
       return { status: "identity-conflict", projectId: null, repository: null, remoteWrites: false, repair: "adopt-current-repository" };
     }
-    const renamed = manifestTuple !== liveTuple;
+    // GitHub owner/repo are case-insensitive, so a pure case difference is not a
+    // rename; compare case-folded to avoid a spurious "update-manifest" repair.
+    const renamed = (manifestTuple ?? "").toLowerCase() !== (liveTuple ?? "").toLowerCase();
     return {
       status: renamed ? "verified-renamed" : "verified",
       projectId: liveRepositoryId,

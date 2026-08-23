@@ -6,9 +6,33 @@ import { readCache } from "./cache.mjs";
 import { resolveProjectIdentity } from "./identity.mjs";
 import { parseProjectManifest, selectManifestCandidate } from "./manifest.mjs";
 
+// Hardening flags applied to every git invocation: neutralize a hostile
+// per-repository fsmonitor/pager hook (the hook runs git in an untrusted cwd
+// before the user types anything) and ignore system-level git config.
+const GIT_HARDENING = ["-c", "core.fsmonitor=", "-c", "core.pager=cat"];
+
 function git(cwd, args) {
-  const result = spawnSync("git", args, { cwd, encoding: "utf8" });
+  const result = spawnSync("git", [...GIT_HARDENING, ...args], {
+    cwd,
+    encoding: "utf8",
+    env: { ...process.env, GIT_CONFIG_NOSYSTEM: "1", GIT_PAGER: "cat", GIT_TERMINAL_PROMPT: "0" },
+  });
   return result.status === 0 ? result.stdout.trim() : null;
+}
+
+// A ref that reaches a `git show` argv slot must not begin with "-" (else git
+// parses it as an option, e.g. --output=) and must stay within a conservative
+// ref charset. Anything else is treated as "no discovered ref".
+function safeRef(ref) {
+  return typeof ref === "string" && ref.length > 0 && !ref.startsWith("-") && /^[A-Za-z0-9._/-]+$/.test(ref) ? ref : null;
+}
+
+function readTextFile(file) {
+  try {
+    return fs.readFileSync(file, "utf8");
+  } catch {
+    return null;
+  }
 }
 
 function resolveGitPath(cwd, value) {
@@ -27,6 +51,7 @@ function emptyResult(reason) {
     repository: null,
     capability: { operations: {} },
     authorization: null,
+    identity_repair: null,
     active_issue: null,
     active_pr: null,
     pipeline_phase: null,
@@ -55,10 +80,10 @@ export async function resolveLocalProjectContext({ cwd, liveRepository = null, d
   if (manifestExists && !manifestTracked) rejectedManifestReason = "untracked-manifest";
   else if (manifestExists && !manifestRegular) rejectedManifestReason = "unsafe-manifest-file";
   const currentBranchText = manifestExists && rejectedManifestReason === null
-    ? fs.readFileSync(manifestFile, "utf8")
+    ? readTextFile(manifestFile)
     : null;
-  const discoveredDefaultRef = defaultBranchRef
-    ?? git(cwd, ["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"]);
+  const discoveredDefaultRef = safeRef(defaultBranchRef
+    ?? git(cwd, ["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"]));
   const defaultBranchText = currentBranchText === null && discoveredDefaultRef
     ? git(cwd, ["show", `${discoveredDefaultRef}:.devmuse/project.yaml`])
     : null;
@@ -83,11 +108,17 @@ export async function resolveLocalProjectContext({ cwd, liveRepository = null, d
     });
 
   const cacheFile = path.join(gitCommonDir, "devmuse", "project-context.v1.json");
-  let cache = null;
-  if (fs.existsSync(cacheFile)) cache = readCache(fs.readFileSync(cacheFile, "utf8")).value;
+  const cacheText = readTextFile(cacheFile);
+  const cache = cacheText === null ? null : readCache(cacheText).value;
   const conflicts = invalidManifest
     ? [{ type: invalidManifestStatus, source: rejectedManifestReason ? "current-branch" : manifestCandidate.source, reason: manifest.reason }]
     : [];
+  // A valid manifest whose immutable ID disagrees with the live repository is
+  // the conflict the design calls out most explicitly; surface it so callers
+  // can act on identity.repair rather than silently reading fallback_reason.
+  if (!invalidManifest && identity.status === "identity-conflict") {
+    conflicts.push({ type: "identity-conflict", source: "manifest-vs-live", repair: identity.repair });
+  }
   const cacheIdentityConflict = Boolean(cache?.project_id && identity.projectId && cache.project_id !== identity.projectId);
   if (cacheIdentityConflict) {
     conflicts.push({ type: "identity-conflict", cache: cache.project_id, resolved: identity.projectId });
@@ -101,8 +132,12 @@ export async function resolveLocalProjectContext({ cwd, liveRepository = null, d
     collaboration_mode: manifestValue?.collaboration.mode ?? "local-only",
     provider: manifestValue?.collaboration.provider ?? null,
     repository: cacheIdentityConflict ? null : identity.repository,
+    // Resolution never surfaces capability or a grant: a mutation's capability
+    // comes from a fresh live probe and its authorization from an explicit
+    // grant (grants are never cached). These stay empty by design.
     capability: { operations: {} },
     authorization: null,
+    identity_repair: cacheBlocked ? null : identity.repair ?? null,
     active_issue: entry.issue ?? null,
     active_pr: entry.pull_request ?? null,
     pipeline_phase: entry.pipeline_phase ?? null,

@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 
+import { sanitizePublishable } from "./collaboration.mjs";
+
 const KINDS = new Set(["scope", "scope-revision", "plan", "plan-revision"]);
 const WORK_ID = /^[A-Za-z0-9._:-]{1,128}$/;
 const ATTRIBUTE = /^[a-z0-9_]+=[^\s]+$/;
@@ -77,6 +79,12 @@ export function renderManagedRevision({ kind, workId, issue = null, attemptId, r
     throw Object.assign(new Error("managed plan requires issue"), { code: "invalid-managed-revision" });
   }
   const normalized = normalizeContent(content);
+  // This is the one deterministic publication gate: refuse to render a block
+  // whose content carries a secret or an untrusted-instruction pattern, so a
+  // secret can never reach an Issue/PR body through the managed path (UC-G7).
+  if (sanitizePublishable(normalized).status !== "safe") {
+    throw Object.assign(new Error("managed content rejected"), { code: "secret-rejected" });
+  }
   const issueAttribute = family === "plan" ? ` issue=${issue}` : "";
   const header = `<!-- devmuse:${kind}:start schema=1 work_id=${workId}${issueAttribute} attempt_id=${attemptId} revision=${revision} content_sha256=${hashContent(normalized)} -->`;
   return `${header}\n${normalized}<!-- devmuse:${kind}:end -->`;

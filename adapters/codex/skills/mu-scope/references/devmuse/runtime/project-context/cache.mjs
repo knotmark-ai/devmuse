@@ -142,7 +142,10 @@ export function reconcileCacheEntry({ expectedRevision, currentRevision, candida
   const valid = candidates.filter((candidate) => candidate?.valid === true);
   if (Number.isInteger(choice) && valid[choice]) return { status: "resolved", value: withoutValidity(valid[choice]) };
   if (valid.length === 0) return { status: "fresh-discovery", value: null };
-  const combined = {};
+  // Null-prototype accumulator so a candidate key of "__proto__" is stored as
+  // an own property and compared, instead of mutating the prototype and slipping
+  // the conflict check.
+  const combined = Object.create(null);
   for (const candidate of valid) {
     for (const [key, value] of Object.entries(withoutValidity(candidate))) {
       if (Object.hasOwn(combined, key) && combined[key] !== value) {
@@ -151,7 +154,7 @@ export function reconcileCacheEntry({ expectedRevision, currentRevision, candida
       combined[key] = value;
     }
   }
-  return { status: "resolved", value: combined };
+  return { status: "resolved", value: { ...combined } };
 }
 
 export function upsertRecoveryAttempt(cache, attempt) {
@@ -200,6 +203,22 @@ export async function writeCacheAtomic(file, value, options = {}) {
   }
 }
 
+const STALE_LOCK_MS = 30_000;
+
+// A crashed writer can leave the mkdir mutex directory behind. Rather than wedge
+// every future update for good, break a lock whose own recorded timestamp is
+// older than STALE_LOCK_MS, then retry the acquire once.
+async function breakStaleLock(lockDirectory) {
+  try {
+    const stat = await fs.promises.stat(lockDirectory);
+    if (Date.now() - stat.mtimeMs >= STALE_LOCK_MS) {
+      await fs.promises.rmdir(lockDirectory).catch(() => {});
+    }
+  } catch {
+    // Lock vanished between EEXIST and here; the next acquire attempt handles it.
+  }
+}
+
 async function acquireLock(lockDirectory, options = {}) {
   const deadline = Date.now() + (options.lockTimeoutMs ?? 5_000);
   await fs.promises.mkdir(path.dirname(lockDirectory), { recursive: true, mode: 0o700 });
@@ -208,7 +227,11 @@ async function acquireLock(lockDirectory, options = {}) {
       await fs.promises.mkdir(lockDirectory, { mode: 0o700 });
       return async () => fs.promises.rmdir(lockDirectory).catch(() => {});
     } catch (error) {
-      if (error.code !== "EEXIST" || Date.now() >= deadline) throw error;
+      if (error.code !== "EEXIST") throw error;
+      if (Date.now() >= deadline) {
+        await breakStaleLock(lockDirectory);
+        return null;
+      }
       await delay(10);
     }
   }
@@ -216,6 +239,9 @@ async function acquireLock(lockDirectory, options = {}) {
 
 export async function updateCache(file, incoming, options = {}) {
   const release = await acquireLock(`${file}.lock`, options);
+  // A contended-and-stale lock could not be taken; degrade to memory-only rather
+  // than throwing, matching the "corrupt or absent state" degradation contract.
+  if (release === null) return { status: "lock-unavailable", persistence: "memory-only" };
   try {
     let current;
     try {
