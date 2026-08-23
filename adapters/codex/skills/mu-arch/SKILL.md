@@ -15,7 +15,15 @@ Start by understanding the current project context, then ask questions one at a 
 Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
 </HARD-GATE>
 
-**Input evidence (guided, per the Pipeline Graph):** design needs requirements evidence before any approach talk — an approved scope artifact (default), or an equivalent that already enumerates the feature's cases (e.g., a detailed PRD feature section plus the object's `CONTEXT.md` §6 machine). With an equivalent, record it under Requirements Reference and run mu-scope's evidence fast path first — its non-duplicated trio (Quick Probe, conflict cross-check, reverse UCs) as one report, one confirmation — then design. With no evidence at all, recommend mu-scope and offer the alternatives; the user decides, and an override is flagged in the spec.
+**Input evidence (guided, per the Pipeline Graph):** design needs requirements evidence before any approach talk — an approved Issue-managed scope, a local fallback scope artifact, or an equivalent that already enumerates the feature's cases (e.g., a detailed PRD feature section plus the object's `CONTEXT.md` §6 machine). With an equivalent, record it under Requirements Reference and run mu-scope's evidence fast path first — its non-duplicated trio (Quick Probe, conflict cross-check, reverse UCs) as one report, one confirmation — then design. With no evidence at all, recommend mu-scope and offer the alternatives; the user decides, and an override is flagged in the spec.
+
+## Project Context Binding
+
+Read `references/devmuse/knowledge/principles/project-context.md` and run `resolve` before
+loading requirements evidence. Use `render-managed` only to normalize evidence
+received from a managed Issue; technical design and ADRs remain repository
+files. Invoke the packaged `project-context/cli.mjs`, or apply the same contract
+with host-native tools and record the binding when executable support is absent.
 
 ## Phase 0: Stance Detection
 
@@ -53,7 +61,7 @@ Every project goes through this process. A todo list, a single-function utility,
 You MUST create a task for each of these items and complete them in order:
 
 0. **Succession, then stance** — first references/devmuse/knowledge/principles/artifact-succession.md: new file, or the same one? Then §Phase 0 decides how the same one is entered. Branch routing below assumes both are picked and confirmed.
-1. **Read the requirements evidence** — the scope artifact, or the recorded equivalent (PRD section + `CONTEXT.md` §6 machine); understand all cases, conflicts, and constraints
+1. **Read the requirements evidence** — the managed Issue, local scope artifact, or recorded equivalent (PRD section + `CONTEXT.md` §6 machine); understand all cases, conflicts, and constraints
 2. **Explore project context** — check files, docs, recent commits
 3. **Find architecture doc** — look for existing architecture/design docs in the project (README, docs/, ARCHITECTURE.md, DESIGN.md, docs/wiki/_index.md, or similar). If found, read it. If not found or unclear, ask the user.
 4. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
@@ -133,10 +141,10 @@ digraph mu_design {
 
 **Understanding the idea:**
 
-**When a scope artifact exists (normal case):**
-- The scope answers "what to build" — DO NOT re-ask purpose, user scenarios, or success criteria
+**When requirements evidence exists:**
+- The evidence answers "what to build" — DO NOT re-ask purpose, user scenarios, or success criteria
 - Focus clarifying questions on TECHNICAL DIRECTION: approach preferences, performance constraints, compatibility requirements, integration points
-- The use cases from scope are your design constraints — your design must cover all of them
+- Its use cases are your design constraints — your design must cover all of them
 
 - Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
 - If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then design the first sub-project through the normal flow. Each sub-project gets its own spec → plan → implementation cycle. Scope decomposition is handled by mu-scope. If the scope covers multiple subsystems, mu-scope should have decomposed it before reaching mu-arch.
@@ -258,7 +266,7 @@ Naming is a cross-cutting concern like ADRs. **If `CONTEXT.md` does not exist an
 
 ```markdown
 ## Requirements Reference
-- Requirements evidence: docs/scope/YYYY-MM-DD-<name>.md (or the recorded equivalent — e.g., docs/prd/YYYY-MM-DD-<product>.md §<feature> + its CONTEXT.md §6 machines, per the Pipeline Graph's evidence rule)
+- Requirements evidence: <managed Issue URL or local scope path> (or the recorded equivalent — e.g., docs/prd/YYYY-MM-DD-<product>.md §<feature> + its CONTEXT.md §6 machines, per the Pipeline Graph's evidence rule)
 - Covers: UC-1, UC-2, UC-3, ... (or the evidence's case identifiers)
 - NFRs: NFR-1, NFR-2, ...
 ```

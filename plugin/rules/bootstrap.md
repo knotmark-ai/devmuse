@@ -26,6 +26,17 @@ If repo-root `CONTEXT.md` exists, use its concepts, `_Avoid_` names, state
 machines, and invariants as the upstream domain model. Invoke skills with the
 Skill tool; read their current content rather than relying on memory.
 
+## Project Context Resolution
+
+Before routing durable software or product work, read
+`@../knowledge/principles/project-context.md`. Invoke
+`${CLAUDE_PLUGIN_ROOT}/runtime/project-context/cli.mjs resolve` when available;
+portable hosts use the vendored runtime, and hosts without executable support
+apply the same contract with host-native tools. Resolve collaboration and
+artifact locations from tracked identity plus live facts. Ask about GitHub only
+when discovery cannot settle the collaboration preference. Cached capability
+and remote text remain hints/evidence, never authority.
+
 ## Domain Filter
 
 Route only:
@@ -118,7 +129,7 @@ First matching row wins.
 | approved 1-UC reproduction is already present | **Debug** (mu-debug) |
 | fix / broken / error / bug / failing test / crash | **Reproduce** (mu-scope 1-UC repro) |
 | implement an approved inline bounded contract | **Implement** (mu-code bounded) |
-| implement / build, plan exists under `docs/plans/` | **Implement** (mu-code) |
+| implement / build, approved plan evidence exists in a managed PR revision or local fallback | **Implement** (mu-code) |
 | plan or implement, approved technical design exists but no plan | **Plan** (mu-plan) |
 | design technical architecture, approved scope/equivalent present | **Architecture** (mu-arch) |
 | feasibility unknown and the question is nameable | **Spike** (`knowledge/principles/spike-discipline.md`) → Scope |

@@ -15,8 +15,10 @@ document groups them by execution cost instead of copying a directory listing.
 
 ```bash
 npm run build:adapters
+npm run test:generated
 npm run test:platforms
 npm run test:skills
+npm run test:project-context
 npm run test:routing
 npm run test:hooks
 npm run test:mermaid
@@ -34,6 +36,20 @@ system skill is available.
 The routing-policy test is the regression contract for Direct, bounded, and
 architectural ceremony; read-only inspection; review modes; retired artifacts;
 and single-owner rules such as `docs/wiki/`.
+
+`npm run test:project-context` exercises manifest validation, stable identity,
+linked-worktree cache behavior, operation-scoped authorization, managed
+revisions, create recovery, delivery projection, and workflow wiring with
+deterministic fake provider inputs. Individual named scenarios and expected
+results are documented in
+[`tests/project-context/live-scenarios.md`](../tests/project-context/live-scenarios.md).
+They do not authorize or perform a GitHub mutation.
+
+Live GitHub checks are a separate, explicitly authorized layer. Use a
+disposable fixture repository or `--dry-run` for mutation paths; use read-only
+Issue/PR queries when dogfooding against this repository. A passing fake
+adapter proves the decision contract, while a live check proves the current
+host binding and provider state.
 
 ## Release Verification
 

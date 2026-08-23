@@ -15,13 +15,15 @@
 
 > Jeff asks for a regulated batch-export API that crosses two services and adds a public response contract, with no scope file on disk.
 
-1. Routing rejects the **Direct lane** because public-contract and cross-system risk are present → **opening move** = Scope.
-2. mu-scope runs **Quick Probe** and selects the architectural **scope path**. It enumerates cases with Jeff and writes a **Use Case Set** — UC-1…UC-9 plus UC-R1…R3.
-3. Jeff approves it. That approval is the **control gate**; the file is now an approved **artifact**.
-4. The **Pipeline Graph** names the successor: mu-arch. It consumes the scope as **evidence** and produces a design spec, which goes through its own reviewer loop and Jeff's approval.
-5. mu-plan turns the spec into TDD tasks, each carrying `Covers: UC-x` **anchors**.
-6. mu-code implements task by task; TDD and verification-before-completion are **safety gates** — Jeff cannot waive those the way he can waive a recommendation.
-7. mu-review audits coverage against the UC anchors, then merges.
+1. **Project context** resolves the repository's stable identity, its GitHub-first collaboration preference, and no matching open Issue. Jeff approves Issue creation.
+2. Routing rejects the **Direct lane** because public-contract and cross-system risk are present → **opening move** = Scope.
+3. mu-scope runs **Quick Probe** and selects the architectural **scope path**. It enumerates cases with Jeff and writes a **Use Case Set** — UC-1…UC-9 plus UC-R1…R3 — into the Issue.
+4. Jeff approves it. That approval is the **control gate**; the Issue is now an approved **artifact**, and its **Delivery lifecycle** is Scoped.
+5. The **Pipeline Graph** names the successor: mu-arch. It consumes the scope as **evidence** and produces a design spec, which goes through its own reviewer loop and Jeff's approval.
+6. The first meaningful commit opens a Draft PR and moves delivery to Implementing. mu-plan turns the spec into TDD tasks there, each carrying `Covers: UC-x` **anchors**.
+7. mu-code implements task by task; TDD and verification-before-completion are **safety gates** — Jeff cannot waive those the way he can waive a recommendation.
+8. mu-review audits coverage against the UC anchors, then merges. If external delivery remains, the Issue stays open in MergedPendingDelivery.
+9. Only verified code, documentation, and external acceptance move delivery to Complete and close the Issue.
 
 Had the request been an exact README correction, Direct would have changed and
 verified it without a skill. Had it been a clear change to an existing private
@@ -49,7 +51,9 @@ Archetypes: **Role** · **Thing** · **Moment** (has a lifecycle) · **Descripti
 | **Orthogonal skill** | Description | An auto-routed skill running outside the pipeline's order | — | — |
 | **On-demand skill** | Description | A skill never auto-routed; slash invocation only | — | — |
 | **Creative skill** | Description | A skill authoring a judgment-bearing artifact: stance at entry, sign-off at exit | — | — |
-| **Living artifact** | Description | An artifact form with no date in its filename, updated in place with a History row | — | — |
+| **Living artifact** | Description | An artifact with stable identity, updated in place while its revision history remains available | — | — |
+| **Project context** | Derived | The resolved view of repository identity, collaboration preference, canonical artifact paths, and recoverable coordination hints | project context resolver | canonical manifest plus live Git and provider facts |
+| **Delivery lifecycle** | Moment | The coordinated work from approved scope through implementation, review, merge, external verification, and closure | mu-scope | the skills and humans owning its Issue and PRs |
 | **Use Case Set** | Thing | The inline or artifact-backed list of use cases mu-scope produces; its UC-IDs propagate downstream | mu-scope | mu-scope |
 | **Quick Probe** | Description | mu-scope's focused impact scan that selects fix, bounded, architectural, or spike | — | — |
 | **Anchor** | Description | A verbatim identifier a reviewer must cite in every finding | — | — |
@@ -66,10 +70,12 @@ Archetypes: **Role** · **Thing** · **Moment** (has a lifecycle) · **Descripti
 
 ```
 1. Tag every concept with an archetype (§3)
-2. Moments: Artifact · Task transition
+2. Moments: Artifact · Delivery lifecycle · Task transition
 3. Dependency count: Artifact is referenced by stance, control gate,
    HARD-GATE, evidence, Pipeline Graph, living-artifact, Use Case Set,
-   sign-off gate — 8. Task transition: 1.
+   sign-off gate — 8. Delivery lifecycle is referenced by project context,
+   the Core pipeline's collaboration surfaces, and completion semantics — 3.
+   Task transition: 1.
 4. Candidate = Artifact
 5. Verify: can DevMuse be told as "the life of an artifact"? → yes (below)
 ∴ spine = Artifact
@@ -129,6 +135,7 @@ stateDiagram-v2
 
 ```
 user intent
+    │  PROJECT CONTEXT: identity + collaboration + artifact locations
     │  routing rules (bootstrap): request + git/fs facts
     ▼
 Direct lane ──▶ proportional verification ──▶ end
@@ -146,23 +153,27 @@ opening move ──▶ skill
                   ▼
              downstream skill  ⟲
                   │
+       DELIVERY LIFECYCLE: Scoped → Implementing → Reviewing
+                            → MergedPendingDelivery → Complete
+                  │
      safety gates (TDD · verification · git) apply throughout,
      reachable by no override
 ```
 
-**Walked through §2's example:** public-contract and cross-system signals reject
-Direct and select Scope (step 1); Quick Probe selects the architectural path;
-mu-scope finds no artifact → `create` (2); the Use Case Set reaches `Drafted`
-(3), then `Approved` when Jeff signs off (5); the graph names mu-arch (6),
-which consumes the scope as evidence (7); the dated scope ends `Frozen` (8a).
-The bounded contrast stops after an inline contract; the Direct contrast creates
-no artifact. TDD inside mu-code remains a safety gate.
+**Walked through §2's example:** project context identifies the repository and
+GitHub collaboration surface; public-contract and cross-system signals reject
+Direct and select Scope. Quick Probe selects the architectural path; the Issue
+scope reaches `Drafted`, then `Approved` when Jeff signs off. The graph names
+mu-arch, which consumes that Issue as evidence. The Draft PR then carries the
+implementation evidence while the delivery lifecycle remains open through any
+external work. The bounded contrast stops after an inline contract; the Direct
+contrast creates no artifact. TDD inside mu-code remains a safety gate.
 
 ## 6. Concepts in Detail
 
 ### Artifact
 
-A durable work product a skill authors, a user approves, and a downstream skill consumes. Three forms: **dated snapshots** (`docs/scope|specs|plans/YYYY-MM-DD-*.md`) freeze on approval and are never retro-edited; **living artifacts** (`CONTEXT.md`, `docs/wiki/`, spike READMEs) carry no date, update in place, and append a History row per revision. A spike README is the thinnest living artifact: no reviewer loop, since it records an observation rather than a decision — but still approved, because its verdict is what a scope will be built on.
+A durable work product a skill authors, a user approves, and a downstream skill consumes. Three forms: **dated snapshots** (`docs/scope|specs|plans/YYYY-MM-DD-*.md`) freeze on approval and are never retro-edited; **living artifacts** (`CONTEXT.md`, `docs/wiki/`, GitHub Issues and Draft PRs, spike READMEs) keep a stable identity, update in place, and retain revision history. A spike README is the thinnest living artifact: no reviewer loop, since it records an observation rather than a decision — but still approved, because its verdict is what a scope will be built on.
 
 The third form is the **decision record** (`docs/adr/NNNN-*.md`): one global sequence, only ever appended to. Its states map onto this machine exactly — `Proposed` is Drafted, `Accepted` is Approved, and superseding produces a *new* record rather than an edit. What makes it a separate form is that it is **not rebuildable**: the wiki can be regenerated from source, but a rejected alternative leaves no trace in source. See `plugin/knowledge/principles/adr.md`.
 
@@ -172,7 +183,7 @@ _Avoid_: document, deliverable, output file
 
 ### Evidence
 
-The role an artifact plays for a downstream edge — what the edge consumes, as opposed to which file supplies it. The Pipeline Graph's edges are declared over evidence precisely so an equivalent can substitute: a detailed PRD feature section plus its `CONTEXT.md` §6 machine stands in for a scope artifact, an inline plan stands in for `docs/plans` at mu-code. Missing evidence obliges a recommendation, not a refusal — the recommendation is the agent's duty, declining it is the user's right, and a declined recommendation is flagged in the consuming artifact.
+The role an artifact plays for a downstream edge — what the edge consumes, as opposed to which file supplies it. The Pipeline Graph's edges are declared over evidence precisely so an equivalent can substitute: a detailed PRD feature section plus its `CONTEXT.md` §6 machine stands in for a scope artifact, and an inline plan stands in for a dated plan at mu-code. Missing evidence obliges a recommendation, not a refusal — the recommendation is the agent's duty, declining it is the user's right, and a declined recommendation is flagged in the consuming artifact.
 
 _Avoid_: input file, prerequisite doc
 
@@ -249,7 +260,8 @@ _Avoid_: terminal chain, hardwired terminal
 The proportional routing family: Direct → verification → end; bounded
 mu-scope → mu-code → end; architectural
 mu-scope → mu-arch → mu-plan → mu-code → mu-review. Edges consume evidence;
-only the architectural path requires every dated artifact.
+the architectural path requires approved scope, design, and plan evidence, not
+a particular local file form.
 
 _Avoid_: main flow, workflow chain
 
@@ -273,9 +285,56 @@ _Avoid_: authoring skill, artifact skill
 
 ### Living artifact
 
-The artifact form with no date in its filename, updated in place with a History row appended per revision (`docs/wiki/`, spike READMEs, this file) — as opposed to the dated snapshots under `docs/scope|specs|plans`.
+The artifact form with a stable identity, updated in place while its revision
+history remains available. Repository forms have no date in their filename and
+append a History row (`docs/wiki/`, spike READMEs, this file); GitHub Issues and
+Draft PRs use their provider timeline. This contrasts with frozen dated
+snapshots under `docs/scope|specs|plans`.
 
 _Avoid_: evergreen doc
+
+### Project context
+
+The resolved, authority-aware view of a project: stable repository identity,
+approved collaboration preference, canonical artifact locations, live provider
+capability, and recoverable coordination hints. Stable facts come from the
+tracked project manifest; live permission and repository facts come from Git
+and the provider; Git-common state is a disposable hint. A checkout directory
+never supplies identity, and cached capability never authorizes a write.
+
+_Avoid_: session memory, directory identity, workspace profile
+
+### Delivery lifecycle
+
+The lifecycle of one coordinated change across its canonical Issue and related
+Draft PRs. It measures delivery, not merely code integration: merged code with
+unverified documentation or human/platform work is not complete.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Scoped
+    Scoped --> Implementing: first meaningful commit and Draft PR
+    Implementing --> Reviewing: tasks and verification complete
+    Reviewing --> Implementing: changes requested
+    Implementing --> Scoped: last active PR closed without merge
+    Reviewing --> Scoped: last active PR closed without merge
+    Reviewing --> Complete: merged and all acceptance criteria verified
+    Reviewing --> MergedPendingDelivery: merged but external work remains
+    MergedPendingDelivery --> Complete: external work verified
+    MergedPendingDelivery --> Cancelled: delivery abandoned with reason
+    Scoped --> Cancelled: closed with reason
+    Implementing --> Cancelled: closed with reason
+    Reviewing --> Cancelled: closed with reason
+    Complete --> [*]
+    Cancelled --> [*]
+```
+
+The Issue remains open through Scoped, Implementing, Reviewing, and
+MergedPendingDelivery. An unmerged closed PR returns to Scoped unless another
+related PR remains active. `blocked` is a reason attached to work, not a
+lifecycle state.
+
+_Avoid_: PR status, merge status, task state
 
 ### Use Case Set
 
@@ -330,6 +389,10 @@ _Avoid_: skill SEO, discoverability tuning
 
 | Date | Commit | Change |
 |---|---|---|
+| 2026-08-22 | `31f7a79`–`945c68a` | Implemented the approved **Project context** and **Delivery lifecycle**: tracked identity, cross-worktree recovery, authority-safe GitHub coordination, workflow bindings, portable adapters, and default-branch manifest recovery. |
+| 2026-08-22 | 2a19598 | Added **Project context** and **Delivery lifecycle** for ADR-0002, generalized living artifacts to include GitHub Issues and Draft PRs, and separated delivery completion from merge completion. |
+| 2026-08-22 | — (uncommitted) | Completed lifecycle exits for unmerged PR closure and abandoned post-merge delivery. |
+| 2026-08-24 | (this revision) | Hardened the **Project context** runtime after implementation review: fail-closed authorization binding, injection defenses in the manifest and default-branch-ref paths, a managed-publisher secret gate, delivery-vocabulary validation, and deterministic CLI commands for the hash/splice/sanitize/cache-write operations a model cannot perform reliably. |
 | 2026-08-04 | — (uncommitted) | Retired **mu-explore** as a persistent workflow. Read-only understanding moved to Direct inspection, unfamiliar changes to mu-scope Quick Probe, bug-adjacent investigation to mu-debug, and durable current architecture to explicit `/mu-wiki`. Per-task independent review was also removed from mu-code in favor of one final mu-review. |
 | 2026-08-03 | — (uncommitted) | Added **Direct lane** and **Scope path** so ceremony scales with execution risk: exact mechanical work bypasses skills, bounded behavior stays inline, architectural work retains the artifact pipeline. |
 | 2026-07-13 | — | "UC" ruled exclusive to mu-scope; mu-explore's five exploration types renamed **variant**. Bare "gate" retired — always qualified (HARD-GATE / sign-off gate / size-area gate). |

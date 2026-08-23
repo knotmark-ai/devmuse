@@ -136,8 +136,39 @@ assert.match(
 assert.match(muCode, /Automatic invocation requires both conditions/);
 assert.match(muCode, /generic specification.*is not enough/);
 
+for (const skill of ["mu-scope", "mu-arch", "mu-plan", "mu-code", "mu-review"]) {
+  assert.ok(
+    fs.existsSync(path.join(
+      root,
+      "adapters/codex/skills",
+      skill,
+      "references/devmuse/knowledge/principles/project-context.md",
+    )),
+    `${skill} lacks the packaged project-context principle`,
+  );
+  assert.ok(
+    fs.existsSync(path.join(
+      root,
+      "adapters/codex/skills",
+      skill,
+      "references/devmuse/runtime/project-context/cli.mjs",
+    )),
+    `${skill} lacks the packaged project-context runtime`,
+  );
+}
+assert.ok(
+  fs.existsSync(path.join(
+    root,
+    "adapters/codex/skills/mu-scope/references/devmuse/knowledge/principles/artifact-succession.md",
+  )),
+  "mu-scope lacks the packaged fallback succession contract",
+);
+
 assert.match(read("adapters/codex/HOST_POLICY.md"), /native `\/plan`/);
 assert.match(read("adapters/codex/HOST_POLICY.md"), /native `\/review`/);
+assert.match(read("adapters/codex/HOST_POLICY.md"), /GitHub-first/);
+assert.match(read("adapters/codex/HOST_POLICY.md"), /host-native capability and approval/);
+assert.doesNotMatch(read("adapters/codex/HOST_POLICY.md"), /GitHub write permission is cached/);
 assert.match(
   read("adapters/codex/HOST_POLICY.md"),
   /sandbox, approval, and administrator policy authoritative/,
