@@ -1,6 +1,6 @@
 # Domain Model (CONTEXT.md)
 
-**When to use:** Produced and deliberately maintained by `mu-model` **before** PRD or design work; `mu-arch` may coin approved terms and any workflow may surface candidates for the next model update. All other skills and sessions consume it passively via the bootstrap rule. Adapted from mattpocock/skills' shared-language mechanism, then widened from vocabulary to model.
+**When to use:** The domain model is the **`domain_model` member of the project's living architecture set** (declared at `artifacts.architecture.domain_model` in the project manifest — `CONTEXT.md` at the repo root by default). It is authored and maintained *inside* the PRD and architecture flow: `mu-prd` runs this method when a feature introduces lifecycle-bearing objects, and `mu-arch` runs it when a design coins domain concepts; both write to the single `domain_model` member. `mu-model` remains the optional dedicated tool for a focused modeling pass, not a required gate before PRD or design work. Any workflow may surface candidates for the next update, and all other skills and sessions consume the model passively via the bootstrap rule. Adapted from mattpocock/skills' shared-language mechanism, then widened from vocabulary to model.
 
 **Purpose:** Settle the domain's concept structure before design starts — what exists, what has a lifecycle, what depends on what, who produces and who maintains each thing. Consistent naming falls out as a by-product; it is not the goal.
 
@@ -8,7 +8,7 @@
 
 ## The Artifact
 
-- **Location:** `CONTEXT.md` at the repo root. Root placement makes it visible to humans and agents alike; the user may `@`-reference it from `CLAUDE.md` to force-load it.
+- **Location:** the manifest's `artifacts.architecture.domain_model` path — `CONTEXT.md` at the repo root by default. Discoverable through project memory as a member of the architecture set rather than an orphan root file; root placement keeps the default visible to humans and agents alike, and the user may `@`-reference it from `CLAUDE.md` to force-load it.
 - **Lazy creation:** create it the first time the project has a concept structure worth stating. An empty scaffold is noise.
 - **Size: no term cap.** The necessary concept count is set by the domain, not by a context budget — a model missing a load-bearing concept makes downstream design wrong, which costs far more than the tokens it saved. What is capped is **isolates** (see Qualification Test).
 - **Single source of truth:** PRDs, design docs, and wiki pages link here for shared terms *and domain facts* (state machines, invariants, guarantees); they never restate them. Area-local implementation jargon stays beside the source or in the relevant wiki page.
