@@ -15,6 +15,7 @@
     "test:github-first": "node --test tests/github-first-contract/run-test.mjs",
     "test:platforms": "node tests/platform-compat/run-test.mjs",
     "test:project-context": "node tests/project-context/run-scenario.mjs",
+    "test:regression-judge": "node --test tests/prd-state-modeling/judge.test.mjs",
     "test:skills": "node tests/skill-validation/run-test.mjs && node tests/code-quality-principles/run-test.mjs && node scripts/validate-skills.mjs",
     "test:code-quality": "node tests/code-quality-principles/run-test.mjs",
     "test:routing": "bash tests/routing-policy/test-routing-policy.sh",

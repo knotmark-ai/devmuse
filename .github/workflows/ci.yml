@@ -57,6 +57,9 @@ jobs:
       - name: Test GitHub-first project context runtime
         run: npm run test:project-context
 
+      - name: Test regression auto-judge harness
+        run: npm run test:regression-judge
+
       - name: Test destructive-command guard
         run: npm run test:hooks
 
