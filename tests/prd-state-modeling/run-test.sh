@@ -45,4 +45,11 @@ $TO claude -p "$PROMPT" \
     > "$OUTPUT_DIR/claude-output.json" || echo "WARN: claude run exited non-zero"
 
 echo "Transcript: $OUTPUT_DIR/claude-output.json"
-echo "Judge against the criteria table in tests/prd-state-modeling/README.md"
+
+# Optional auto-judge: `./run-test.sh <prompt> <max-turns> --judge` scores the
+# transcript against the README criteria via judge.sh and exits with its verdict.
+if [ "$3" = "--judge" ] || [ "$JUDGE" = "1" ]; then
+    "$SCRIPT_DIR/judge.sh" "$SCENARIO" "$OUTPUT_DIR/claude-output.json"
+else
+    echo "Judge against the criteria table in tests/prd-state-modeling/README.md (or re-run with --judge)"
+fi

@@ -11,7 +11,21 @@ Each prompt instructs the agent to simulate the skill against a fixed product br
 # transcript lands in /tmp/devmuse-tests/<ts>/prd-state-modeling/
 ```
 
-Judge the transcript manually or hand it to a subagent with the criteria table below.
+Judge the transcript manually, or use the auto-judge:
+
+```bash
+./run-test.sh prompts/<scenario>.txt 6 --judge   # run, then score in one step
+./judge.sh <scenario> [transcript.json]          # score an existing transcript
+```
+
+`judge.sh` builds a grading prompt from this file's criteria table (the single
+source of truth — `parse-criteria.mjs` reads the rows below, nothing duplicates
+them), hands the transcript to a headless `claude` judge, and parses a
+per-criterion verdict. `overall` is recomputed from the sub-verdicts, so a judge
+that marks any criterion `fail` cannot return an overall pass; an unparseable
+judge response is an error, never a silent pass. The deterministic parser and
+verdict logic are covered by `npm run test:regression-judge` (no model needed);
+the judge invocation itself needs the `claude` CLI.
 
 ## Scenarios and pass criteria
 
