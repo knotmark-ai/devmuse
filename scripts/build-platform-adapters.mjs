@@ -24,7 +24,6 @@ const ui = {
   "mu-mrd": ["DevMuse MRD", "Validate a product or market premise", "evaluate this product premise and draft an MRD"],
   "mu-plan": ["DevMuse Plan", "Write a traceable implementation plan", "write a durable UC-traceable implementation plan"],
   "mu-prd": ["DevMuse PRD", "Define product flows and requirements", "create or update the product requirements document"],
-  "mu-retro": ["DevMuse Retro", "Run an evidence-based retrospective", "run a repository retrospective for the requested period"],
   "mu-review": ["DevMuse Review", "Review coverage, security, and quality", "run the specialized DevMuse review requested here"],
   "mu-scope": ["DevMuse Scope", "Classify impact and define use cases", "probe this behavior-changing request and define its scope"],
   "mu-wiki": ["DevMuse Wiki", "Generate or update architecture docs", "generate or update the repository architecture wiki"],

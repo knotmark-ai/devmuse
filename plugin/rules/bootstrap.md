@@ -139,7 +139,6 @@ First matching row wins.
 | domain concepts / terminology / “what do these words mean?” | point to `/mu-model` |
 | product requirements / user flows / screens | point to `/mu-prd` |
 | durable current architecture docs / wiki | point to `/mu-wiki` |
-| retrospective / look back | point to `/mu-retro` |
 | stress-test / grill a plan or design | point to `/mu-grill` |
 | plausible installed non-DevMuse skill match | propose that skill |
 | no match / empty or shallow repo | inspect only enough to identify the missing choice, then ask one targeted question |
@@ -157,7 +156,7 @@ exclusion and route without asking permission again.
 - **Orthogonal:** mu-debug.
 - **On-demand:** never auto-invoke; point to the slash command — `/mu-mrd`
   (market/premise), `/mu-model` (domain concepts), `/mu-prd` (product flows),
-  `/mu-wiki` (current architecture docs), `/mu-retro` (retrospective),
+  `/mu-wiki` (current architecture docs),
   `/mu-grill` (stress-test a plan/design).
 - **Meta:** mu-write-skill.
 

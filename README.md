@@ -82,7 +82,6 @@ architectural → scope → arch → plan → code → review → end
 - **mu-model** 🧪 — Domain model: concepts, archetypes, the spine, who produces and maintains what. Runs before PRD and design, writes repo-root `CONTEXT.md`. Invoke with `/mu-model`. **Its `create` path has not been validated on a from-zero project — see [Validation status](#validation-status).**
 - **mu-prd** — Product requirements: user flows, object lifecycle models, wireframes, per-feature specs, tiering rules. Invoke with `/mu-prd`.
 - **mu-wiki** — The single durable home for current architecture documentation, generated from source with citations. Invoke with `/mu-wiki generate` or `/mu-wiki update`.
-- **mu-retro** — Periodic retrospective: git metrics, review patterns, and durable learnings. Invoke with `/mu-retro`.
 - **mu-grill** — Relentless plan/design interview until every rework-forcing fork is resolved. Invoke with `/mu-grill`.
 
 These are NOT auto-routed. The user explicitly invokes them when needed.
@@ -131,7 +130,6 @@ devmuse/
 | On-demand | **mu-model** 🧪 | Domain model — concepts, archetypes, the spine, ownership; written to `CONTEXT.md` before PRD or design. **`create` path unproven — see Validation** |
 | On-demand | **mu-prd** | Product requirements — user flows, object lifecycle models, wireframes, feature specs, tiering rules |
 | On-demand | **mu-wiki** | Architecture wiki — generates and maintains project-level architecture documentation |
-| On-demand | **mu-retro** | Periodic retrospective with git metrics and durable learning capture |
 | On-demand | **mu-grill** | Relentless plan/design interview — resolves every rework-forcing fork before work begins |
 | Meta | **mu-write-skill** | Create/edit skills using TDD methodology |
 
