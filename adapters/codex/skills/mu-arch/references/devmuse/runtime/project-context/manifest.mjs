@@ -13,6 +13,21 @@ const LEAVES = new Set([
   "artifacts.architecture.domain_model",
 ]);
 
+// Optional v2 additions — the case-registry asset router. Present only in a
+// schema_version:2 manifest, and never required (a v2 manifest may omit `cases:`
+// and default to the repository backend). Provider-token semantics are validated
+// downstream by project-registry; this parser only captures the strings safely.
+const SCHEMA_VERSIONS = new Set([1, 2]);
+const V2_CONTAINERS = new Set(["cases", "cases.routes"]);
+const V2_LEAVES = new Set([
+  "cases.registry",
+  "cases.routes.product_requirements",
+  "cases.routes.rules",
+  "cases.routes.acceptance_examples",
+  "cases.routes.test_cases",
+  "cases.routes.test_results",
+]);
+
 // Detect C0 control characters and DEL. `allowStructuralWhitespace` keeps tab,
 // newline and carriage return (which the multi-line manifest grammar handles
 // itself) while still rejecting NUL and the rest; scalar values allow none.
@@ -87,16 +102,17 @@ export function parseProjectManifest(text, { repoRoot } = {}) {
   }
   if (/(^|[\s:])[&*!][^\s]*/m.test(text) || /[{}[\]]/.test(text)) return invalid("unsupported-yaml-feature");
 
-  // Test the schema version before the unknown-key screen below. A future
-  // versioned manifest (e.g. v2's `cases:` block) must degrade to
-  // `unsupported-schema` — "your DevMuse is older than this manifest" — rather
-  // than `unknown-key`, which reads as corruption. This parser understands v1
-  // only; any other clean integer version is unsupported here. Malformed or
-  // v1 values fall through to the normal parse unchanged.
+  // Test the schema version before the unknown-key screen below. A genuinely
+  // newer manifest (schema_version > 2) must degrade to `unsupported-schema` —
+  // "your DevMuse is older than this manifest" — rather than `unknown-key`,
+  // which reads as corruption. This parser understands v1 and v2 (v2 adds the
+  // optional `cases:` asset router). Malformed values fall through unchanged.
   const declaredVersion = text.replace(/\r\n?/g, "\n").split("\n").map((line) => line.match(/^schema_version:\s*(\d+)\s*$/)).find(Boolean);
-  if (declaredVersion && Number(declaredVersion[1]) !== 1) {
+  const version = declaredVersion ? Number(declaredVersion[1]) : null;
+  if (version !== null && !SCHEMA_VERSIONS.has(version)) {
     return { status: "unsupported-schema", value: null, reason: "unsupported-schema" };
   }
+  const allowV2 = version === 2;
 
   const stack = [];
   const values = new Map();
@@ -116,18 +132,18 @@ export function parseProjectManifest(text, { repoRoot } = {}) {
     values.set(dotted, true);
     const raw = tail.trim();
     if (raw === "") {
-      if (!CONTAINERS.has(dotted)) return invalid("unknown-key");
+      if (!CONTAINERS.has(dotted) && !(allowV2 && V2_CONTAINERS.has(dotted))) return invalid("unknown-key");
       stack.push(key);
       continue;
     }
-    if (!LEAVES.has(dotted)) return invalid("unknown-key");
+    if (!LEAVES.has(dotted) && !(allowV2 && V2_LEAVES.has(dotted))) return invalid("unknown-key");
     const scalar = parseScalar(raw);
     if (typeof scalar === "undefined") return invalid("invalid-scalar");
     values.set(dotted, scalar);
   }
 
   if ([...CONTAINERS, ...LEAVES].some((key) => !values.has(key))) return invalid("missing-key");
-  if (values.get("schema_version") !== 1) {
+  if (!SCHEMA_VERSIONS.has(values.get("schema_version"))) {
     return { status: "unsupported-schema", value: null, reason: "unsupported-schema" };
   }
   if (!/^github:[A-Za-z0-9_-]+$/.test(values.get("project.id"))) return invalid("invalid-project-id");
@@ -138,8 +154,18 @@ export function parseProjectManifest(text, { repoRoot } = {}) {
     if (!safeArtifactPath(values.get(key), repoRoot)) return invalid("unsafe-artifact-path");
   }
 
+  // v2 provider tokens are bare lowercase words; reject anything odd here so the
+  // captured routing is well-formed before project-registry validates the
+  // specific provider vocabulary.
+  for (const key of V2_LEAVES) {
+    if (values.has(key) && !/^[a-z][a-z0-9_]*$/.test(values.get(key))) return invalid("invalid-route-provider");
+  }
+
   const value = {};
   for (const key of LEAVES) setNested(value, key, values.get(key));
+  for (const key of V2_LEAVES) {
+    if (values.has(key)) setNested(value, key, values.get(key));
+  }
   return { status: "valid", value, reason: null };
 }
 

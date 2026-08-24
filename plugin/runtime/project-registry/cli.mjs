@@ -7,7 +7,12 @@
 //   parse              — parse and validate a registry file
 //   staleness          — result-anchored coverage staleness
 //   propose-migration  — propose a v1->v2 manifest migration (no write)
-// This module performs no tracked writes; mu-setup owns approval + persistence.
+//   serialize-manifest — render a manifest value to YAML text (no write)
+//   read-routing       — validate the cases block of a parsed manifest
+//   init / write-kind / write-manifest — TRACKED WRITES, gated on {approved:true}
+// Read/validate/propose commands never write. The write commands (init,
+// write-kind, write-manifest) mutate tracked files ONLY when the request carries
+// approved:true — the present-before-write gate, enforced here in code.
 import {
   validateRouting,
   assetRevision,
@@ -22,7 +27,11 @@ import {
   writeKind,
   providerTransition,
   classifyOutcome,
+  serializeManifest,
+  readRouting,
 } from "./index.mjs";
+import fs from "node:fs";
+import path from "node:path";
 import { xrayReadTestsRequest, normalizeXrayTest, xrayCapabilities } from "./providers/xray.mjs";
 
 function write(value, status = 0) {
@@ -54,14 +63,33 @@ try {
     write(coverageStaleness(input.result ?? null, input.current ?? {}));
   } else if (command === "propose-migration") {
     write(proposeV2Migration(input.v1 ?? input.v1_value, input.cases ?? null));
+  } else if (command === "serialize-manifest") {
+    write({ manifest: serializeManifest(input.value ?? input) });
+  } else if (command === "read-routing") {
+    write(readRouting(input.manifest ?? input.value ?? input));
   } else if (command === "init") {
-    write(initRegistry(input.repo_root ?? process.cwd()));
+    // Tracked write — gated on explicit approval (present-before-write).
+    if (input.approved !== true) write({ status: "blocked", reason: "approval-required" }, 1);
+    else write(initRegistry(input.repo_root ?? process.cwd()));
   } else if (command === "status") {
     write(registryStatus(input.repo_root ?? process.cwd()));
   } else if (command === "read-kind") {
     write(readKind(input.repo_root ?? process.cwd(), input.kind));
   } else if (command === "write-kind") {
-    write(writeKind(input.repo_root ?? process.cwd(), input.kind, input.assets ?? []));
+    if (input.approved !== true) write({ status: "blocked", reason: "approval-required" }, 1);
+    else write(writeKind(input.repo_root ?? process.cwd(), input.kind, input.assets ?? []));
+  } else if (command === "write-manifest") {
+    // Serialize + write .devmuse/project.yaml, gated on approval. Never stores
+    // credentials — the value is the resolved manifest, no secrets.
+    if (input.approved !== true) {
+      write({ status: "blocked", reason: "approval-required" }, 1);
+    } else {
+      const root = input.repo_root ?? process.cwd();
+      const file = path.join(root, ".devmuse", "project.yaml");
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, serializeManifest(input.value), { encoding: "utf8" });
+      write({ status: "written", file: ".devmuse/project.yaml" });
+    }
   } else if (command === "provider-transition") {
     write(providerTransition(input));
   } else if (command === "classify-outcome") {

@@ -43,6 +43,9 @@ jobs:
           npm run test:routing
           npm run test:hooks
           npm run test:mermaid
+          npm run test:project-context
+          npm run test:project-registry
+          npm run test:cross-review
           npm run test:token-benchmark
           npm run test:release
           git diff --check

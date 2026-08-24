@@ -41,7 +41,8 @@ test("manifest rejects executable YAML and unsafe artifact paths", () => {
 
 // Covers: UC-G7, UC-G9
 test("manifest rejects unknown schema, duplicate or unknown keys, and forbidden secret fields", () => {
-  assert.equal(parseProjectManifest(manifestText.replace("schema_version: 1", "schema_version: 2"), { repoRoot: "/repo" }).status, "unsupported-schema");
+  // v1 and v2 are supported; a genuinely newer schema degrades to unsupported.
+  assert.equal(parseProjectManifest(manifestText.replace("schema_version: 1", "schema_version: 3"), { repoRoot: "/repo" }).status, "unsupported-schema");
   for (const text of [
     `${manifestText}schema_version: 1\n`,
     `${manifestText}unknown: true\n`,
@@ -49,13 +50,27 @@ test("manifest rejects unknown schema, duplicate or unknown keys, and forbidden 
   ]) assert.equal(parseProjectManifest(text, { repoRoot: "/repo" }).status, "invalid");
 });
 
-// A future-versioned manifest degrades to unsupported-schema even when it carries
-// keys this v1 reader does not know (e.g. the v2 `cases:` block) — "your DevMuse
-// is older than this manifest", not a corruption error. The schema-version test
-// runs before the unknown-key screen.
-test("a v2 manifest with a cases block degrades to unsupported-schema, not unknown-key", () => {
-  const v2 = `${manifestText.replace("schema_version: 1", "schema_version: 2")}cases:\n  registry: repository\n`;
-  assert.equal(parseProjectManifest(v2, { repoRoot: "/repo" }).reason, "unsupported-schema");
+// A genuinely newer manifest (schema 3+) degrades to unsupported-schema even when
+// it carries a v2-shaped `cases:` block — "your DevMuse is older than this
+// manifest", not corruption. The schema check runs before the unknown-key screen.
+test("a schema-3 manifest with a cases block degrades to unsupported-schema, not unknown-key", () => {
+  const v3 = `${manifestText.replace("schema_version: 1", "schema_version: 3")}cases:\n  registry: repository\n`;
+  assert.equal(parseProjectManifest(v3, { repoRoot: "/repo" }).reason, "unsupported-schema");
+});
+
+// A v2 manifest parses and captures the asset router; v2 without a cases block is
+// valid (defaults to repository); a cases block under v1 is rejected.
+test("a v2 manifest with a cases block parses and exposes the routing", () => {
+  const v2 = `${manifestText.replace("schema_version: 1", "schema_version: 2")}cases:\n  registry: repository\n  routes:\n    test_cases: xray\n`;
+  const result = parseProjectManifest(v2, { repoRoot: "/repo" });
+  assert.equal(result.status, "valid");
+  assert.equal(result.value.cases.registry, "repository");
+  assert.equal(result.value.cases.routes.test_cases, "xray");
+  // v2 without cases is still valid.
+  assert.equal(parseProjectManifest(manifestText.replace("schema_version: 1", "schema_version: 2"), { repoRoot: "/repo" }).status, "valid");
+  // A cases block under v1 is an unknown key.
+  const v1cases = `${manifestText}cases:\n  registry: repository\n`;
+  assert.equal(parseProjectManifest(v1cases, { repoRoot: "/repo" }).status, "invalid");
 });
 
 // Covers: UC-G7
