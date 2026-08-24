@@ -69,8 +69,26 @@ test("a judge that grades fewer criteria than asked is rejected (H1)", () => {
   assert.equal(parseVerdict(short, { expectedCount: 1 }).overall, "pass");
 });
 
-test("a missing/malformed per-criterion verdict is not a pass", () => {
-  assert.equal(parseVerdict('{"criteria":[{"n":1},{"n":2,"verdict":"pass"}],"overall":"pass"}').overall, "fail");
+test("a malformed per-criterion verdict is a judge fault, not a silent regression (F3)", () => {
+  // Criterion 1 carries no verdict — the judge is broken, so this must surface as a
+  // fault (exit 2), not be mislabeled as a scenario fail (exit 1).
+  assert.throws(
+    () => parseVerdict('{"criteria":[{"n":1},{"n":2,"verdict":"pass"}],"overall":"pass"}'),
+    (error) => error.code === "malformed-criterion",
+  );
+});
+
+test("count without coverage is not enough — a duplicated/mis-numbered criterion is rejected (F1)", () => {
+  // Right NUMBER of entries, all pass, but every n is 1 — criteria 2..7 were never
+  // graded. The length check alone let this pass; coverage catches it.
+  const dupes = `{"criteria":[${Array.from({ length: 7 }, () => '{"n":1,"verdict":"pass"}').join(",")}],"overall":"pass"}`;
+  assert.throws(() => parseVerdict(dupes, { expectedCount: 7 }), (error) => error.code === "criteria-coverage-mismatch");
+  // Out-of-range numbering (n:99 x7) is likewise rejected.
+  const outOfRange = `{"criteria":[${Array.from({ length: 7 }, () => '{"n":99,"verdict":"pass"}').join(",")}],"overall":"pass"}`;
+  assert.throws(() => parseVerdict(outOfRange, { expectedCount: 7 }), (error) => error.code === "criteria-coverage-mismatch");
+  // A genuine, complete 1..N grading passes.
+  const complete = `{"criteria":[${Array.from({ length: 7 }, (_, i) => `{"n":${i + 1},"verdict":"pass"}`).join(",")}],"overall":"pass"}`;
+  assert.equal(parseVerdict(complete, { expectedCount: 7 }).overall, "pass");
 });
 
 test("criteriaCount returns a scenario's sub-criteria count and vague-groupbuy now splits into 7", () => {

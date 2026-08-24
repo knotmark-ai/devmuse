@@ -65,9 +65,28 @@ export function parseVerdict(responseText, { expectedCount = null } = {}) {
     if (expectedCount !== null && value.criteria.length !== expectedCount) {
       throw Object.assign(new Error(`judge graded ${value.criteria.length} of ${expectedCount} criteria`), { code: "criteria-count-mismatch" });
     }
-    // Recompute overall: every entry must carry an explicit "pass"; anything else
-    // (fail, missing, malformed) is not a pass.
-    const overall = value.criteria.every((entry) => entry?.verdict === "pass") ? "pass" : "fail";
+    // A structurally malformed entry (no explicit pass/fail) is a judge fault, not
+    // a silent regression — surfacing it as a fail would mislabel a broken judge as
+    // a skill failure (F3).
+    for (const entry of value.criteria) {
+      if (entry?.verdict !== "pass" && entry?.verdict !== "fail") {
+        throw Object.assign(new Error("judge returned a criterion without a valid verdict"), { code: "malformed-criterion" });
+      }
+    }
+    // Coverage, not just cardinality: the graded criteria must be exactly the set
+    // {1..expectedCount}, each numbered once. A length match alone lets a judge
+    // duplicate one passing criterion (n:1 x N) and never grade the ones it would
+    // fail — the exact skip-the-failing-criterion threat the count check misses (F1).
+    if (expectedCount !== null) {
+      const ns = value.criteria.map((entry) => entry?.n);
+      const complete = ns.every((n) => Number.isInteger(n) && n >= 1 && n <= expectedCount)
+        && new Set(ns).size === expectedCount;
+      if (!complete) {
+        throw Object.assign(new Error("judge did not number each criterion 1..N exactly once"), { code: "criteria-coverage-mismatch" });
+      }
+    }
+    // Recompute overall from the now-validated entries.
+    const overall = value.criteria.every((entry) => entry.verdict === "pass") ? "pass" : "fail";
     return { ...value, overall };
   }
   throw Object.assign(new Error("no valid verdict JSON in judge response"), { code: "unparseable-verdict" });

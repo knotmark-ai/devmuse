@@ -41,6 +41,15 @@ if [ -z "$JUDGE_JSON" ]; then
 fi
 
 # Pull the judge model's response text, then parse the verdict deterministically,
-# requiring the judge to have graded exactly the scenario's criteria count.
-EXPECTED=$(node "$SCRIPT_DIR/judge.mjs" --count "$SCENARIO" 2>/dev/null || echo "")
+# requiring the judge to have graded exactly the scenario's criteria count. A
+# failed count lookup (unknown scenario, README heading rename) is a setup fault —
+# fail loudly (exit 2) rather than passing "" and silently grading "of 0" (F2).
+if ! EXPECTED=$(node "$SCRIPT_DIR/judge.mjs" --count "$SCENARIO"); then
+    echo "Could not determine the criteria count for '$SCENARIO' (unknown scenario or README parse error)." >&2
+    exit 2
+fi
+if ! [[ "$EXPECTED" =~ ^[0-9]+$ ]] || [ "$EXPECTED" -lt 1 ]; then
+    echo "Criteria count for '$SCENARIO' is not a positive integer: '$EXPECTED'." >&2
+    exit 2
+fi
 printf '%s' "$JUDGE_JSON" | node "$SCRIPT_DIR/extract-result.mjs" | node "$SCRIPT_DIR/judge.mjs" --parse "$EXPECTED"
