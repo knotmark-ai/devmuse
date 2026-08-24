@@ -33,15 +33,27 @@ function camelizeKey(key) {
 // boundary so a snake_case request binds to the real parameters instead of
 // silently leaving them undefined — a correctness and a security requirement,
 // since an unbound identity must never satisfy an authorization check.
-function camelizeKeys(value) {
-  if (Array.isArray(value)) return value.map(camelizeKeys);
+//
+// `opaqueKeys` names pass-through *payloads* (update-cache's `entry`/`attempt`)
+// that are stored verbatim and validated as snake_case downstream. Their KEY is
+// still camelized, but their VALUE must not be descended into — camelizing
+// `work_id`/`pull_request`/`pipeline_phase` inside them would produce keys the
+// cache validator rejects, silently dropping every write (the C1 defect).
+function camelizeKeys(value, opaqueKeys = null) {
+  if (Array.isArray(value)) return value.map((item) => camelizeKeys(item, opaqueKeys));
   if (value && typeof value === "object") {
     const result = {};
-    for (const [key, item] of Object.entries(value)) result[camelizeKey(key)] = camelizeKeys(item);
+    for (const [key, item] of Object.entries(value)) {
+      const camel = camelizeKey(key);
+      result[camel] = opaqueKeys && opaqueKeys.has(camel) ? item : camelizeKeys(item, opaqueKeys);
+    }
     return result;
   }
   return value;
 }
+
+// Payload keys whose snake_case schema must survive the boundary untouched.
+const OPAQUE_PAYLOAD_KEYS = new Set(["entry", "attempt"]);
 
 async function readRequest() {
   const chunks = [];
@@ -88,7 +100,7 @@ if (!known.has(command)) {
 } else {
   let input;
   try {
-    input = camelizeKeys(await readRequest());
+    input = camelizeKeys(await readRequest(), OPAQUE_PAYLOAD_KEYS);
   } catch (error) {
     write({ error: { code: error.code ?? "invalid-json" } }, 2);
   }
@@ -131,7 +143,9 @@ if (!known.has(command)) {
         if (target.error) {
           write({ error: { code: target.error } }, 1);
         } else {
-          const incoming = { projectId: target.projectId, ...(input.incoming ?? {}) };
+          // Injected identity goes LAST so a caller-supplied project_id cannot
+          // override the repository-resolved one (F4).
+          const incoming = { ...(input.incoming ?? {}), projectId: target.projectId };
           const result = await updateCache(target.file, incoming, {});
           write({ status: result.status, persistence: result.persistence ?? null, revision: result.value?.revision ?? null });
         }

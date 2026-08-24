@@ -42,6 +42,14 @@ test("progressive same-work enrichment merges instead of demanding reconciliatio
   assert.equal(conflict.status, "needs-reconciliation");
 });
 
+// Covers: UC-G8 — an explicit null placeholder is enriched, not treated as a conflict (F3).
+test("enriching an explicit null field is progressive enhancement, not a contradiction", () => {
+  const base = { schema_version: 1, revision: 1, project_id: "github:repo", worktrees: { main: { work_id: "issue-62", issue: 62, pull_request: null } }, recovery: {} };
+  const enriched = mergeCache(base, { worktreeKey: "main", entry: { pull_request: 65 } });
+  assert.equal(enriched.status, "merged"); // was "needs-reconciliation" before F3
+  assert.equal(enriched.value.worktrees.main.pull_request, 65);
+});
+
 // Covers: UC-G8
 test("a stale cache lock is broken AND the current write is persisted, not dropped", async (t) => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-lock-retry-"));
