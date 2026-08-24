@@ -40,8 +40,10 @@ survives provider changes, repo moves, and Scope closure. Downstream stages
 
 Claude skills invoke `${CLAUDE_PLUGIN_ROOT}/runtime/project-registry/cli.mjs`;
 portable skills invoke their vendored
-`references/devmuse/runtime/project-registry/cli.mjs`. It performs no tracked
-write.
+`references/devmuse/runtime/project-registry/cli.mjs`. Its read/validate/propose
+commands never write; its `init`, `write-kind`, and `write-manifest` commands
+mutate tracked files **only** when the request carries `approved: true` — the
+present-before-write gate, enforced in code, and they never store credentials.
 
 Coverage is **result-anchored**: a Test Result records the revisions of the
 requirement/example, the test case, and the code it ran against. Run the CLI's

@@ -24,9 +24,13 @@ for one delivery; it is never the long-term home of the cases (UC-CR1).
 
 Claude skills invoke `references/devmuse/runtime/project-registry/cli.mjs`;
 portable skills invoke their vendored
-`references/devmuse/runtime/project-registry/cli.mjs`. It performs **no tracked
-write** — it validates, proposes, and reports; mu-setup obtains approval and
-performs the write. snake_case in, snake_case out.
+`references/devmuse/runtime/project-registry/cli.mjs`. Its read/validate/propose
+commands (`resolve` via project-context, `propose-migration`, `serialize-manifest`,
+`status`, `read-kind`, `read-routing`) never write. After the user approves, the
+write commands persist: `write-manifest` serializes and writes
+`.devmuse/project.yaml`, and `init` creates the registry files — **each requires
+`approved: true` in the request** (the present-before-write gate, enforced in
+code) and never stores credentials. snake_case in, snake_case out.
 
 ## Process
 
