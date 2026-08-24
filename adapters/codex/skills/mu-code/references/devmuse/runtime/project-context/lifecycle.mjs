@@ -36,7 +36,10 @@ export function projectDelivery({ currentState, event, requiredPrs = [], accepta
   const projectionRequested = (currentState === "Reviewing" && event === "merged")
     || (currentState === "MergedPendingDelivery" && event === "external-work-verified");
   if (projectionRequested) {
-    if (!allRequiredPrsResolved(requiredPrs)) return { currentState: "Reviewing", issueAction: "keep_open", reason: "required-prs-remaining" };
+    // Preserve the current state — a required-PR-remaining check must never move
+    // MergedPendingDelivery backward to Reviewing (that would reopen review after
+    // merge and break monotonicity).
+    if (!allRequiredPrsResolved(requiredPrs)) return { currentState, issueAction: "keep_open", reason: "required-prs-remaining" };
     if (!allPassed(acceptanceResults, { requireOne: true })) return { currentState, issueAction: "keep_open", reason: "acceptance-unverified" };
     if (!allPassed(externalTaskResults)) return { currentState: "MergedPendingDelivery", issueAction: "keep_open", reason: "external-work-remaining" };
     return { currentState: "Complete", issueAction: "close", reason: "all-acceptance-verified" };
