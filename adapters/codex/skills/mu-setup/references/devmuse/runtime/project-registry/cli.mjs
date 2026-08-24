@@ -9,6 +9,9 @@
 //   propose-migration  — propose a v1->v2 manifest migration (no write)
 //   serialize-manifest — render a manifest value to YAML text (no write)
 //   read-routing       — validate the cases block of a parsed manifest
+//   read-preferences   — read user-level default routes (absent file is ok)
+//   resolve-routing    — merge project routes over user prefs (project wins)
+//   write-preferences  — USER-LEVEL WRITE (outside repo), gated on {approved:true}
 //   init / write-kind / write-manifest — TRACKED WRITES, gated on {approved:true}
 // Read/validate/propose commands never write. The write commands (init,
 // write-kind, write-manifest) mutate tracked files ONLY when the request carries
@@ -29,6 +32,9 @@ import {
   classifyOutcome,
   serializeManifest,
   readRouting,
+  readPreferences,
+  writePreferences,
+  resolveEffectiveRoutes,
 } from "./index.mjs";
 import fs from "node:fs";
 import path from "node:path";
@@ -90,6 +96,18 @@ try {
       fs.writeFileSync(file, serializeManifest(input.value), { encoding: "utf8" });
       write({ status: "written", file: ".devmuse/project.yaml" });
     }
+  } else if (command === "read-preferences") {
+    // Read-only: user-level default routes. Absent file is not an error.
+    write(readPreferences());
+  } else if (command === "resolve-routing") {
+    // Merge project routes over user preferences (project wins), reporting the
+    // per-kind source. Pure read — writes nothing.
+    write(resolveEffectiveRoutes(input.project_routes ?? {}, input.preference_routes ?? readPreferences().routes));
+  } else if (command === "write-preferences") {
+    // User-level write (outside any repo), gated on explicit approval. Never
+    // rewrites a project override — only the user's own default routes.
+    if (input.approved !== true) write({ status: "blocked", reason: "approval-required" }, 1);
+    else write(writePreferences(input.routes ?? {}));
   } else if (command === "provider-transition") {
     write(providerTransition(input));
   } else if (command === "classify-outcome") {
