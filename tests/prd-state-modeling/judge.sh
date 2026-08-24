@@ -3,8 +3,9 @@
 # Usage: ./judge.sh <scenario> [transcript.json]
 #   - <scenario> is a prompt basename, e.g. stateless-cli-no-trigger
 #   - transcript.json defaults to the newest run under /tmp/devmuse-tests/*/prd-state-modeling/<scenario>/
-# Exit 0 = pass, 1 = fail, 2 = usage/setup error. Judgment uses headless claude.
+# Exit 0 = pass, 1 = fail (regression), 2 = usage/setup/judge fault. Uses headless claude.
 set -e
+set -o pipefail   # a mid-pipe crash (extract-result) must not be masked by the tail
 
 SCENARIO="$1"
 TRANSCRIPT="$2"
@@ -39,5 +40,7 @@ if [ -z "$JUDGE_JSON" ]; then
     exit 2
 fi
 
-# Pull the judge model's response text, then parse the verdict deterministically.
-printf '%s' "$JUDGE_JSON" | node "$SCRIPT_DIR/extract-result.mjs" | node "$SCRIPT_DIR/judge.mjs" --parse
+# Pull the judge model's response text, then parse the verdict deterministically,
+# requiring the judge to have graded exactly the scenario's criteria count.
+EXPECTED=$(node "$SCRIPT_DIR/judge.mjs" --count "$SCENARIO" 2>/dev/null || echo "")
+printf '%s' "$JUDGE_JSON" | node "$SCRIPT_DIR/extract-result.mjs" | node "$SCRIPT_DIR/judge.mjs" --parse "$EXPECTED"
