@@ -131,8 +131,12 @@ export function mergeCache(current, incoming) {
       // contradictory value, or the work_id itself changed.
       const existingWork = existing.work_id ?? null;
       const incomingWork = entry.work_id ?? existingWork;
+      // An explicit null on the existing side (e.g. a worktree seeded with
+      // `pull_request: null`) counts as absent, so enriching it to a real value
+      // is progressive enhancement, not a contradiction (F3).
       const contradiction = incomingWork !== existingWork
-        || Object.keys(entry).some((key) => existing[key] !== undefined && JSON.stringify(existing[key]) !== JSON.stringify(entry[key]));
+        || Object.keys(entry).some((key) => existing[key] !== undefined && existing[key] !== null
+          && JSON.stringify(existing[key]) !== JSON.stringify(entry[key]));
       if (contradiction) {
         return { status: "needs-reconciliation", candidates: [clone(existing), clone(entry)], revision: current.revision };
       }
