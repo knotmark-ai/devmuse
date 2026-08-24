@@ -3,9 +3,9 @@ import { EventEmitter } from "node:events";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
 
-import { buildInvocation, RECURSION_ENV, baseBranch, ENV_BINARY, ENV_CONFIG_HOME } from "../../plugin/runtime/cross-review/reviewer.mjs";
+import { buildInvocation, RECURSION_ENV, baseBranch, ENV_BINARY, ENV_CONFIG_HOME, FINDINGS_SCHEMA } from "../../plugin/runtime/cross-review/reviewer.mjs";
 import { runCrossReview, runReview } from "../../plugin/runtime/cross-review/runner.mjs";
-import { normalizeExternalFindings, mergeFindings } from "../../plugin/runtime/cross-review/findings.mjs";
+import { normalizeExternalFindings, mergeFindings, extractClaudeStructuredOutput } from "../../plugin/runtime/cross-review/findings.mjs";
 
 const base = { projectDir: "/repo", outputPath: "/tmp/out.json", schemaPath: "/tmp/schema.json", refs: ["main...HEAD"] };
 
@@ -56,7 +56,11 @@ test("claude invocation is read-only (plan + tool allowlist), JSON-schema output
   assert.equal(inv.args[inv.args.indexOf("--permission-mode") + 1], "plan");
   const allow = inv.args.indexOf("--allowed-tools");
   assert.deepEqual(inv.args.slice(allow + 1, allow + 4), ["Read", "Glob", "Grep"]);
-  assert.ok(inv.args.includes("--json-schema"));
+  // --json-schema must be INLINE JSON, not the schemaPath file (C2). A path makes
+  // claude exit 1 with "not valid JSON".
+  const schemaValue = inv.args[inv.args.indexOf("--json-schema") + 1];
+  assert.notEqual(schemaValue, base.schemaPath);
+  assert.deepEqual(JSON.parse(schemaValue), FINDINGS_SCHEMA);
   assert.equal(inv.args[inv.args.indexOf("--output-format") + 1], "json");
   assert.ok(!inv.args.includes("--settings")); // config home goes to CLAUDE_CONFIG_DIR env
   assert.equal(inv.outputMode, "stdout");
@@ -116,17 +120,42 @@ test("codex (file mode) normalizes findings from its output file", async () => {
   assert.equal(result.findings[0].severity, "important"); // "high" aliased
 });
 
-test("claude (stdout mode) reads findings from drained stdout, never deadlocks", async () => {
+test("claude (stdout mode) extracts findings from the real event-stream envelope, not phantom events (C3)", async () => {
   const child = fakeChild({ withStdout: true });
   const promise = runCrossReview(
     { status: "ready", reviewer: "claude", outputMode: "stdout", command: "claude", args: [], cwd: "/repo", env: {} },
     { spawn: () => child },
   );
-  child.stdout.emit("data", JSON.stringify({ findings: [{ severity: "critical", summary: "x" }] }));
+  // The real shape of `claude -p --output-format json`: an ARRAY of stream events
+  // whose terminal `result` event carries the schema-conforming JSON as a string.
+  // Feeding this array naively to the normalizer produced one phantom finding per event.
+  const events = [
+    { type: "system", subtype: "init" },
+    { type: "assistant", message: { content: [{ type: "text", text: "reviewing" }] } },
+    { type: "user", message: { content: [] } },
+    { type: "result", subtype: "success", result: JSON.stringify({ findings: [{ severity: "critical", file: "a.mjs", line: 3, summary: "real" }] }) },
+  ];
+  child.stdout.emit("data", JSON.stringify(events));
   child.emit("close", 0);
   const result = await promise;
   assert.equal(result.status, "ok");
+  assert.equal(result.findings.length, 1); // ONE real finding, not one-per-event
   assert.equal(result.findings[0].severity, "critical");
+  assert.equal(result.findings[0].file, "a.mjs");
+});
+
+test("extractClaudeStructuredOutput unwraps every envelope shape and degrades safely", () => {
+  const payload = { findings: [{ severity: "minor", summary: "s" }] };
+  // Event array with a terminal result carrying JSON-string.
+  const arr = [{ type: "system" }, { type: "result", result: JSON.stringify(payload) }];
+  assert.deepEqual(JSON.parse(extractClaudeStructuredOutput(JSON.stringify(arr))), payload);
+  // Single {result} envelope.
+  assert.deepEqual(JSON.parse(extractClaudeStructuredOutput(JSON.stringify({ result: JSON.stringify(payload) }))), payload);
+  // Already the payload object.
+  assert.deepEqual(extractClaudeStructuredOutput(payload), payload);
+  // A non-conforming terminal result (plain prose) → normalizer reports invalid, NOT phantom findings.
+  const prose = [{ type: "result", result: "I could not review." }];
+  assert.equal(normalizeExternalFindings(extractClaudeStructuredOutput(JSON.stringify(prose)), { reviewer: "claude" }).status, "invalid");
 });
 
 test("a synchronous spawn failure returns a typed fallback, not a timer ReferenceError", async () => {
@@ -197,6 +226,22 @@ test("every claude flag we build is accepted by the installed claude", { skip: !
   for (const flag of inv.args.filter((a) => a.startsWith("--"))) {
     assert.ok(help.includes(flag), `claude --help does not list ${flag}`);
   }
+});
+
+// Name-in-help is not flag-works (H3): this actually runs claude with our built
+// --json-schema VALUE and asserts it is not rejected as malformed. A file path
+// (the C2 bug) exits 1 with "--json-schema is not valid JSON"; inline JSON parses.
+// Tolerant of auth/network failure — it only checks the flag-parse error is absent.
+test("claude accepts our inline --json-schema value, not a file path (live, catches C2)", { skip: !which("claude") }, () => {
+  const inv = buildInvocation({ currentHost: "codex", ...base });
+  const schemaValue = inv.args[inv.args.indexOf("--json-schema") + 1];
+  const r = spawnSync("claude", [
+    "-p", 'reply with {"findings":[]}',
+    "--output-format", "json", "--json-schema", schemaValue,
+    "--permission-mode", "plan", "--allowed-tools", "Read",
+  ], { encoding: "utf8", timeout: 60000 });
+  const out = `${r.stdout ?? ""}${r.stderr ?? ""}`;
+  assert.ok(!/json-schema is not valid JSON/i.test(out), `claude rejected our --json-schema value: ${out.slice(0, 200)}`);
 });
 
 // --- findings normalization and contradiction surfacing ---

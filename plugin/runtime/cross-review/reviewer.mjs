@@ -154,7 +154,10 @@ export function buildInvocation({
         "--permission-mode", "plan",
         "--allowed-tools", "Read", "Glob", "Grep",
         "--output-format", "json",
-        "--json-schema", schemaPath,
+        // claude's --json-schema takes INLINE JSON, not a file path (verified
+        // against claude 2.1.241 — a path makes it exit 1 with "not valid JSON").
+        // Only codex's --output-schema takes a file (schemaPath) — C2.
+        "--json-schema", JSON.stringify(FINDINGS_SCHEMA),
       ],
       env: childEnv,
       cwd: projectDir,
