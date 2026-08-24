@@ -25,6 +25,11 @@ received from a managed Issue; technical design and ADRs remain repository
 files. Invoke the packaged `project-context/cli.mjs`, or apply the same contract
 with host-native tools and record the binding when executable support is absent.
 
+When the project has a case registry (`/mu-setup`), map the selected cases to
+domain invariants, contracts, and technical realization by citing their stable
+IDs — never restate requirement prose — per
+`references/devmuse/knowledge/principles/case-registry.md`.
+
 ## Phase 0: Stance Detection
 
 Before engaging the design process, detect the current state of any existing arch artifact and pick an entry stance.

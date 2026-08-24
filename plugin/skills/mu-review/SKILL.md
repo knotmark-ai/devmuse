@@ -36,6 +36,11 @@ after `authorize` succeeds for the exact Issue/PR operation. Apply the packaged
 `project-context/cli.mjs`, or the same contract through host-native tools with
 the binding recorded when executable support is absent.
 
+When the project has a case registry (`/mu-setup`), the review-coverage pass
+traces each affected case ID to a test and result and marks coverage **stale**,
+not merely covered, when a bound revision moved, per
+`@../../knowledge/principles/case-registry.md`.
+
 Run `project-delivery` with the required PR set, acceptance evidence, and every
 external work item. Consume its canonical `current_state`, `issue_action`, and
 `reason`: merge evidence with pending human/platform work keeps the Issue open.

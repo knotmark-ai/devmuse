@@ -22,6 +22,12 @@ Read `@../../knowledge/principles/project-context.md`. Run `resolve`, then
 explicit, live-validated, or carries the exact work ID. Semantic matches require
 confirmation. A missing match produces an offer; `authorize` plus explicit creation approval is required before `issue.create`.
 
+When the project has a case registry (a v2 manifest with a `cases:` block, from
+`/mu-setup`), reference the affected product cases by their stable IDs and own
+only the delivery-specific delta per
+`@../../knowledge/principles/case-registry.md`; closing this scope never deletes
+the long-lived cases it references.
+
 Use `render-managed` for scope publication and `recover-attempt` after an
 indeterminate create/adoption. The packaged
 `project-context/cli.mjs` is the deterministic binding; use the same contract

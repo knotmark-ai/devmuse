@@ -20,6 +20,10 @@ isolation happens later, at mu-code Step 1.
 
 ## Project Context Binding
 
+When the project has a case registry (`/mu-setup`), carry the affected case IDs
+through tasks and tests so each test records which cases it exercises, per
+`@../../knowledge/principles/case-registry.md`.
+
 Read `@../../knowledge/principles/project-context.md` and run `resolve`. In
 GitHub-first mode, the first meaningful commit is the Draft PR boundary: find or
 create that exact-work Draft PR, run `authorize` for each mutation, and publish

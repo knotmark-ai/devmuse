@@ -304,7 +304,7 @@ Verify every use case from validated requirements evidence has corresponding imp
 | Use Case | Test | Code | Status |
 |----------|------|------|--------|
 | UC-1 | file:line | file:line | ✅ Covered |
-| UC-2 | file:line | file:line | ✅ Covered |
+| UC-2 | file:line | file:line | ⚠️ Stale |
 | UC-3 | — | — | ❌ Missing |
 
 **Status:** All Covered | Gaps Found
@@ -312,6 +312,13 @@ Verify every use case from validated requirements evidence has corresponding imp
 **Gaps (if any):**
 - [UC-ID]: [description] - [what's missing: test, implementation, or both]
 ```
+
+When the project has a case registry (a v2 manifest with a `cases:` block),
+coverage is **result-anchored**: a case with a test and result is `⚠️ Stale`, not
+`✅ Covered`, when the requirement/example, test, or code revision the latest
+result bound has since changed. Compute it with the project-registry runtime's
+`staleness` command rather than by hand; a stale result hides a regression that a
+plain "covered" would not.
 
 **Calibration:** Only report findings with >80% confidence. If a UC-ID is not explicitly referenced in tests but the functionality is clearly covered, mark as `⚠️ Likely covered (no explicit UC-ID reference)` rather than `❌ Missing`.
 

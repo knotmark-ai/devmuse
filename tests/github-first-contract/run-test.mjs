@@ -47,6 +47,15 @@ test("scope writes a dated local file only as an explicit fallback, never by def
   assert.ok(datedAt > fallbackAt, "the dated scope path appears only within the fallback gate");
 });
 
+test("every pipeline stage references the case-registry traceability contract", () => {
+  for (const name of ["scope", "arch", "plan", "code", "review"]) {
+    assert.match(files[name], /case-registry\.md/, name);
+  }
+  // The reviewer marks coverage stale, not merely covered, when a bound revision moved.
+  assert.match(files.reviewer, /staleness/);
+  assert.match(files.reviewer, /Stale/);
+});
+
 test("review agents accept GitHub evidence without requiring a local plan or scope file", () => {
   assert.match(files.reviewer, /PLAN_EVIDENCE_URL/);
   assert.match(files.reviewer, /SCOPE_EVIDENCE_URL/);
