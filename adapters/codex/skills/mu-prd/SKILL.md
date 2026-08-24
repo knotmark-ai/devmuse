@@ -63,16 +63,16 @@ Phase 0 parses only the stance token; Depth Mode Selection parses only the depth
 
 Two orthogonal axes compose the section set (see references/devmuse/knowledge/principles/project-profiles.md):
 
-- **Profile** — *what kind of product this is* — selects **which** sections exist. A user-facing app (`client-app`) has information architecture, core user flows, key screens, and tiering; a `library-sdk` or `cli-devtool` has a public surface and no screens; a `data-ai` product has data-flow and model/tool-boundary sections. Compose profiles; take the union when more than one applies. Never emit a section a profile does not populate from the project's own evidence.
+- **Profile** — *what kind of product this is* — selects **which** sections exist. The product axis values are `end-user-app` / `developer-tool` / `library-sdk` / `data-ai` (see the axis table in references/devmuse/knowledge/principles/project-profiles.md — use those names, not ad-hoc ones). An `end-user-app` has information architecture, core user flows, key screens, and tiering; a `library-sdk` or `developer-tool` has a public/command surface and no screens; a `data-ai` product has data-flow and model/tool-boundary sections. Compose profiles; take the union when more than one applies. Never emit a section a profile does not populate from the project's own evidence.
 - **Depth** — *how much ceremony the stakes justify* — selects **how much** of each section to carry.
 
 | Signal | Depth | Scope |
 |---|---|---|
-| Solo dev, small project, "lightweight PRD", `/mu-prd lightweight` | **Lightweight** | The profile's core sections only (for `client-app`: core flows + key specs + open questions) |
+| Solo dev, small project, "lightweight PRD", `/mu-prd lightweight` | **Lightweight** | The profile's core sections only (for `end-user-app`: core flows + key specs + open questions) |
 | Team project, investor-facing, formal product, `/mu-prd full` | **Full** | The profile's full section set |
 | Unclear | One probe: "Stakes — hobby / internal tool / public launch?" hobby → lightweight; internal → lightweight; launch → full |
 
-**Length scales with stakes:** hobby ≈ a page or two; internal ≈ a few pages; launch ≈ as long as its features require. Profile picks the section set; depth and stakes calibrate how much each section carries. The full section list below is the `client-app` profile — the default when a project is a user-facing application.
+**Length scales with stakes:** hobby ≈ a page or two; internal ≈ a few pages; launch ≈ as long as its features require. Profile picks the section set; depth and stakes calibrate how much each section carries. The full section list below is the `end-user-app` profile — the default when a project is a user-facing application, not what every project emits.
 
 ## Process Flow
 
@@ -185,6 +185,15 @@ Save to `docs/prd/YYYY-MM-DD-<product>.md` (plus the `CONTEXT.md` machines when 
 Ask the user which MVP feature to start with. Then invoke mu-scope for that feature. Remaining features go through mu-scope iteratively, one at a time.
 
 ## Artifact Format
+
+The template below is the **`end-user-app` profile** in full depth — its nine
+sections (persona, information architecture, screens, tiering, …) belong to a
+user-facing app, not to every project. Compose the actual section set from §2's
+axes: keep the common core, add the sections the project's profile activates, and
+drop the ones it does not populate (a `library-sdk`/`developer-tool` has a public
+or command surface and no screens or IA; a `data-ai` product leads with data-flow
+and the model/tool boundary). Do not emit an empty `end-user-app` section for a
+project whose profile never fills it.
 
 ```markdown
 # PRD: <product name>
