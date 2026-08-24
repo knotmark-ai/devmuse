@@ -12,10 +12,12 @@ const targetSkillsRoot = path.join(codexRoot, "skills");
 const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, "package.json"), "utf8"));
 
 const implicitSkills = new Set(["mu-scope", "mu-arch", "mu-code", "mu-debug"]);
-const projectContextConsumers = new Set(["mu-scope", "mu-arch", "mu-plan", "mu-code", "mu-review"]);
+const projectContextConsumers = new Set(["mu-scope", "mu-arch", "mu-plan", "mu-code", "mu-review", "mu-setup"]);
 const projectContextRuntimeRoot = path.join(sourcePluginRoot, "runtime", "project-context");
 const crossReviewConsumers = new Set(["mu-review"]);
 const crossReviewRuntimeRoot = path.join(sourcePluginRoot, "runtime", "cross-review");
+const projectRegistryConsumers = new Set(["mu-setup"]);
+const projectRegistryRuntimeRoot = path.join(sourcePluginRoot, "runtime", "project-registry");
 
 const ui = {
   "mu-arch": ["DevMuse Architecture", "Design bounded technical architecture", "design the architecture for an approved scope"],
@@ -28,6 +30,7 @@ const ui = {
   "mu-prd": ["DevMuse PRD", "Define product flows and requirements", "create or update the product requirements document"],
   "mu-review": ["DevMuse Review", "Review coverage, security, and quality", "run the specialized DevMuse review requested here"],
   "mu-scope": ["DevMuse Scope", "Classify impact and define use cases", "probe this behavior-changing request and define its scope"],
+  "mu-setup": ["DevMuse Setup", "Initialize project case-registry routing", "discover and initialize this project's case-registry routing and preferences"],
   "mu-wiki": ["DevMuse Wiki", "Generate or update architecture docs", "generate or update the repository architecture wiki"],
   "mu-write-skill": ["DevMuse Skill Authoring", "Author and pressure-test Agent Skills", "author or revise this Agent Skill with pressure tests"],
 };
@@ -58,6 +61,10 @@ function rewritePortableText(text, skillName) {
     .replaceAll(
       "${CLAUDE_PLUGIN_ROOT}/runtime/cross-review/cli.mjs",
       "references/devmuse/runtime/cross-review/cli.mjs",
+    )
+    .replaceAll(
+      "${CLAUDE_PLUGIN_ROOT}/runtime/project-registry/cli.mjs",
+      "references/devmuse/runtime/project-registry/cli.mjs",
     )
     // Reciprocal cross-review host identity: the canonical skill is authored for
     // Claude Code (reviewer = Codex); the generated Codex adapter reviews with
@@ -155,6 +162,14 @@ for (const skillName of skillNames) {
     fs.cpSync(
       crossReviewRuntimeRoot,
       path.join(targetRoot, "references", "devmuse", "runtime", "cross-review"),
+      { recursive: true },
+    );
+  }
+
+  if (projectRegistryConsumers.has(skillName)) {
+    fs.cpSync(
+      projectRegistryRuntimeRoot,
+      path.join(targetRoot, "references", "devmuse", "runtime", "project-registry"),
       { recursive: true },
     );
   }

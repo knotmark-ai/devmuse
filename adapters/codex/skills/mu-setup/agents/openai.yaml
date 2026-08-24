@@ -1,0 +1,6 @@
+interface:
+  display_name: "DevMuse Setup"
+  short_description: "Initialize project case-registry routing"
+  default_prompt: "Use $mu-setup to discover and initialize this project's case-registry routing and preferences."
+policy:
+  allow_implicit_invocation: false

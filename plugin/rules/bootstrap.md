@@ -140,6 +140,7 @@ First matching row wins.
 | product requirements / user flows / screens | point to `/mu-prd` |
 | durable current architecture docs / wiki | point to `/mu-wiki` |
 | stress-test / grill a plan or design | point to `/mu-grill` |
+| set up / initialize project case-registry routing or preferences | point to `/mu-setup` |
 | plausible installed non-DevMuse skill match | propose that skill |
 | no match / empty or shallow repo | inspect only enough to identify the missing choice, then ask one targeted question |
 
@@ -157,7 +158,7 @@ exclusion and route without asking permission again.
 - **On-demand:** never auto-invoke; point to the slash command — `/mu-mrd`
   (market/premise), `/mu-model` (domain concepts), `/mu-prd` (product flows),
   `/mu-wiki` (current architecture docs),
-  `/mu-grill` (stress-test a plan/design).
+  `/mu-grill` (stress-test a plan/design), `/mu-setup` (case-registry routing).
 - **Meta:** mu-write-skill.
 
 ## Pipeline Graph
