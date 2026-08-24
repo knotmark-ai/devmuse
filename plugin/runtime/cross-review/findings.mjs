@@ -11,6 +11,38 @@ function normalizeSeverity(value) {
   return SEVERITY_ALIAS[key] ?? "minor";
 }
 
+// Unwrap claude's `-p --output-format json` envelope down to the schema-conforming
+// payload. That flag emits either a single `{result}` object or an ARRAY of stream
+// events whose terminal `type:"result"` element carries the final text (C3). Naively
+// handing the array to the normalizer made the event list itself look like the
+// findings list — one phantom finding per event. Returns the inner value (object or
+// JSON string) for the normalizer to validate; the raw input when it can't unwrap
+// (so a non-conforming reviewer degrades to `invalid`, never phantom findings).
+export function extractClaudeStructuredOutput(raw) {
+  let value;
+  try {
+    value = typeof raw === "string" ? JSON.parse(raw) : raw;
+  } catch {
+    return raw;
+  }
+  if (value && !Array.isArray(value) && typeof value === "object") {
+    if (Array.isArray(value.findings)) return value;       // already the payload
+    if (value.result !== undefined) return value.result;   // {result} envelope
+    return raw;
+  }
+  if (Array.isArray(value)) {
+    const result = value.find((event) => event && event.type === "result" && event.result !== undefined);
+    if (result) return result.result;
+    const parts = [];
+    for (const event of value) {
+      const content = event?.message?.content;
+      if (Array.isArray(content)) for (const block of content) if (block?.type === "text") parts.push(block.text);
+    }
+    if (parts.length) return parts.join("\n");
+  }
+  return raw;
+}
+
 // Validate the structured payload rather than trusting a zero exit. Returns a
 // typed result: `invalid` when the reviewer produced no usable findings array,
 // otherwise `ok` with normalized findings carrying reviewer provenance.

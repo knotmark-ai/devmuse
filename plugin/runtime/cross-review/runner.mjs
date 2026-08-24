@@ -8,7 +8,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { buildInvocation, FINDINGS_SCHEMA, ENV_TIMEOUT_MS } from "./reviewer.mjs";
-import { normalizeExternalFindings } from "./findings.mjs";
+import { normalizeExternalFindings, extractClaudeStructuredOutput } from "./findings.mjs";
 
 const DEFAULT_TIMEOUT_MS = 180_000;
 
@@ -53,7 +53,7 @@ export async function runCrossReview(invocation, { spawn = nodeSpawn, timeoutMs 
       let raw;
       try {
         if (readOutput) raw = readOutput();                       // test injection
-        else if (invocation.outputMode === "stdout") raw = stdout; // claude → stdout
+        else if (invocation.outputMode === "stdout") raw = extractClaudeStructuredOutput(stdout); // claude → stdout event stream
         else raw = fs.readFileSync(outputPath ?? "", "utf8");      // codex → output file
       } catch {
         return done({ status: "fallback", reason: "no-output", exitCode: code, stderr: stderr.slice(0, 500) });
