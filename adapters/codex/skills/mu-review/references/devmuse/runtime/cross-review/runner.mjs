@@ -8,7 +8,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { buildInvocation, FINDINGS_SCHEMA, ENV_TIMEOUT_MS } from "./reviewer.mjs";
-import { normalizeExternalFindings, extractClaudeStructuredOutput } from "./findings.mjs";
+import { normalizeExternalFindings, extractClaudeStructuredOutput, extractCodexReviewFindings } from "./findings.mjs";
 
 const DEFAULT_TIMEOUT_MS = 180_000;
 
@@ -54,7 +54,13 @@ export async function runCrossReview(invocation, { spawn = nodeSpawn, timeoutMs 
       try {
         if (readOutput) raw = readOutput();                       // test injection
         else if (invocation.outputMode === "stdout") raw = extractClaudeStructuredOutput(stdout); // claude → stdout event stream
-        else raw = fs.readFileSync(outputPath ?? "", "utf8");      // codex → output file
+        else {
+          // codex → --output-last-message file. codex `exec review` ignores
+          // --output-schema and writes a native review report, so parse that
+          // into findings rather than JSON.parsing prose (M4).
+          const fileText = fs.readFileSync(outputPath ?? "", "utf8");
+          raw = invocation.reviewer === "codex" ? extractCodexReviewFindings(fileText) : fileText;
+        }
       } catch {
         return done({ status: "fallback", reason: "no-output", exitCode: code, stderr: stderr.slice(0, 500) });
       }

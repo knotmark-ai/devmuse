@@ -5,7 +5,7 @@ import test from "node:test";
 
 import { buildInvocation, RECURSION_ENV, baseBranch, ENV_BINARY, ENV_CONFIG_HOME, FINDINGS_SCHEMA } from "../../plugin/runtime/cross-review/reviewer.mjs";
 import { runCrossReview, runReview } from "../../plugin/runtime/cross-review/runner.mjs";
-import { normalizeExternalFindings, mergeFindings, extractClaudeStructuredOutput } from "../../plugin/runtime/cross-review/findings.mjs";
+import { normalizeExternalFindings, mergeFindings, extractClaudeStructuredOutput, extractCodexReviewFindings } from "../../plugin/runtime/cross-review/findings.mjs";
 
 const base = { projectDir: "/repo", outputPath: "/tmp/out.json", schemaPath: "/tmp/schema.json", refs: ["main...HEAD"] };
 
@@ -108,17 +108,6 @@ function fakeChild({ withStdout = false } = {}) {
   return child;
 }
 
-test("codex (file mode) normalizes findings from its output file", async () => {
-  const child = fakeChild();
-  const promise = runCrossReview(
-    { status: "ready", reviewer: "codex", outputMode: "file", command: "codex", args: [], cwd: "/repo", env: {} },
-    { spawn: () => child, outputPath: "/tmp/out.json", readOutput: () => JSON.stringify({ findings: [{ severity: "high", file: "a.mjs", line: 3, summary: "leak" }] }) },
-  );
-  child.emit("close", 0);
-  const result = await promise;
-  assert.equal(result.status, "ok");
-  assert.equal(result.findings[0].severity, "important"); // "high" aliased
-});
 
 test("claude (stdout mode) extracts findings from the real event-stream envelope, not phantom events (C3)", async () => {
   const child = fakeChild({ withStdout: true });
@@ -156,6 +145,51 @@ test("extractClaudeStructuredOutput unwraps every envelope shape and degrades sa
   // A non-conforming terminal result (plain prose) → normalizer reports invalid, NOT phantom findings.
   const prose = [{ type: "result", result: "I could not review." }];
   assert.equal(normalizeExternalFindings(extractClaudeStructuredOutput(JSON.stringify(prose)), { reviewer: "claude" }).status, "invalid");
+});
+
+test("codex (file mode) parses the native review report from its real output file into findings (M4)", async () => {
+  // The REAL shape of codex `exec review`'s --output-last-message, captured live
+  // against codex-cli 0.149.1. --output-schema is ignored; this is prose, not JSON,
+  // so JSON.parsing it would drop every finding. Drive the real file-read path.
+  const fs = await import("node:fs");
+  const os = await import("node:os");
+  const path = await import("node:path");
+  const report = [
+    "The patch removes input validation and changes documented runtime behavior for empty and invalid inputs.",
+    "",
+    "Review comment:",
+    "",
+    "- [P1] Restore the invalid and empty array guard — src/util.js:5-5",
+    "  When callers pass null, undefined, a non-array value, or an empty array, this no longer preserves the null result.",
+    "- [P2] Update the stale doc comment — src/util.js:1-1",
+    "  The comment still says 'non-empty array'.",
+  ].join("\n");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-codex-m4-"));
+  const outputPath = path.join(dir, "out.txt");
+  fs.writeFileSync(outputPath, report);
+  const child = fakeChild();
+  const promise = runCrossReview(
+    { status: "ready", reviewer: "codex", outputMode: "file", command: "codex", args: [], cwd: "/repo", env: {} },
+    { spawn: () => child, outputPath },
+  );
+  child.emit("close", 0);
+  const result = await promise;
+  fs.rmSync(dir, { recursive: true, force: true });
+  assert.equal(result.status, "ok");
+  assert.equal(result.findings.length, 2);
+  assert.deepEqual(result.findings.map((f) => [f.severity, f.file, f.line]), [
+    ["important", "src/util.js", 5], // P1 -> important
+    ["minor", "src/util.js", 1],     // P2 -> minor
+  ]);
+});
+
+test("extractCodexReviewFindings maps priorities and locators, and a clean report yields none", () => {
+  assert.deepEqual(extractCodexReviewFindings("No issues found.").findings, []);
+  const one = extractCodexReviewFindings("- [P0] Blocker — a.js:12-20\n  body").findings;
+  assert.deepEqual(one, [{ severity: "critical", file: "a.js", line: 12, summary: "Blocker" }]);
+  // A bullet with no locator still yields a finding (file/line null).
+  assert.deepEqual(extractCodexReviewFindings("- [P3] general note about style").findings,
+    [{ severity: "minor", file: null, line: null, summary: "general note about style" }]);
 });
 
 test("a synchronous spawn failure returns a typed fallback, not a timer ReferenceError", async () => {
