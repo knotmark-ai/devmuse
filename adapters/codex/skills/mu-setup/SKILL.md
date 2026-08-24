@@ -26,11 +26,13 @@ Claude skills invoke `references/devmuse/runtime/project-registry/cli.mjs`;
 portable skills invoke their vendored
 `references/devmuse/runtime/project-registry/cli.mjs`. Its read/validate/propose
 commands (`resolve` via project-context, `propose-migration`, `serialize-manifest`,
-`status`, `read-kind`, `read-routing`) never write. After the user approves, the
-write commands persist: `write-manifest` serializes and writes
-`.devmuse/project.yaml`, and `init` creates the registry files — **each requires
-`approved: true` in the request** (the present-before-write gate, enforced in
-code) and never stores credentials. snake_case in, snake_case out.
+`status`, `read-kind`, `read-routing`, `read-preferences`, `resolve-routing`)
+never write. After the user approves, the write commands persist: `write-manifest`
+serializes and writes `.devmuse/project.yaml`, `init` creates the registry files,
+and `write-preferences` records the user-level default routes **outside** any repo
+— **each requires `approved: true` in the request** (the present-before-write
+gate, enforced in code) and never stores credentials. snake_case in, snake_case
+out.
 
 ## Process
 
@@ -64,8 +66,15 @@ digraph mu_setup {
    is sufficient (tests in `xray/` → `test_cases: xray`; a `tests/` tree with no
    provider → `test_cases: repository`).
 3. **Ask only unresolved choices** that change canonical ownership. Do not invent
-   a SaaS, database, or process the evidence does not show (UC-CR4). An asset kind
-   with no evidence defaults to `repository`.
+   a SaaS, database, or process the evidence does not show (UC-CR4). For routes
+   the project evidence leaves unset, seed the default from the user's personal
+   preferences with `resolve-routing` (pass the inferred `project_routes`): the
+   project's own evidence always wins, the user default fills only the gaps, and
+   an asset kind with neither still defaults to `repository` (UC-C9). Applying a
+   preference is read-only — it never rewrites the user file. If the user settles
+   a choice they want to reuse across projects, offer `write-preferences` to save
+   it as their default; that write is user-level, approval-gated, and never
+   touches this repo's tracked config.
 4. **Propose.** Build the v1→v2 migration with `propose-migration`, passing the
    inferred `cases:` block. **Present the full proposed configuration and the
    change list to the user before any tracked write** (UC-C5).
@@ -91,7 +100,7 @@ digraph mu_setup {
 ## Storage tiers (do not call all of this "memory")
 
 - **Tracked project configuration** — identity, canonical locations, routes, team policy. Reviewable in Git; the authority.
-- **User configuration** — personal defaults across projects; project policy wins without rewriting it (UC-C9).
+- **User configuration** — personal default routes across projects, in a user-level file (`$DEVMUSE_CONFIG_HOME`, else `$XDG_CONFIG_HOME/devmuse`, else `~/.config/devmuse/preferences.json`), schema `{cases:{routes:{<kind>:<provider>}}}`. Read with `read-preferences`, written with `write-preferences`, applied with `resolve-routing`. Project policy wins per-route without rewriting it (UC-C9).
 - **Disposable Git-common cache** — worktree pointers, capability probes, sync cursors (project-context's cache). Hints only.
 - **Credentials** — the host/provider credential system; never project config or cache.
 
