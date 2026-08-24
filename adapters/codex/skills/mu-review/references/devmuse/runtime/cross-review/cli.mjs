@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 // Thin CLI over the cross-review runtime. snake_case in, snake_case out.
 //   plan       — build and print the reviewer invocation (no execution)
-//   run        — execute the invocation with a bounded timeout and fallback
+//   run        — execute a cross-review (owns a private temp dir + schema)
 //   normalize  — normalize a reviewer's raw JSON output into DevMuse findings
 //   merge      — merge primary and external findings, surfacing contradictions
 import { buildInvocation } from "./reviewer.mjs";
-import { runCrossReview } from "./runner.mjs";
+import { runReview } from "./runner.mjs";
 import { normalizeExternalFindings, mergeFindings } from "./findings.mjs";
 
 function write(value, status = 0) {
@@ -35,10 +35,10 @@ const command = process.argv[2] ?? "plan";
 try {
   const input = await readStdin();
   if (command === "plan") {
-    write(buildInvocation({ ...input, env: input.env ?? process.env }));
+    // Inspection only — placeholder schema/output paths so the argv is visible.
+    write(buildInvocation({ ...input, env: input.env ?? process.env, schemaPath: input.schemaPath ?? "<schema>", outputPath: input.outputPath ?? "<output>" }));
   } else if (command === "run") {
-    const invocation = buildInvocation({ ...input, env: input.env ?? process.env });
-    write(await runCrossReview(invocation, { outputPath: input.outputPath }));
+    write(await runReview({ ...input, env: input.env ?? process.env }));
   } else if (command === "normalize") {
     write(normalizeExternalFindings(input.raw, { reviewer: input.reviewer, model: input.model }));
   } else if (command === "merge") {

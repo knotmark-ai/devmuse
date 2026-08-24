@@ -110,14 +110,13 @@ review; do not turn a missing CLI into an installation flow.
 
 Do not hand-build the reviewer command. The runtime constructs a read-only,
 ephemeral, project-scoped invocation with quoted argument arrays (no `eval`, no
-shell, no aliases) and prefers an existing local subscription/session login over
-an API key. Claude skills invoke
-`references/devmuse/runtime/cross-review/cli.mjs`; portable skills invoke
-their vendored `references/devmuse/runtime/cross-review/cli.mjs`:
+shell, no aliases), a private temp dir for its output schema, and an existing
+local subscription/session login preferred over an API key. Codex skills invoke their vendored
+`references/devmuse/runtime/cross-review/cli.mjs`.
 
-- `plan` with `{"current_host":"codex", "project_dir":"…", "refs":["<base>...HEAD"], "output_path":"…"}` returns the reviewer argv/env, or a typed denial (`unavailable`, `same-family`, `recursion-blocked`).
-- `run` executes it under a bounded timeout and returns normalized findings or a typed `fallback`.
+- `run` with `{"current_host":"codex", "project_dir":"…", "refs":["<base>...HEAD"]}` builds the invocation (owning its schema + output temp dir), executes it under a bounded timeout, and returns normalized findings or a typed `fallback` — or `skipped` for a typed denial (`unavailable`, `same-family`, `recursion-blocked`). `plan` prints the argv without running.
 - `normalize`/`merge` map reviewer output into DevMuse severities and surface contradictions side by side, preserving reviewer provenance. Validate structured output rather than trusting exit code 0; never print, copy, or commit OAuth caches, API keys, or tokens.
+- Overrides are host-native env vars, never shell aliases: `DEVMUSE_CROSS_REVIEW_BINARY`, `DEVMUSE_CROSS_REVIEW_CONFIG_HOME` (mapped to `CODEX_HOME` / `CLAUDE_CONFIG_DIR`), and `DEVMUSE_CROSS_REVIEW_TIMEOUT_MS`.
 
 Present contradictory conclusions side by side; do not silently choose one.
 
