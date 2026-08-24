@@ -17,6 +17,33 @@ export function registryPath(repoRoot, kind) {
   return path.join(repoRoot, REGISTRY_DIR, `${kind}.json`);
 }
 
+// Real path of the nearest existing ancestor of `target`, so symlink escape is
+// detected even for a file that does not exist yet.
+function realExistingPath(target) {
+  let cursor = path.resolve(target);
+  const suffix = [];
+  while (!fs.existsSync(cursor)) {
+    const parent = path.dirname(cursor);
+    if (parent === cursor) return path.resolve(target);
+    suffix.unshift(path.basename(cursor));
+    cursor = parent;
+  }
+  return path.join(fs.realpathSync(cursor), ...suffix);
+}
+
+// A tracked write target must resolve to a real path INSIDE the repo. A
+// `registry` dir that is (or is under) a symlink pointing elsewhere is rejected,
+// so an approved write can never land outside the repository.
+function containedRegistryPath(repoRoot, kind) {
+  const file = registryPath(repoRoot, kind);
+  const root = realExistingPath(repoRoot);
+  const resolved = realExistingPath(file);
+  if (resolved !== root && !resolved.startsWith(`${root}${path.sep}`)) {
+    throw Object.assign(new Error("registry path escapes the repository"), { code: "registry-escapes-repo" });
+  }
+  return file;
+}
+
 // Read one kind's assets. An absent file is an empty kind, not an error — a fresh
 // project has no assets yet. A present-but-corrupt file is surfaced, not hidden.
 export function readKind(repoRoot, kind) {
@@ -34,7 +61,7 @@ export function readKind(repoRoot, kind) {
 // Atomic write: temp file + rename, so a crash never leaves a half-written
 // registry file. Tracked file, normal mode.
 export function writeKind(repoRoot, kind, assets) {
-  const file = registryPath(repoRoot, kind);
+  const file = containedRegistryPath(repoRoot, kind); // rejects a symlink escape
   const serialized = serializeRegistryFile(kind, assets); // validates + rejects on bad input
   fs.mkdirSync(path.dirname(file), { recursive: true });
   const temporary = `${file}.${process.pid}.${randomUUID()}.tmp`;
