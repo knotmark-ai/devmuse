@@ -61,7 +61,22 @@ test("a provider test record normalizes to a registry reference, not a payload c
   assert.deepEqual(normalized.asset.locator, { provider: "xray", ref: "PROJ-12" });
   assert.equal(normalized.asset.fields.title, "Login works");
   assert.equal(normalized.providerRevision, "xray:2026-08-01T00:00:00Z");
-  assert.equal(normalizeXrayTest({ nope: 1 }).reason, "missing-key");
+});
+
+test("the read request rejects injection-prone input (URL userinfo/query, non-ISO since)", () => {
+  const bad = (input) => xrayReadTestsRequest(input).reason;
+  assert.equal(bad({ baseUrl: "http://x.atlassian.net", projectKey: "PROJ" }), "bad-base-url"); // not https
+  assert.equal(bad({ baseUrl: "https://u:p@x.atlassian.net", projectKey: "PROJ" }), "bad-base-url"); // userinfo
+  assert.equal(bad({ baseUrl: "https://x.atlassian.net?a=1", projectKey: "PROJ" }), "bad-base-url"); // query
+  assert.equal(bad({ baseUrl: "https://x.atlassian.net", projectKey: "PROJ", since: '2026" OR "1"="1' }), "bad-since"); // JQL injection attempt
+  assert.equal(xrayReadTestsRequest({ baseUrl: "https://x.atlassian.net", projectKey: "PROJ", since: "2026-01-01" }).status, "ready");
+});
+
+test("record normalization rejects a malformed key or timestamp", () => {
+  assert.equal(normalizeXrayTest({ nope: 1 }).reason, "bad-key");
+  assert.equal(normalizeXrayTest({ key: "not a key" }).reason, "bad-key");
+  assert.equal(normalizeXrayTest({ key: "PROJ-12", fields: { updated: "whenever" } }).reason, "bad-updated");
+  assert.equal(normalizeXrayTest({ key: "PROJ-12", fields: { updated: "2026-08-01T00:00:00.000+0000" } }).status, "ok"); // Jira offset form
 });
 
 test("capabilities are declared design-time-only until validated against live", () => {

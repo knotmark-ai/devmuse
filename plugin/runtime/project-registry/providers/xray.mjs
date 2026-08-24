@@ -24,17 +24,37 @@ export function xrayCapabilities() {
   };
 }
 
+// A date (2026-01-01) or a full instant with a Z or numeric offset — the forms
+// `since` and Jira's `updated` actually use.
+const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2}))?$/;
+
+// A clean https origin + path, rejecting userinfo, query, and fragment forms so a
+// crafted baseUrl cannot smuggle credentials or parameters.
+function cleanBaseUrl(baseUrl) {
+  if (typeof baseUrl !== "string") return null;
+  let url;
+  try {
+    url = new URL(baseUrl);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash) return null;
+  return `${url.origin}${url.pathname.replace(/\/+$/, "")}`;
+}
+
 // Build a read request for a project's Xray tests. No credentials in the
 // descriptor — the transport adds Authorization from the credential store.
 export function xrayReadTestsRequest({ baseUrl, projectKey, since = null } = {}) {
-  if (typeof baseUrl !== "string" || !/^https:\/\//.test(baseUrl)) return { status: "invalid", reason: "bad-base-url" };
+  const base = cleanBaseUrl(baseUrl);
+  if (!base) return { status: "invalid", reason: "bad-base-url" };
   if (typeof projectKey !== "string" || !/^[A-Z][A-Z0-9_]{0,63}$/.test(projectKey)) return { status: "invalid", reason: "bad-project-key" };
+  if (since !== null && (typeof since !== "string" || !ISO_INSTANT.test(since))) return { status: "invalid", reason: "bad-since" };
   const jql = `project = ${projectKey} AND issuetype = Test${since ? ` AND updated >= "${since}"` : ""}`;
   return {
     status: "ready",
     request: {
       method: "GET",
-      url: `${baseUrl.replace(/\/+$/, "")}/rest/api/2/search`,
+      url: `${base}/rest/api/2/search`,
       query: { jql, fields: "summary,status,updated,issuelinks" },
       headers: { Accept: "application/json" }, // no Authorization here, by contract
     },
@@ -45,10 +65,16 @@ export function xrayReadTestsRequest({ baseUrl, projectKey, since = null } = {})
 // locator + a revision derived from the provider's own change stamp, plus
 // minimal normalized fields — not the full payload.
 export function normalizeXrayTest(record) {
-  if (!record || typeof record !== "object" || typeof record.key !== "string") {
-    return { status: "invalid", reason: "missing-key" };
+  if (!record || typeof record !== "object" || Array.isArray(record)) return { status: "invalid", reason: "not-a-record" };
+  // A Jira issue key is PROJECT-NNN; reject anything else so a malformed record
+  // cannot produce a bogus canonical id.
+  if (typeof record.key !== "string" || !/^[A-Z][A-Z0-9_]{0,63}-[1-9]\d*$/.test(record.key)) {
+    return { status: "invalid", reason: "bad-key" };
   }
-  const fields = record.fields ?? {};
+  const fields = (record.fields && typeof record.fields === "object" && !Array.isArray(record.fields)) ? record.fields : {};
+  if (fields.updated !== undefined && fields.updated !== null && !(typeof fields.updated === "string" && ISO_INSTANT.test(fields.updated))) {
+    return { status: "invalid", reason: "bad-updated" };
+  }
   const asset = {
     id: `tc:${record.key.toLowerCase()}`,
     kind: "test_cases",

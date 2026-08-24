@@ -36,7 +36,10 @@ try {
   const input = await readStdin();
   if (command === "plan") {
     // Inspection only — placeholder schema/output paths so the argv is visible.
-    write(buildInvocation({ ...input, env: input.env ?? process.env, schemaPath: input.schemaPath ?? "<schema>", outputPath: input.outputPath ?? "<output>" }));
+    const inv = buildInvocation({ ...input, env: input.env ?? process.env, schemaPath: input.schemaPath ?? "<schema>", outputPath: input.outputPath ?? "<output>" });
+    // Never print env VALUES (they may hold auth-home paths); expose only keys.
+    if (inv.env) inv.env = Object.keys(inv.env).sort();
+    write(inv);
   } else if (command === "run") {
     write(await runReview({ ...input, env: input.env ?? process.env }));
   } else if (command === "normalize") {

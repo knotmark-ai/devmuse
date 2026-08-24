@@ -62,3 +62,12 @@ test("writeKind rejects an asset of the wrong kind (validation via serialize)", 
   const repo = tempRepo(t);
   assert.throws(() => writeKind(repo, "rules", [{ id: "BAD ID", kind: "rules" }]));
 });
+
+test("writeKind rejects a registry dir that symlinks outside the repo", (t) => {
+  const repo = tempRepo(t);
+  const outside = tempRepo(t);
+  fs.symlinkSync(outside, path.join(repo, "registry"), process.platform === "win32" ? "junction" : "dir");
+  assert.throws(() => writeKind(repo, "test_cases", [{ id: "tc:x", kind: "test_cases", fields: {} }]), (error) => error.code === "registry-escapes-repo");
+  // Nothing was written outside the repo.
+  assert.equal(fs.existsSync(path.join(outside, "test_cases.json")), false);
+});

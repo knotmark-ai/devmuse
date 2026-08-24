@@ -18,6 +18,20 @@ export const ENV_BINARY = "DEVMUSE_CROSS_REVIEW_BINARY";
 export const ENV_CONFIG_HOME = "DEVMUSE_CROSS_REVIEW_CONFIG_HOME";
 export const ENV_TIMEOUT_MS = "DEVMUSE_CROSS_REVIEW_TIMEOUT_MS";
 
+// The ONLY parent-env keys copied into the reviewer subprocess. The whole
+// process.env must never be forwarded — it commonly holds API tokens that would
+// then be visible in the invocation and any log of it. The reviewer finds its
+// subscription login through HOME (or an explicit CODEX_HOME/CLAUDE_CONFIG_DIR).
+const CHILD_ENV_ALLOWLIST = ["PATH", "HOME", "LANG", "LC_ALL", "LC_CTYPE", "TERM", "TMPDIR", "SHELL", "USER"];
+
+function minimalChildEnv(env) {
+  const child = {};
+  for (const key of CHILD_ENV_ALLOWLIST) {
+    if (typeof env[key] === "string") child[key] = env[key];
+  }
+  return child;
+}
+
 // The structured output both reviewers must emit; the runner writes this to a
 // temp file and passes it as the reviewer's output schema, then validates the
 // result against it rather than trusting a zero exit.
@@ -96,7 +110,8 @@ export function buildInvocation({
 
   const binary = target.binary ?? env[ENV_BINARY] ?? null;
   const authHome = target.authHome ?? env[ENV_CONFIG_HOME] ?? null;
-  const childEnv = { ...env, [RECURSION_ENV]: "1" };
+  // Minimal child env (allowlist) + the recursion guard — never the full env.
+  const childEnv = { ...minimalChildEnv(env), [RECURSION_ENV]: "1" };
 
   if (target.host === "codex") {
     const base = baseBranch(refs);

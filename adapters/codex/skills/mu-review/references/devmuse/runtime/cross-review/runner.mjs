@@ -21,10 +21,11 @@ export async function runCrossReview(invocation, { spawn = nodeSpawn, timeoutMs 
   }
   return new Promise((resolve) => {
     let settled = false;
-    const done = (result) => {
+    let timer = null; // declared before `done` so a synchronous spawn failure
+    const done = (result) => {   // does not hit a temporal-dead-zone ReferenceError
       if (settled) return;
       settled = true;
-      clearTimeout(timer);
+      if (timer) clearTimeout(timer);
       resolve(result);
     };
 
@@ -35,7 +36,7 @@ export async function runCrossReview(invocation, { spawn = nodeSpawn, timeoutMs 
       return done({ status: "fallback", reason: "spawn-failed", detail: error.code ?? error.message });
     }
 
-    const timer = setTimeout(() => {
+    timer = setTimeout(() => {
       try { child.kill("SIGKILL"); } catch { /* already gone */ }
       done({ status: "fallback", reason: "timeout" });
     }, timeoutMs);
@@ -47,6 +48,8 @@ export async function runCrossReview(invocation, { spawn = nodeSpawn, timeoutMs 
     child.stderr?.on("data", (chunk) => { stderr += String(chunk); });
     child.on("error", (error) => done({ status: "fallback", reason: "spawn-error", detail: error.code ?? error.message }));
     child.on("close", (code) => {
+      // A reviewer that exited non-zero failed; do not trust partial output.
+      if (code !== 0) return done({ status: "fallback", reason: "nonzero-exit", exitCode: code, stderr: stderr.slice(0, 500) });
       let raw;
       try {
         if (readOutput) raw = readOutput();                       // test injection

@@ -78,6 +78,15 @@ test("env overrides supply binary and config home without shell aliases", () => 
   assert.equal(inv.env.CODEX_HOME, "/env/home");
 });
 
+test("the reviewer child env is a strict allowlist — host secrets are never forwarded", () => {
+  const inv = buildInvocation({ currentHost: "claude", ...base, env: { PATH: "/bin", HOME: "/home/u", SECRET_TOKEN: "leak", GITHUB_TOKEN: "leak2" } });
+  assert.equal(inv.env.PATH, "/bin");
+  assert.equal(inv.env.HOME, "/home/u");
+  assert.equal("SECRET_TOKEN" in inv.env, false);
+  assert.equal("GITHUB_TOKEN" in inv.env, false);
+  assert.equal(inv.env[RECURSION_ENV], "1");
+});
+
 test("baseBranch extracts the base from a range or a bare branch", () => {
   assert.equal(baseBranch(["main...HEAD"]), "main");
   assert.equal(baseBranch(["release/2.0..HEAD"]), "release/2.0");
@@ -118,6 +127,25 @@ test("claude (stdout mode) reads findings from drained stdout, never deadlocks",
   const result = await promise;
   assert.equal(result.status, "ok");
   assert.equal(result.findings[0].severity, "critical");
+});
+
+test("a synchronous spawn failure returns a typed fallback, not a timer ReferenceError", async () => {
+  const result = await runCrossReview(
+    { status: "ready", reviewer: "codex", outputMode: "file", command: "x", args: [], cwd: "/repo", env: {} },
+    { spawn: () => { throw Object.assign(new Error("nope"), { code: "ENOENT" }); } },
+  );
+  assert.equal(result.status, "fallback");
+  assert.equal(result.reason, "spawn-failed");
+});
+
+test("a non-zero reviewer exit is a fallback, not trusted output", async () => {
+  const child = fakeChild();
+  const promise = runCrossReview(
+    { status: "ready", reviewer: "codex", outputMode: "file", command: "codex", args: [], cwd: "/repo", env: {} },
+    { spawn: () => child, readOutput: () => JSON.stringify({ findings: [] }) },
+  );
+  child.emit("close", 2);
+  assert.equal((await promise).reason, "nonzero-exit");
 });
 
 test("timeout, unparseable output, and not-ready all fall back typed, never throw or block", async () => {
