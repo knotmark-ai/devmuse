@@ -24,6 +24,10 @@ Announce the selected path at the start.
 
 ## Project Context Binding
 
+When the project has a case registry (`/mu-setup`), preserve the case IDs the
+plan carries through implementation and tests per
+`references/devmuse/knowledge/principles/case-registry.md`.
+
 Read `references/devmuse/knowledge/principles/project-context.md` and run `resolve` before
 architectural execution. In GitHub-first mode, the first meaningful commit
 binds the exact-work Draft PR. Before each remote evidence change, run
