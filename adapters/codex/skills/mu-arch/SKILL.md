@@ -255,7 +255,7 @@ Pre-existing specs with inline ADR bodies stay as they are — moving them retro
 
 ## Domain Language
 
-Naming is a cross-cutting concern like ADRs. **If `CONTEXT.md` does not exist and this design introduces domain concepts rather than only technical components, recommend `/mu-model` first — non-blocking, the user may decline.** Before coining any component or concept name, read the repo-root `CONTEXT.md` (if present) and reuse its terms — including respecting `_Avoid_` lists. When the design coins a new name and the user approves it, add the entry (definition + `_Avoid_` synonyms) to `CONTEXT.md` in the same commit as the design doc, per the qualification test in `references/devmuse/knowledge/principles/domain-model.md`.
+Naming is a cross-cutting concern like ADRs. **When this design introduces domain concepts rather than only technical components, run the domain-modeling method inline (references/devmuse/knowledge/principles/domain-model.md) and update the architecture set's `domain_model` member — `/mu-model` is the optional dedicated tool, not a required prior step.** Before coining any component or concept name, read the repo-root `CONTEXT.md` (if present) and reuse its terms — including respecting `_Avoid_` lists. When the design coins a new name and the user approves it, add the entry (definition + `_Avoid_` synonyms) to `CONTEXT.md` in the same commit as the design doc, per the qualification test in `references/devmuse/knowledge/principles/domain-model.md`.
 
 ## After the Design
 

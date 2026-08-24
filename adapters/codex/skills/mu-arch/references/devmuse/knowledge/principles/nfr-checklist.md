@@ -1,6 +1,6 @@
 # Non-Functional Requirements Checklist
 
-**When to use:** Referenced by mu-arch during design to systematically identify which NFR categories are relevant to the current feature. Scan the trigger conditions — only elaborate on categories where at least one trigger fires.
+**When to use:** Referenced by **mu-prd** (product-side concern scan, per @project-profiles.md) and **mu-arch** (design-side) to systematically identify which concern categories are relevant to the current feature. Scan the trigger conditions — only elaborate on categories where at least one trigger fires.
 
 Based on ISO/IEC 25010 quality model and practical software engineering experience.
 

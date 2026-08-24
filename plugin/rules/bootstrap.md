@@ -165,7 +165,7 @@ exclusion and route without asking permission again.
 
 | From | Consumes | Next |
 |---|---|---|
-| mu-mrd (full) | approved MRD | point to `/mu-model` if no `CONTEXT.md`, else `/mu-prd create` |
+| mu-mrd (full) | approved MRD | point to `/mu-prd create` (it runs domain modeling inline when the feature needs it; `/mu-model` is an optional focused pass) |
 | mu-model | approved domain model | point to `/mu-prd`, or mu-scope when PRD exists |
 | mu-prd | approved PRD | mu-scope, first MVP feature |
 | Spike | recorded verdict | mu-scope, or end on “do not build” |

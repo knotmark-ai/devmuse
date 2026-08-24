@@ -9,7 +9,14 @@ description: "Define product requirements — user flows, object lifecycles, scr
 
 Independent of the feature-level pipeline. Product-level skill that runs **once per product**, not per feature. Reads the MRD as input; outputs PRD that becomes input for per-feature mu-scope.
 
-**Domain model check (before Phase 0):** if repo-root `CONTEXT.md` does not exist, recommend `/mu-model` first — the PRD's surfaces are a projection of the model's ownership table, and its state names come from the model. Non-blocking: the user may decline, in which case flag "no domain model" in the PRD header and coin names as you go.
+**Domain modeling (folded in, not a gate):** when a feature introduces
+lifecycle-bearing objects or new domain vocabulary, run the domain-modeling
+method inline (references/devmuse/knowledge/principles/domain-model.md) and write to the
+architecture set's `domain_model` member — the PRD's surfaces are a projection of
+that model's ownership table, and its state names come from it. `/mu-model`
+remains the optional dedicated tool for a focused pass; it is **not** a required
+step before this skill. When the project has no domain concepts worth modeling,
+flag "no domain model" in the PRD header and coin names as you go.
 
 <HARD-GATE>
 Do NOT invoke mu-scope or any feature-level skill until the user has approved the PRD artifact. The PRD must cover all MVP features from the MRD when a full-mode MRD exists; otherwise, the features the user names.
@@ -116,26 +123,40 @@ If not found, ask the user to provide market context inline. Log "no MRD referen
 
 ### 2. PRD Sections
 
-Produce sections one at a time, approving each before moving on. Drive each section's open points per references/devmuse/knowledge/principles/grilling.md — one question per message with a recommendation, facts self-served, converge every fork before the section is approved.
+The section set is **composed** from the project's profile axes
+(references/devmuse/knowledge/principles/project-profiles.md), not a fixed list: common core
++ the sections each activated axis adds + concern-triggered sections. Depth
+(lightweight/full) scales how much each carries. Produce sections one at a time,
+approving each before moving on. Drive each section's open points per
+references/devmuse/knowledge/principles/grilling.md — one question per message with a
+recommendation, facts self-served, converge every fork before the section is
+approved. **Emit a section only when the project's evidence populates it — never
+add a screen/state/tiering slot a profile merely offers (UC-DR2).**
 
-#### Full mode (9 sections)
+#### Common core (every profile)
 
-1. **Persona deepening** — concrete scenarios for the target persona(s). "A day in the life" / usage contexts.
-2. **Information architecture / feature map** — hierarchy of features, navigation structure
-3. **Core user flows** — journey maps or sequence diagrams for primary tasks
-4. **Key screen wireframes** — text/mermaid wireframes for critical screens. Use Visual Companion for mockups when visual questions arise.
-5. **Per-feature specs** — for each MVP feature: what it does, why, user-facing rules (edge cases in user terms, not code). **Scope boundary:** these are product-level rules (what the user sees and agrees to) — mu-scope later enumerates all concrete paths (happy / edge / error use cases) through those rules on a per-feature basis. Do not pre-enumerate UCs here. Guarantees that survive retries and races ("double-clicking never creates two orders", "a lapsed booking cannot be revived") are rules, not use cases — they live in the object model, and a feature touching a modeled object cites its states by name.
-6. **Tiering rules** — free vs paid behavioral boundaries (quotas, features, upgrade triggers)
-7. **Non-functional requirements** — performance targets, privacy/compliance needs, accessibility, localization
-8. **Success metrics → instrumentation** — which events to track for each flow; how funnel metrics are computed
-9. **Open questions / assumptions** — things not yet decided that downstream work must resolve
+1. **Purpose and users** — who it is for, the target persona(s), the problem.
+2. **Per-feature specs** — for each MVP feature: what it does, why, user-facing rules (edge cases in user terms, not code). **Scope boundary:** these are product-level rules — mu-scope later enumerates all concrete paths (happy / edge / error use cases) per feature. Do not pre-enumerate UCs here. Guarantees that survive retries and races ("double-clicking never creates two orders") are rules, not use cases — they live in the object model, and a feature touching a modeled object cites its states by name.
+3. **Open questions / assumptions** — things not yet decided that downstream work must resolve.
 
-#### Lightweight mode (3 sections)
+#### Profile-activated sections (add only the axes that apply)
 
-Minimum viable PRD for solo/small projects:
-1. **Core user flow(s)** — 1-3 primary flows only
-2. **Key per-feature specs** — MVP features, minimal detail
-3. **Open questions** — what to defer
+- **`end-user-app` product / `gui` surface** — information architecture & feature map; core user flows (journey/sequence maps); key screen wireframes (text/mermaid; use Visual Companion for mockups); tiering rules (free vs paid quotas/triggers). *(These four are the classic "full mode" — they belong to the user-facing app profile, not to every project.)*
+- **`cli` surface** — command/flag grammar, exit-code and output contract (no screens).
+- **`library-sdk` / `api` surface** — public API/endpoint surface, request/response and error shapes, versioning/compat contract.
+- **`data-ai` product** — data flow and lineage; model/tool boundary; evaluation and guardrails; cost/latency envelope.
+- **`plugin-agent` implementation** — host-relationship boundary; invocation/routing and capability/permission model.
+
+#### Concern-triggered sections
+
+Scan references/devmuse/knowledge/principles/nfr-checklist.md; add a section only where a
+trigger fires (performance, security/PII, transactions, multitenancy, public
+API, AI/model-tool boundary, accessibility & localization, compliance…). Success
+metrics → instrumentation is added whenever the product has a measurable funnel.
+
+**Depth:** lightweight carries the core (purpose + key per-feature specs + open
+questions) at minimal detail; full carries every activated section at launch
+depth. Depth changes *how much*, profile changes *which*.
 
 ### 3. Product Object Model (conditional)
 

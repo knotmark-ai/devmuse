@@ -4,22 +4,22 @@
 
 ## Diagram Type by Profile
 
-Diagram selection follows the project's **profile** (@project-profiles.md) — the
-same lens that composes PRD and architecture sections, so the classification is
-made once and reused. Profiles compose; take the union of diagram sets when more
-than one applies, and drop a diagram whose neighbourhood this change does not
-touch.
+Diagram selection follows the project's **profile axes** (@project-profiles.md) —
+the same classification that composes PRD and architecture sections, made once
+and reused. Take the union of the diagram sets the activated axes imply, and drop
+a diagram whose neighbourhood this change does not touch.
 
-| Profile | Recommended diagrams | Why |
+| Axis value | Recommended diagrams | Why |
 |---|---|---|
-| `library-sdk` | C3 Component + API surface | Component relationships and the public surface, not containers |
-| `cli-devtool` | C3 Component | Command/flag surface over components; no multi-container complexity |
-| `client-app` | C1 Context + C2 Container | System boundary + device ↔ cloud ↔ third-party containers |
-| `stateful-service` | C1 Context + C2 Container + State machine | Service boundary, containers, and the lifecycle the state owns |
-| `event-driven` | C1 Context + C2 Container + Data Flow | Event/message flow and delivery are the core complexity |
-| `infrastructure` | C2 Container + Data Flow / topology | Resource topology and failure domains are the concern |
-| `plugin-agent` | C1 Context (host relationship) + C3 Component | "Where do I fit in the host system?" is the key question |
-| `data-ai` | Data Flow (primary) + model/tool boundary | How data flows and transforms, and where the model/tool boundary sits |
+| product `library-sdk` | C3 Component + API surface | Component relationships and the public surface, not containers |
+| product `developer-tool` | C3 Component | Command/task surface over components; no multi-container complexity |
+| product `end-user-app` | C1 Context + C2 Container | System boundary + device ↔ cloud ↔ third-party containers |
+| product `data-ai` | Data Flow (primary) + model/tool boundary | How data flows and transforms, and where the model/tool boundary sits |
+| impl `stateful-service` | + State machine | The lifecycle the state owns |
+| impl `event-driven` | + Data Flow | Event/message flow and delivery are the core complexity |
+| impl `infrastructure` | C2 Container + topology | Resource topology and failure domains are the concern |
+| impl `plugin-agent` | C1 Context (host relationship) + C3 Component | "Where do I fit in the host system?" is the key question |
+| surface `api` | + API boundary on C2/C3 | The inside/outside contract is load-bearing |
 
 ## C4 Model Quick Reference
 
