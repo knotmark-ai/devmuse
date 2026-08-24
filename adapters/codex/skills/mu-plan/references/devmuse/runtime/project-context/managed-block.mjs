@@ -90,12 +90,19 @@ export function renderManagedRevision({ kind, workId, issue = null, attemptId, r
   return `${header}\n${normalized}<!-- devmuse:${kind}:end -->`;
 }
 
-export function selectCurrentManagedRevision({ body = "", comments = [], kind } = {}) {
+export function selectCurrentManagedRevision({ body = "", comments = [], kind, workId = null, issue = null } = {}) {
   const family = familyFor(kind);
   const parsed = [parseDocument(body, family), ...comments.map((comment) => parseDocument(comment, family))];
   const invalid = parsed.find((result) => result.status !== "valid");
   if (invalid) return { status: invalid.status, revision: null };
-  const blocks = parsed.flatMap((result) => result.blocks);
+  let blocks = parsed.flatMap((result) => result.blocks);
+  // Bind selection to the expected work identity: a block carrying a foreign
+  // work_id (or, for plans, a foreign issue) must never win by having the highest
+  // revision. When no expected identity is supplied, selection is unfiltered.
+  if (workId !== null) {
+    blocks = blocks.filter((block) => block.attributes.work_id === workId
+      && (issue === null || String(block.attributes.issue ?? "") === String(issue)));
+  }
   if (blocks.length === 0) return { status: "missing", revision: null };
   const highest = Math.max(...blocks.map((block) => block.revision));
   const candidates = blocks.filter((block) => block.revision === highest);

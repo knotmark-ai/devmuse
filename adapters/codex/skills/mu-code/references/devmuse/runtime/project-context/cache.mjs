@@ -124,10 +124,22 @@ export function mergeCache(current, incoming) {
   next.recovery ??= {};
   if (incoming.worktreeKey) {
     const existing = next.worktrees[incoming.worktreeKey];
-    if (existing && JSON.stringify(existing) !== JSON.stringify(incoming.entry)) {
-      return { status: "needs-reconciliation", candidates: [clone(existing), clone(incoming.entry)], revision: current.revision };
+    const entry = incoming.entry ?? {};
+    if (existing) {
+      // Same work item → enrich in place (issue → PR → phase is normal delivery
+      // progress, not a conflict). Reconcile only when a shared field carries a
+      // contradictory value, or the work_id itself changed.
+      const existingWork = existing.work_id ?? null;
+      const incomingWork = entry.work_id ?? existingWork;
+      const contradiction = incomingWork !== existingWork
+        || Object.keys(entry).some((key) => existing[key] !== undefined && JSON.stringify(existing[key]) !== JSON.stringify(entry[key]));
+      if (contradiction) {
+        return { status: "needs-reconciliation", candidates: [clone(existing), clone(entry)], revision: current.revision };
+      }
+      next.worktrees[incoming.worktreeKey] = { ...existing, ...entry };
+    } else {
+      next.worktrees[incoming.worktreeKey] = clone(entry);
     }
-    next.worktrees[incoming.worktreeKey] = clone(incoming.entry);
   }
   if (incoming.attempt) next.recovery[incoming.attempt.attempt_id] = clone(incoming.attempt);
   if (incoming.clearAttemptId) delete next.recovery[incoming.clearAttemptId];
@@ -229,8 +241,16 @@ async function acquireLock(lockDirectory, options = {}) {
     } catch (error) {
       if (error.code !== "EEXIST") throw error;
       if (Date.now() >= deadline) {
+        // Break a stale lock and retry the acquire ONCE, so the current write is
+        // persisted rather than silently dropped to memory-only. Only if the
+        // retry still fails do we degrade.
         await breakStaleLock(lockDirectory);
-        return null;
+        try {
+          await fs.promises.mkdir(lockDirectory, { mode: 0o700 });
+          return async () => fs.promises.rmdir(lockDirectory).catch(() => {});
+        } catch {
+          return null;
+        }
       }
       await delay(10);
     }
