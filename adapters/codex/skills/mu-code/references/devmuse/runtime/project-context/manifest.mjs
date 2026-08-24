@@ -87,6 +87,17 @@ export function parseProjectManifest(text, { repoRoot } = {}) {
   }
   if (/(^|[\s:])[&*!][^\s]*/m.test(text) || /[{}[\]]/.test(text)) return invalid("unsupported-yaml-feature");
 
+  // Test the schema version before the unknown-key screen below. A future
+  // versioned manifest (e.g. v2's `cases:` block) must degrade to
+  // `unsupported-schema` — "your DevMuse is older than this manifest" — rather
+  // than `unknown-key`, which reads as corruption. This parser understands v1
+  // only; any other clean integer version is unsupported here. Malformed or
+  // v1 values fall through to the normal parse unchanged.
+  const declaredVersion = text.replace(/\r\n?/g, "\n").split("\n").map((line) => line.match(/^schema_version:\s*(\d+)\s*$/)).find(Boolean);
+  if (declaredVersion && Number(declaredVersion[1]) !== 1) {
+    return { status: "unsupported-schema", value: null, reason: "unsupported-schema" };
+  }
+
   const stack = [];
   const values = new Map();
   for (const originalLine of text.replace(/\r\n?/g, "\n").split("\n")) {
