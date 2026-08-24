@@ -20,7 +20,10 @@ import {
   registryStatus,
   readKind,
   writeKind,
+  providerTransition,
+  classifyOutcome,
 } from "./index.mjs";
+import { xrayReadTestsRequest, normalizeXrayTest, xrayCapabilities } from "./providers/xray.mjs";
 
 function write(value, status = 0) {
   process.stdout.write(`${JSON.stringify(value)}\n`);
@@ -59,6 +62,16 @@ try {
     write(readKind(input.repo_root ?? process.cwd(), input.kind));
   } else if (command === "write-kind") {
     write(writeKind(input.repo_root ?? process.cwd(), input.kind, input.assets ?? []));
+  } else if (command === "provider-transition") {
+    write(providerTransition(input));
+  } else if (command === "classify-outcome") {
+    write(classifyOutcome(input.outcome ?? input));
+  } else if (command === "xray-capabilities") {
+    write(xrayCapabilities());
+  } else if (command === "xray-read-request") {
+    write(xrayReadTestsRequest(input));
+  } else if (command === "xray-normalize") {
+    write(normalizeXrayTest(input.record ?? input));
   } else {
     write({ error: { code: "unknown-command" } }, 2);
   }

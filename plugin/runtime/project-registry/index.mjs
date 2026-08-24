@@ -3,3 +3,5 @@ export * from "./registry.mjs";
 export * from "./staleness.mjs";
 export * from "./migration.mjs";
 export * from "./store.mjs";
+export * from "./provider.mjs";
+export * as xray from "./providers/xray.mjs";
