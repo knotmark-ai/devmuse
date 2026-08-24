@@ -49,6 +49,15 @@ test("manifest rejects unknown schema, duplicate or unknown keys, and forbidden 
   ]) assert.equal(parseProjectManifest(text, { repoRoot: "/repo" }).status, "invalid");
 });
 
+// A future-versioned manifest degrades to unsupported-schema even when it carries
+// keys this v1 reader does not know (e.g. the v2 `cases:` block) — "your DevMuse
+// is older than this manifest", not a corruption error. The schema-version test
+// runs before the unknown-key screen.
+test("a v2 manifest with a cases block degrades to unsupported-schema, not unknown-key", () => {
+  const v2 = `${manifestText.replace("schema_version: 1", "schema_version: 2")}cases:\n  registry: repository\n`;
+  assert.equal(parseProjectManifest(v2, { repoRoot: "/repo" }).reason, "unsupported-schema");
+});
+
 // Covers: UC-G7
 test("manifest rejects a repository-relative path that resolves through an escaping symlink", (t) => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-manifest-"));

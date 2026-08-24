@@ -1,0 +1,99 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { defaultRouting, validateRouting, resolveProvider, ASSET_KINDS, ROUTE_KEYS } from "../../plugin/runtime/project-registry/routing.mjs";
+import { assetRevision, validateAsset, serializeRegistryFile, parseRegistryFile, canonicalJson, withRevision } from "../../plugin/runtime/project-registry/registry.mjs";
+import { coverageStaleness } from "../../plugin/runtime/project-registry/staleness.mjs";
+import { proposeV2Migration } from "../../plugin/runtime/project-registry/migration.mjs";
+
+const v1 = { project: { id: "github:x", repository: "github.com/o/r" }, collaboration: { provider: "github", mode: "github-first" }, artifacts: { prd: null, architecture: { index: "docs/architecture.md", domain_model: "CONTEXT.md" } } };
+
+// --- routing ---
+
+test("five asset kinds and route keys, distinct", () => {
+  assert.equal(ASSET_KINDS.length, 5);
+  assert.equal(new Set(ASSET_KINDS).size, 5);
+  assert.equal(ROUTE_KEYS.length, 5);
+});
+
+test("routing validation fills defaults and rejects unknown keys/providers", () => {
+  const filled = validateRouting({ routes: { test_cases: "xray" } });
+  assert.equal(filled.status, "valid");
+  assert.equal(filled.value.routes.test_cases, "xray");
+  assert.equal(filled.value.routes.acceptance_examples, "repository"); // default fill
+  assert.equal(filled.value.registry, "repository");
+  assert.equal(validateRouting({ routes: { made_up: "jira" } }).reason, "unknown-route-key");
+  assert.equal(validateRouting({ routes: { test_cases: "notaprovider" } }).reason, "unknown-route-provider");
+  assert.equal(validateRouting({ registry: "notaprovider" }).reason, "unknown-registry-provider");
+  assert.equal(validateRouting({ extra: 1 }).reason, "unknown-cases-key");
+  assert.equal(resolveProvider(defaultRouting(), "test_results"), "repository");
+});
+
+// --- registry entity model ---
+
+test("asset revision is a content hash: stable, and changes only with content", () => {
+  const a = { id: "duc:checkout", kind: "product_use_cases", fields: { title: "Checkout", consequence: "order placed" } };
+  const r1 = assetRevision(a);
+  assert.match(r1, /^sha256:[a-f0-9]{64}$/);
+  // Re-hashing identical content is stable; volatile metadata is excluded.
+  assert.equal(assetRevision({ ...a, revision: "sha256:old", provenance: { created_at: "whenever" }, locator: { provider: "jira", ref: "PROJ-1" } }), r1);
+  // Changing a content field changes the revision.
+  assert.notEqual(assetRevision({ ...a, fields: { title: "Checkout", consequence: "order confirmed" } }), r1);
+});
+
+test("canonical JSON sorts object keys for clean diffs, preserves array order", () => {
+  assert.equal(canonicalJson({ b: 1, a: 2 }), canonicalJson({ a: 2, b: 1 }));
+  assert.notEqual(canonicalJson([1, 2]), canonicalJson([2, 1]));
+});
+
+test("asset validation checks id, kind, and relations", () => {
+  assert.equal(validateAsset({ id: "duc:x", kind: "product_use_cases" }).status, "valid");
+  assert.equal(validateAsset({ id: "BAD ID", kind: "rules" }).reason, "invalid-id");
+  assert.equal(validateAsset({ id: "duc:x", kind: "not_a_kind" }).reason, "unknown-kind");
+  assert.equal(validateAsset({ id: "tc:x", kind: "test_cases", relations: [{ type: "nope", to: "duc:y" }] }).reason, "invalid-relation");
+  assert.equal(validateAsset({ id: "tc:x", kind: "test_cases", relations: [{ type: "verifies", to: "duc:y" }] }).status, "valid");
+});
+
+test("serialize/parse round-trips, sorts by id, and rejects a hand-edited revision", () => {
+  const assets = [
+    { id: "duc:b", kind: "product_use_cases", fields: { n: 2 } },
+    { id: "duc:a", kind: "product_use_cases", fields: { n: 1 } },
+  ];
+  const file = serializeRegistryFile("product_use_cases", assets);
+  const parsed = parseRegistryFile(file);
+  assert.equal(parsed.status, "valid");
+  assert.deepEqual(parsed.assets.map((a) => a.id), ["duc:a", "duc:b"]); // sorted
+  assert.match(parsed.assets[0].revision, /^sha256:/);
+  // Tamper with a field without rehashing → revision-mismatch.
+  const tampered = file.replace('"n": 1', '"n": 999');
+  assert.equal(parseRegistryFile(tampered).reason, "revision-mismatch");
+  assert.equal(parseRegistryFile("{not json").reason, "unparseable");
+  assert.equal(parseRegistryFile('{"schema":1,"kind":"nope","assets":[]}').reason, "bad-registry-file");
+});
+
+// --- staleness (result-anchored) ---
+
+test("coverage staleness is result-anchored across all four revision axes", () => {
+  assert.equal(coverageStaleness(null).status, "uncovered");
+  const result = { boundRevisions: { requirement: "r1", test_case: "t1", code: "c1" }, environment: "ci-linux" };
+  assert.equal(coverageStaleness(result, { requirement: "r1", test_case: "t1", code: "c1" }).status, "covered");
+  const stale = coverageStaleness(result, { requirement: "r2", test_case: "t1", code: "c1" });
+  assert.equal(stale.status, "stale");
+  assert.deepEqual(stale.staleAxes, ["requirement"]);
+  // An axis the result never bound is not evaluated (no false stale).
+  assert.equal(coverageStaleness(result, { acceptance_example: "e9" }).status, "covered");
+});
+
+// --- migration (proposal only, never writes) ---
+
+test("v1->v2 migration proposes without writing and lists every change", () => {
+  const proposal = proposeV2Migration(v1, { routes: { test_cases: "xray", test_results: "ci" } });
+  assert.equal(proposal.status, "proposed");
+  assert.equal(proposal.writes, false);
+  assert.equal(proposal.proposal.schema_version, 2);
+  assert.equal(proposal.proposal.cases.routes.test_cases, "xray");
+  assert.equal(proposal.proposal.project.id, "github:x"); // v1 members carried over
+  assert.ok(proposal.changes.includes("schema_version: 1 -> 2"));
+  assert.equal(proposeV2Migration(null).reason, "missing-v1-manifest");
+  assert.equal(proposeV2Migration(v1, { routes: { bad: "x" } }).reason, "unknown-route-key");
+});
