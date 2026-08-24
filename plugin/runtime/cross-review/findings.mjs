@@ -43,6 +43,35 @@ export function extractClaudeStructuredOutput(raw) {
   return raw;
 }
 
+// codex `exec review` does NOT honor --output-schema — verified live against
+// codex-cli 0.149.1, its --output-last-message carries codex's native review
+// report, not `{findings}` (M4). The report is a summary line followed by
+// priority-tagged bullets:  `- [P1] <title> — <file>:<start>[-<end>]`, each with
+// an indented body. Parse that into findings; an empty/clean report yields `{findings:[]}`.
+const CODEX_PRIORITY = { P0: "critical", P1: "important", P2: "minor", P3: "minor" };
+export function extractCodexReviewFindings(text) {
+  const findings = [];
+  if (typeof text !== "string") return { findings };
+  for (const line of text.split(/\r?\n/)) {
+    const bullet = line.match(/^\s*-\s*\[(P\d+)\]\s*(.+)$/);
+    if (!bullet) continue;
+    const severity = CODEX_PRIORITY[bullet[1]] ?? "minor";
+    let summary = bullet[2].trim();
+    let file = null;
+    let lineNo = null;
+    // Split off a trailing " — <file>:<start>[-<end>]" locator when present. The
+    // em dash separates title from locator; the line range sits at the very end.
+    const located = summary.match(/^(.*?)\s+—\s+(.+?):(\d+)(?:-\d+)?\s*$/);
+    if (located) {
+      summary = located[1].trim();
+      file = located[2];
+      lineNo = Number.parseInt(located[3], 10);
+    }
+    findings.push({ severity, file, line: lineNo, summary });
+  }
+  return { findings };
+}
+
 // Validate the structured payload rather than trusting a zero exit. Returns a
 // typed result: `invalid` when the reviewer produced no usable findings array,
 // otherwise `ok` with normalized findings carrying reviewer provenance.

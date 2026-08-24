@@ -124,6 +124,10 @@ export function buildInvocation({
       command: binary ?? "codex",
       // Verified against codex 0.149.1: --base <BRANCH>, --output-schema <FILE>,
       // --output-last-message <FILE>, --ephemeral/--ignore-user-config/--ignore-rules.
+      // NOTE: `exec review` does NOT honor --output-schema — its output-last-message
+      // is codex's native review report, not schema JSON (verified live, M4). The
+      // flag is accepted (harmless) but ineffective; the runner parses the native
+      // report via extractCodexReviewFindings rather than relying on the schema.
       args: [
         "exec", "review",
         "--base", base,
