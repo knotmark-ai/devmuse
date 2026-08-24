@@ -26,14 +26,9 @@ fi
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-# Extract the assistant's final result text from the run JSON (fall back to raw).
-node -e '
-  const fs = require("fs");
-  const raw = fs.readFileSync(process.argv[1], "utf8");
-  let text = raw;
-  try { const j = JSON.parse(raw); text = j.result ?? j.text ?? raw; } catch {}
-  fs.writeFileSync(process.argv[2], String(text));
-' "$TRANSCRIPT" "$WORK/transcript.txt"
+# Extract the assistant's final result text from the run JSON (handles both the
+# single-object and stream-array shapes of `claude -p --output-format json`).
+node "$SCRIPT_DIR/extract-result.mjs" "$TRANSCRIPT" > "$WORK/transcript.txt"
 
 node "$SCRIPT_DIR/judge.mjs" "$SCENARIO" "$WORK/transcript.txt" > "$WORK/prompt.txt"
 
@@ -45,10 +40,4 @@ if [ -z "$JUDGE_JSON" ]; then
 fi
 
 # Pull the judge model's response text, then parse the verdict deterministically.
-echo "$JUDGE_JSON" | node -e '
-  const fs = require("fs");
-  const raw = fs.readFileSync(0, "utf8");
-  let text = raw;
-  try { const j = JSON.parse(raw); text = j.result ?? j.text ?? raw; } catch {}
-  process.stdout.write(text);
-' | node "$SCRIPT_DIR/judge.mjs" --parse
+printf '%s' "$JUDGE_JSON" | node "$SCRIPT_DIR/extract-result.mjs" | node "$SCRIPT_DIR/judge.mjs" --parse
