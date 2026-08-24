@@ -83,6 +83,7 @@ architectural → scope → arch → plan → code → review → end
 - **mu-prd** — Product requirements: user flows, object lifecycle models, wireframes, per-feature specs, tiering rules. Invoke with `/mu-prd`.
 - **mu-wiki** — The single durable home for current architecture documentation, generated from source with citations. Invoke with `/mu-wiki generate` or `/mu-wiki update`.
 - **mu-grill** — Relentless plan/design interview until every rework-forcing fork is resolved. Invoke with `/mu-grill`.
+- **mu-setup** — Initialize and maintain the project's case-registry routing and preferences; discovers, proposes, and writes only on approval. Idempotent. Invoke with `/mu-setup`.
 
 These are NOT auto-routed. The user explicitly invokes them when needed.
 
@@ -131,6 +132,7 @@ devmuse/
 | On-demand | **mu-prd** | Product requirements — user flows, object lifecycle models, wireframes, feature specs, tiering rules |
 | On-demand | **mu-wiki** | Architecture wiki — generates and maintains project-level architecture documentation |
 | On-demand | **mu-grill** | Relentless plan/design interview — resolves every rework-forcing fork before work begins |
+| On-demand | **mu-setup** | Case-registry setup — discovers, proposes, and (on approval) writes the project's asset routing and initializes the registry; idempotent |
 | Meta | **mu-write-skill** | Create/edit skills using TDD methodology |
 
 ### Agents
