@@ -24,7 +24,19 @@ export function coverageStaleness(result, current = {}) {
     return { status: "unknown", staleAxes: [], missingAxes, environment: result.environment ?? null };
   }
   const staleAxes = boundAxes.filter((axis) => current[axis] !== bound[axis]);
-  return { status: staleAxes.length > 0 ? "stale" : "covered", staleAxes, environment: result.environment ?? null };
+  if (staleAxes.length > 0) return { status: "stale", staleAxes, environment: result.environment ?? null };
+  // A genuine coverage claim must bind the source of truth (a requirement or an
+  // acceptance example), the test case, AND the code it ran against. A result
+  // that binds only some of these is `partial` — never "covered", since the
+  // unbound axes could have drifted unseen (M-2).
+  const hasSource = bound.requirement != null || bound.acceptance_example != null;
+  const complete = hasSource && bound.test_case != null && bound.code != null;
+  if (!complete) {
+    const unboundAxes = ["requirement_or_acceptance_example", "test_case", "code"]
+      .filter((axis) => (axis === "requirement_or_acceptance_example" ? !hasSource : bound[axis] == null));
+    return { status: "partial", staleAxes: [], unboundAxes, environment: result.environment ?? null };
+  }
+  return { status: "covered", staleAxes: [], environment: result.environment ?? null };
 }
 
 export { REVISION_AXES };

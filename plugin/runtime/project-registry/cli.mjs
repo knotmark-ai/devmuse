@@ -90,11 +90,19 @@ try {
     if (input.approved !== true) {
       write({ status: "blocked", reason: "approval-required" }, 1);
     } else {
-      const root = input.repo_root ?? process.cwd();
-      const file = path.join(root, ".devmuse", "project.yaml");
-      fs.mkdirSync(path.dirname(file), { recursive: true });
-      fs.writeFileSync(file, serializeManifest(input.value), { encoding: "utf8" });
-      write({ status: "written", file: ".devmuse/project.yaml" });
+      // Validate the cases routing BEFORE persisting — the read path enforces the
+      // provider vocabulary via validateRouting, and the write path must too, or an
+      // invalid provider becomes durable config the read path then rejects (I-2).
+      const routing = readRouting(input.value);
+      if (routing.status === "invalid") {
+        write({ status: "blocked", reason: "invalid-routing", detail: routing.reason }, 1);
+      } else {
+        const root = input.repo_root ?? process.cwd();
+        const file = path.join(root, ".devmuse", "project.yaml");
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, serializeManifest(input.value), { encoding: "utf8" });
+        write({ status: "written", file: ".devmuse/project.yaml" });
+      }
     }
   } else if (command === "read-preferences") {
     // Read-only: user-level default routes. Absent file is not an error.

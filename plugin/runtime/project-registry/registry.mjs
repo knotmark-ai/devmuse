@@ -22,10 +22,17 @@ export function canonicalJson(value) {
 }
 
 // A content-hash revision over the identity-bearing content of an asset — its id,
-// kind, and normalized fields — excluding volatile metadata (the revision itself,
-// provenance timestamps, the locator). Stable across checkouts, needs no counter.
+// kind, normalized fields, AND its typed relations — excluding volatile metadata
+// (the revision itself, provenance timestamps, the locator). Relations are the
+// traceability graph #68 exists to protect, so re-pointing a `covers`/`verifies`
+// edge must change the revision; excluding them let a silent edge rewrite pass the
+// integrity gate (I-1). Relations are normalized and order-independent so an
+// equivalent set hashes identically. Stable across checkouts, needs no counter.
 export function assetRevision(asset) {
-  const content = { id: asset.id, kind: asset.kind, fields: asset.fields ?? {} };
+  const relations = (Array.isArray(asset.relations) ? asset.relations : [])
+    .map((relation) => ({ type: relation?.type ?? null, to: relation?.to ?? null }))
+    .sort((a, b) => canonicalJson(a).localeCompare(canonicalJson(b)));
+  const content = { id: asset.id, kind: asset.kind, fields: asset.fields ?? {}, relations };
   return `sha256:${createHash("sha256").update(canonicalJson(content), "utf8").digest("hex")}`;
 }
 
