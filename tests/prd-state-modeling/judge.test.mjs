@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import { parseCriteria, criteriaFor } from "./parse-criteria.mjs";
-import { buildJudgePrompt, splitSubCriteria, parseVerdict } from "./judge.mjs";
+import { buildJudgePrompt, splitSubCriteria, parseVerdict, criteriaCount } from "./judge.mjs";
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 
@@ -55,4 +55,25 @@ test("overall is recomputed so a failed criterion cannot pass the scenario", () 
 
 test("an unparseable judge response is a typed error, not a silent pass", () => {
   assert.throws(() => parseVerdict("the transcript looks fine to me"), (error) => error.code === "unparseable-verdict");
+});
+
+test("an empty criteria array is a typed error, never a pass (B5)", () => {
+  // [].every() === true would otherwise let a judge that grades nothing pass.
+  assert.throws(() => parseVerdict('{"criteria":[],"overall":"pass"}'), (error) => error.code === "empty-criteria");
+});
+
+test("a judge that grades fewer criteria than asked is rejected (H1)", () => {
+  const short = '{"criteria":[{"n":1,"verdict":"pass"}],"overall":"pass"}';
+  assert.throws(() => parseVerdict(short, { expectedCount: 6 }), (error) => error.code === "criteria-count-mismatch");
+  // The exact count passes.
+  assert.equal(parseVerdict(short, { expectedCount: 1 }).overall, "pass");
+});
+
+test("a missing/malformed per-criterion verdict is not a pass", () => {
+  assert.equal(parseVerdict('{"criteria":[{"n":1},{"n":2,"verdict":"pass"}],"overall":"pass"}').overall, "fail");
+});
+
+test("criteriaCount returns a scenario's sub-criteria count and vague-groupbuy now splits into 7", () => {
+  assert.equal(criteriaCount("stateless-cli-no-trigger"), 3);
+  assert.equal(criteriaCount("vague-groupbuy-dialogue"), 7);
 });

@@ -4,6 +4,8 @@
 // fall back to concatenated assistant text, then the raw input. Reads a file
 // path argument, or stdin when none is given.
 import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 export function extractResultText(raw) {
   let value;
@@ -25,7 +27,7 @@ export function extractResultText(raw) {
   return value.result ?? value.text ?? raw;
 }
 
-if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split(/[\\/]/).pop())) {
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const path = process.argv[2];
   const raw = path ? fs.readFileSync(path, "utf8") : fs.readFileSync(0, "utf8");
   process.stdout.write(extractResultText(raw));

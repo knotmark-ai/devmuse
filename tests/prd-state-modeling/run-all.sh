@@ -27,8 +27,16 @@ pass=0; fail=0; errored=0
 summary=""
 for name in $names; do
     printf 'RUN  %-32s ' "$name"
-    "$SCRIPT_DIR/run-test.sh" "prompts/$name.txt" "$MAX_TURNS" >/dev/null 2>&1
-    verdict_json="$("$SCRIPT_DIR/judge.sh" "$name" 2>/dev/null)"
+    # Capture the run's own transcript path; judging a stale prior-model transcript
+    # would silently corrupt the model-churn signal this routine exists to give.
+    run_output="$("$SCRIPT_DIR/run-test.sh" "prompts/$name.txt" "$MAX_TURNS" 2>/dev/null)"
+    tx="$(printf '%s\n' "$run_output" | sed -n 's/^TRANSCRIPT_PATH=//p' | tail -1)"
+    tx_status="$(printf '%s\n' "$run_output" | sed -n 's/^TRANSCRIPT_STATUS=//p' | tail -1)"
+    if [ -z "$tx" ] || [ ! -s "$tx" ] || [ "${tx_status:-1}" != "0" ]; then
+        echo "ERROR (no fresh transcript)"; errored=$((errored+1)); summary="${summary}ERROR $name (run produced no transcript)\n"
+        continue
+    fi
+    verdict_json="$("$SCRIPT_DIR/judge.sh" "$name" "$tx" 2>/dev/null)"
     status=$?
     if [ $status -eq 0 ]; then
         echo "PASS"; pass=$((pass+1)); summary="${summary}PASS  $name\n"

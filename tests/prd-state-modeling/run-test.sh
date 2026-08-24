@@ -37,14 +37,20 @@ if command -v timeout >/dev/null 2>&1; then TO="timeout 600";
 elif command -v gtimeout >/dev/null 2>&1; then TO="gtimeout 600";
 else TO=""; fi
 
+CLAUDE_STATUS=0
 $TO claude -p "$PROMPT" \
     --plugin-dir "$PLUGIN_DIR" \
     --dangerously-skip-permissions \
     --max-turns "$MAX_TURNS" \
     --output-format json \
-    > "$OUTPUT_DIR/claude-output.json" || echo "WARN: claude run exited non-zero"
+    > "$OUTPUT_DIR/claude-output.json" || CLAUDE_STATUS=$?
 
+# Machine-parseable path so a caller judges THIS run's transcript, never a stale
+# one; STATUS surfaces a failed/empty run instead of masking it.
+echo "TRANSCRIPT_PATH=$OUTPUT_DIR/claude-output.json"
+echo "TRANSCRIPT_STATUS=$CLAUDE_STATUS"
 echo "Transcript: $OUTPUT_DIR/claude-output.json"
+[ "$CLAUDE_STATUS" -ne 0 ] && echo "WARN: claude run exited $CLAUDE_STATUS" >&2
 
 # Optional auto-judge: `./run-test.sh <prompt> <max-turns> --judge` scores the
 # transcript against the README criteria via judge.sh and exits with its verdict.
