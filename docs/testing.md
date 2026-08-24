@@ -104,6 +104,27 @@ The bootstrap prompt covers read-only understanding, exact execution,
 deceptively small contract changes, durable wiki requests, unfamiliar refactors,
 report-only review, and review-and-fix.
 
+## Model-churn regression routine
+
+Every model release re-breaks skill triggering, so the prd-state-modeling suite
+is only meaningful against the model actually in use. **Rerun the whole suite on
+every default-model change**, and after any change to the pipeline skills,
+`state-modeling.md`, `domain-model.md`, `project-profiles.md`, or the bootstrap
+routing rules:
+
+```bash
+bash tests/prd-state-modeling/run-all.sh          # run + auto-judge every scenario
+SCENARIOS="stateless-cli-no-trigger" \
+  bash tests/prd-state-modeling/run-all.sh        # or a named subset
+```
+
+`run-all.sh` runs each scenario through headless `claude`, judges the transcript
+against the README criteria with `judge.sh` (the #41 auto-judge — single source
+of criteria, any failed criterion fails the scenario), and exits non-zero if any
+scenario regressed or could not be judged. The deterministic parser/verdict logic
+is covered by `npm run test:regression-judge`; the runs themselves need the
+`claude` CLI and are a manual/CI step, not part of the fast `npm` suites.
+
 ## Architectural Execution E2E
 
 The projects under `tests/subagent-driven-dev/` are manual, potentially costly

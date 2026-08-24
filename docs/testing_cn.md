@@ -91,6 +91,24 @@ bash tests/prd-state-modeling/run-test.sh \
 bootstrap 场景覆盖只读理解、精确执行、看似很小的契约改动、持久 Wiki
 请求、不熟悉区域的重构、只报告审查以及 review-and-fix。
 
+## 模型更替回归例程（model-churn）
+
+每次模型发布都会重新破坏技能触发，因此 prd-state-modeling 套件只有针对
+**当前实际使用的模型**运行才有意义。**在每次默认模型变更后**，以及修改任一
+流水线技能、`state-modeling.md`、`domain-model.md`、`project-profiles.md` 或
+bootstrap 路由规则后，都要重跑整套：
+
+```bash
+bash tests/prd-state-modeling/run-all.sh          # 运行并自动评分每个场景
+SCENARIOS="stateless-cli-no-trigger" \
+  bash tests/prd-state-modeling/run-all.sh        # 或指定子集
+```
+
+`run-all.sh` 用无头 `claude` 运行每个场景，用 `judge.sh`（#41 的自动评分器——
+标准单一来源，任一标准不过则该场景不过）对照 README 标准评分，任何场景回归或
+无法评分则以非零退出。确定性的解析/裁决逻辑由 `npm run test:regression-judge`
+覆盖；运行本身需要 `claude` CLI，是手动/CI 步骤，不属于快速 `npm` 套件。
+
 ## 架构执行端到端测试
 
 `tests/subagent-driven-dev/` 下的项目是手动且可能昂贵的端到端场景：
