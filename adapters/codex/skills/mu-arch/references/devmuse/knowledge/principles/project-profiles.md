@@ -48,6 +48,15 @@ History/Changelog. The domain model (terms, invariants, state machines) is a
 member of the architecture set (@domain-model.md), not a per-document section —
 documents cite it and never restate it.
 
+## Worked examples
+
+To see profile + concern composition on a real shape, consult the packaged
+examples (@../examples/README.md): `@../examples/reference-booking.md` is a broad
+`stateful-service` reference case exercising state, transactions, concurrency,
+async delivery, multitenancy, a public API, and SLOs; the maintained DevMuse
+dogfood domain model is the repository's own `CONTEXT.md`. These are illustrative
+knowledge, never this repository's own product truth (UC-DR3).
+
 ## Stateless degradation
 
 A profile that would add a state-machine section only does so when a lifecycle
