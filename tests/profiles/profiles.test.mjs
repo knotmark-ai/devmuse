@@ -51,6 +51,27 @@ test("mu-model is de-gated — an optional tool, not a required step before PRD/
   assert.doesNotMatch(bootstrap, /point to `\/mu-model` if no `CONTEXT\.md`/);
 });
 
+test("the README skill inventory does not reinstate mu-model as a pre-PRD gate (A4)", () => {
+  // The canonical role home must match the de-gating, or an agent reading it
+  // believes /mu-model must run before /mu-prd (maintenance-contract drift).
+  for (const file of ["README.md", "README_CN.md"]) {
+    const body = read(file);
+    assert.doesNotMatch(body, /before PRD and design/i, `${file} still gates mu-model in English`);
+    assert.doesNotMatch(body, /在 PRD 与设计之前/, `${file} still gates mu-model in Chinese`);
+  }
+});
+
+test("mu-prd speaks one profile vocabulary — the axis identifiers, never invented ones (A5/A6)", () => {
+  // The dangling pre-#88 identifiers must be gone everywhere in the skill and its twin.
+  for (const file of ["plugin/skills/mu-prd/SKILL.md", "adapters/codex/skills/mu-prd/SKILL.md"]) {
+    const body = read(file);
+    assert.doesNotMatch(body, /`client-app`|`cli-devtool`/, `${file} still uses non-existent axis identifiers`);
+    assert.match(body, /`end-user-app`/, `${file} should use the real product-axis names`);
+  }
+  // The Artifact Format template is explicitly the end-user-app profile, not universal (A6).
+  assert.match(muPrd, /\*\*`end-user-app` profile\*\* in full depth/);
+});
+
 test("both worked examples exist and carry the UC-DR3 banner", () => {
   for (const file of ["plugin/knowledge/examples/reference-booking.md", "plugin/knowledge/examples/reference-ai-plugin.md"]) {
     const body = read(file);

@@ -79,7 +79,7 @@ architectural → scope → arch → plan → code → review → end
 ### On-demand skills (direct `/slash` invocation only)
 
 - **mu-mrd** — Market requirements: should we build it (premise, quick mode) or full market analysis (competitors, target market, revenue opportunity, MVP scope). Invoke with `/mu-mrd`.
-- **mu-model** 🧪 — Domain model: concepts, archetypes, the spine, who produces and maintains what. Runs before PRD and design, writes repo-root `CONTEXT.md`. Invoke with `/mu-model`. **Its `create` path has not been validated on a from-zero project — see [Validation status](#validation-status).**
+- **mu-model** 🧪 — Domain model: concepts, archetypes, the spine, who produces and maintains what. An optional dedicated tool (not a required gate before PRD or design), writes repo-root `CONTEXT.md`. Invoke with `/mu-model`. **Its `create` path has not been validated on a from-zero project — see [Validation status](#validation-status).**
 - **mu-prd** — Product requirements: user flows, object lifecycle models, wireframes, per-feature specs, tiering rules. Invoke with `/mu-prd`.
 - **mu-wiki** — The single durable home for current architecture documentation, generated from source with citations. Invoke with `/mu-wiki generate` or `/mu-wiki update`.
 - **mu-grill** — Relentless plan/design interview until every rework-forcing fork is resolved. Invoke with `/mu-grill`.
@@ -128,7 +128,7 @@ devmuse/
 | Pipeline | **mu-review** | Report-only standalone review, or authorized review-and-fix with verification |
 | Orthogonal | **mu-debug** | Systematic root cause analysis |
 | On-demand | **mu-mrd** | Market requirements — worth building? (quick) or full market analysis (competitors, target market, revenue opportunity, MVP scope) |
-| On-demand | **mu-model** 🧪 | Domain model — concepts, archetypes, the spine, ownership; written to `CONTEXT.md` before PRD or design. **`create` path unproven — see Validation** |
+| On-demand | **mu-model** 🧪 | Domain model — concepts, archetypes, the spine, ownership; written to `CONTEXT.md`. An optional focused pass, not a gate before PRD or design. **`create` path unproven — see Validation** |
 | On-demand | **mu-prd** | Product requirements — user flows, object lifecycle models, wireframes, feature specs, tiering rules |
 | On-demand | **mu-wiki** | Architecture wiki — generates and maintains project-level architecture documentation |
 | On-demand | **mu-grill** | Relentless plan/design interview — resolves every rework-forcing fork before work begins |
