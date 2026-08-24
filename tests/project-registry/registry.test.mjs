@@ -80,8 +80,25 @@ test("coverage staleness is result-anchored across all four revision axes", () =
   const stale = coverageStaleness(result, { requirement: "r2", test_case: "t1", code: "c1" });
   assert.equal(stale.status, "stale");
   assert.deepEqual(stale.staleAxes, ["requirement"]);
-  // An axis the result never bound is not evaluated (no false stale).
-  assert.equal(coverageStaleness(result, { acceptance_example: "e9" }).status, "covered");
+});
+
+test("parse enforces kind-match, id-uniqueness, and revision presence", () => {
+  const foreign = withRevision({ id: "tc:x", kind: "test_cases", fields: {} });
+  assert.equal(parseRegistryFile(JSON.stringify({ schema: 1, kind: "rules", assets: [foreign] })).reason, "kind-mismatch");
+  const a = withRevision({ id: "rule:a", kind: "rules", fields: { n: 1 } });
+  assert.equal(parseRegistryFile(JSON.stringify({ schema: 1, kind: "rules", assets: [a, a] })).reason, "duplicate-id");
+  assert.equal(parseRegistryFile(JSON.stringify({ schema: 1, kind: "rules", assets: [{ id: "rule:a", kind: "rules", fields: {} }] })).reason, "missing-revision");
+  // A well-formed single asset still parses.
+  assert.equal(parseRegistryFile(JSON.stringify({ schema: 1, kind: "rules", assets: [a] })).status, "valid");
+});
+
+test("missing or empty comparison evidence is never reported as covered", () => {
+  const result = { boundRevisions: { requirement: "r1", test_case: "t1", code: "c1" } };
+  // A bound axis with no current revision to compare → unknown, not covered.
+  assert.equal(coverageStaleness(result, { acceptance_example: "e9" }).status, "unknown");
+  assert.equal(coverageStaleness(result, { requirement: "r1" }).status, "unknown"); // test_case/code missing
+  // A result that bound nothing is not coverage.
+  assert.equal(coverageStaleness({ boundRevisions: {} }, { requirement: "r1" }).status, "uncovered");
 });
 
 // --- migration (proposal only, never writes) ---
