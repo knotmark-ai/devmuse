@@ -52,15 +52,20 @@ mu-prd has two independent concepts: **Stance** (Phase 0) and **Depth Mode** (li
 Phase 0 parses only the stance token; Depth Mode Selection parses only the depth token.
 
 
-## Depth Mode Selection
+## Profile and Depth Selection
 
-| Signal | Depth mode | Scope |
+Two orthogonal axes compose the section set (see references/devmuse/knowledge/principles/project-profiles.md):
+
+- **Profile** — *what kind of product this is* — selects **which** sections exist. A user-facing app (`client-app`) has information architecture, core user flows, key screens, and tiering; a `library-sdk` or `cli-devtool` has a public surface and no screens; a `data-ai` product has data-flow and model/tool-boundary sections. Compose profiles; take the union when more than one applies. Never emit a section a profile does not populate from the project's own evidence.
+- **Depth** — *how much ceremony the stakes justify* — selects **how much** of each section to carry.
+
+| Signal | Depth | Scope |
 |---|---|---|
-| Solo dev, small project, "lightweight PRD", `/mu-prd lightweight` | **Lightweight** | Core flows + key specs only |
-| Team project, investor-facing, formal product, `/mu-prd full` | **Full** | All 9 sections |
+| Solo dev, small project, "lightweight PRD", `/mu-prd lightweight` | **Lightweight** | The profile's core sections only (for `client-app`: core flows + key specs + open questions) |
+| Team project, investor-facing, formal product, `/mu-prd full` | **Full** | The profile's full section set |
 | Unclear | One probe: "Stakes — hobby / internal tool / public launch?" hobby → lightweight; internal → lightweight; launch → full |
 
-**Length scales with stakes:** hobby ≈ a page or two; internal ≈ a few pages; launch ≈ as long as its features require. Depth mode picks the section set; stakes calibrate how much each section carries.
+**Length scales with stakes:** hobby ≈ a page or two; internal ≈ a few pages; launch ≈ as long as its features require. Profile picks the section set; depth and stakes calibrate how much each section carries. The full section list below is the `client-app` profile — the default when a project is a user-facing application.
 
 ## Process Flow
 

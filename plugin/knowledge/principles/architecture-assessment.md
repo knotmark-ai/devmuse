@@ -2,19 +2,24 @@
 
 **When to use:** Referenced by mu-scope (Quick Probe), mu-arch (C4 positioning + design diagrams), mu-wiki (project-level architecture documentation), and mu-reviewer (review-design mode).
 
-## Diagram Type by Project Type
+## Diagram Type by Profile
 
-Choose the right diagram type based on what the project is:
+Diagram selection follows the project's **profile** (@project-profiles.md) — the
+same lens that composes PRD and architecture sections, so the classification is
+made once and reused. Profiles compose; take the union of diagram sets when more
+than one applies, and drop a diagram whose neighbourhood this change does not
+touch.
 
-| Project type | Recommended diagrams | Why |
+| Profile | Recommended diagrams | Why |
 |---|---|---|
-| CLI tool / Library | C3 Component | No multi-container complexity; component relationships suffice |
-| Web app (frontend + backend + DB) | C1 Context + C2 Container | Need system boundary + tech stack containers |
-| Microservices | C1 Context + C2 Container + Data Flow | Service interactions are the core complexity |
-| Plugin / Extension | C1 Context (host relationship) + C3 Component | "Where do I fit in the host system?" is the key question |
-| Data pipeline | Data Flow Diagram (primary) | How data flows and transforms is the core concern |
-| API service | C2 Container + API boundary | Need inside/outside boundary + tech containers |
-| Mobile app | C1 Context + C2 Container | Device ↔ cloud ↔ third-party relationships |
+| `library-sdk` | C3 Component + API surface | Component relationships and the public surface, not containers |
+| `cli-devtool` | C3 Component | Command/flag surface over components; no multi-container complexity |
+| `client-app` | C1 Context + C2 Container | System boundary + device ↔ cloud ↔ third-party containers |
+| `stateful-service` | C1 Context + C2 Container + State machine | Service boundary, containers, and the lifecycle the state owns |
+| `event-driven` | C1 Context + C2 Container + Data Flow | Event/message flow and delivery are the core complexity |
+| `infrastructure` | C2 Container + Data Flow / topology | Resource topology and failure domains are the concern |
+| `plugin-agent` | C1 Context (host relationship) + C3 Component | "Where do I fit in the host system?" is the key question |
+| `data-ai` | Data Flow (primary) + model/tool boundary | How data flows and transforms, and where the model/tool boundary sits |
 
 ## C4 Model Quick Reference
 
