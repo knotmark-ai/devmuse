@@ -79,12 +79,20 @@ export function parseRegistryFile(text) {
   if (!doc || doc.schema !== 1 || !KIND_SET.has(doc.kind) || !Array.isArray(doc.assets)) {
     return { status: "invalid", reason: "bad-registry-file", assets: [] };
   }
+  const seen = new Set();
   for (const asset of doc.assets) {
     const check = validateAsset(asset);
     if (check.status !== "valid") return { status: "invalid", reason: check.reason, assets: [] };
-    // A stored revision that disagrees with the recomputed content hash means the
-    // file was hand-edited without rehashing — reject rather than trust it.
-    if (asset.revision && asset.revision !== assetRevision(asset)) return { status: "invalid", reason: "revision-mismatch", assets: [] };
+    // Every asset must belong to this file's kind — a test-case in the
+    // product-use-case file is a corrupt canonical record.
+    if (asset.kind !== doc.kind) return { status: "invalid", reason: "kind-mismatch", assets: [] };
+    // IDs are unique within a kind file; a duplicate silently drops data.
+    if (seen.has(asset.id)) return { status: "invalid", reason: "duplicate-id", assets: [] };
+    seen.add(asset.id);
+    // A canonical asset must carry its content-hash revision, and it must match —
+    // a hand-edit without rehashing is rejected rather than trusted.
+    if (!asset.revision) return { status: "invalid", reason: "missing-revision", assets: [] };
+    if (asset.revision !== assetRevision(asset)) return { status: "invalid", reason: "revision-mismatch", assets: [] };
   }
   return { status: "valid", kind: doc.kind, assets: doc.assets };
 }
