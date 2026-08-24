@@ -41,6 +41,22 @@ test("asset revision is a content hash: stable, and changes only with content", 
   assert.notEqual(assetRevision({ ...a, fields: { title: "Checkout", consequence: "order confirmed" } }), r1);
 });
 
+test("asset revision covers typed relations — re-pointing an edge is detected (I-1)", () => {
+  const base = { id: "tc:x", kind: "test_cases", fields: { n: 1 }, relations: [{ type: "verifies", to: "duc:login" }] };
+  const r1 = assetRevision(base);
+  // Re-pointing the edge to a different target changes the revision (was excluded before).
+  assert.notEqual(assetRevision({ ...base, relations: [{ type: "verifies", to: "duc:elsewhere" }] }), r1);
+  // Relation order is not significant — an equivalent set hashes identically.
+  const two = { ...base, relations: [{ type: "verifies", to: "duc:a" }, { type: "covers", to: "rule:b" }] };
+  const twoReordered = { ...base, relations: [{ type: "covers", to: "rule:b" }, { type: "verifies", to: "duc:a" }] };
+  assert.equal(assetRevision(two), assetRevision(twoReordered));
+  // End to end: a serialized asset whose relation target is hand-edited without
+  // rehashing is rejected as revision-mismatch (the integrity gate now protects relations).
+  const file = serializeRegistryFile("test_cases", [base]);
+  const tampered = file.replace("duc:login", "duc:attacker");
+  assert.equal(parseRegistryFile(tampered).reason, "revision-mismatch");
+});
+
 test("canonical JSON sorts object keys for clean diffs, preserves array order", () => {
   assert.equal(canonicalJson({ b: 1, a: 2 }), canonicalJson({ a: 2, b: 1 }));
   assert.notEqual(canonicalJson([1, 2]), canonicalJson([2, 1]));
@@ -99,6 +115,17 @@ test("missing or empty comparison evidence is never reported as covered", () => 
   assert.equal(coverageStaleness(result, { requirement: "r1" }).status, "unknown"); // test_case/code missing
   // A result that bound nothing is not coverage.
   assert.equal(coverageStaleness({ boundRevisions: {} }, { requirement: "r1" }).status, "uncovered");
+});
+
+test("an under-bound result is partial, not covered — unbound axes could have drifted (M-2)", () => {
+  // Only the requirement is bound; test_case and code are not — this must not read as covered.
+  const underBound = { boundRevisions: { requirement: "r1" } };
+  const result = coverageStaleness(underBound, { requirement: "r1", test_case: "t1", code: "c1" });
+  assert.equal(result.status, "partial");
+  assert.deepEqual(result.unboundAxes, ["test_case", "code"]);
+  // An acceptance_example satisfies the source axis in place of a requirement.
+  const full = { boundRevisions: { acceptance_example: "e1", test_case: "t1", code: "c1" } };
+  assert.equal(coverageStaleness(full, { acceptance_example: "e1", test_case: "t1", code: "c1" }).status, "covered");
 });
 
 // --- migration (proposal only, never writes) ---

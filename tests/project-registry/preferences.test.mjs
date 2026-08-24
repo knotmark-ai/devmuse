@@ -58,6 +58,26 @@ test("precedence: project route wins, user default fills gaps, else repository",
   assert.equal(sources.rules, "default");
 });
 
+test("rewriting an existing 0644 preferences file tightens it to 0600 (M-1)", (t) => {
+  const env = tempEnv(t);
+  fs.mkdirSync(env.DEVMUSE_CONFIG_HOME, { recursive: true });
+  fs.writeFileSync(preferencesPath(env), '{"cases":{"routes":{}}}', { mode: 0o644 });
+  assert.equal(fs.statSync(preferencesPath(env)).mode & 0o777, 0o644); // starts world-readable
+  writePreferences({ test_cases: "xray" }, env);
+  assert.equal(fs.statSync(preferencesPath(env)).mode & 0o777, 0o600); // tightened on rewrite
+});
+
+test("resolveEffectiveRoutes drops an unknown provider on either side (M-3)", () => {
+  // An unknown project provider is not trusted — it falls through to the user default.
+  const merged = resolveEffectiveRoutes({ test_cases: "made-up" }, { test_cases: "xray" });
+  assert.equal(merged.routes.test_cases, "xray");
+  assert.equal(merged.sources.test_cases, "user");
+  // An unknown provider on both sides falls through to the repository default.
+  const both = resolveEffectiveRoutes({ rules: "made-up" }, { rules: "also-bogus" });
+  assert.equal(both.routes.rules, "repository");
+  assert.equal(both.sources.rules, "default");
+});
+
 test("applying a project override never rewrites the user default", (t) => {
   const env = tempEnv(t);
   writePreferences({ test_cases: "qase" }, env);

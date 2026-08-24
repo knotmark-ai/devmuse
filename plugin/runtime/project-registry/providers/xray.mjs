@@ -68,7 +68,9 @@ export function normalizeXrayTest(record) {
   if (!record || typeof record !== "object" || Array.isArray(record)) return { status: "invalid", reason: "not-a-record" };
   // A Jira issue key is PROJECT-NNN; reject anything else so a malformed record
   // cannot produce a bogus canonical id.
-  if (typeof record.key !== "string" || !/^[A-Z][A-Z0-9_]{0,63}-[1-9]\d*$/.test(record.key)) {
+  // Numeric suffix is length-bounded — a real Jira issue number never approaches
+  // 9 digits, and an unbounded suffix would inflate the derived id (LOW).
+  if (typeof record.key !== "string" || !/^[A-Z][A-Z0-9_]{0,63}-[1-9]\d{0,8}$/.test(record.key)) {
     return { status: "invalid", reason: "bad-key" };
   }
   const fields = (record.fields && typeof record.fields === "object" && !Array.isArray(record.fields)) ? record.fields : {};
