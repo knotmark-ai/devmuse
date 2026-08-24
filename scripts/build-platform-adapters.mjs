@@ -59,6 +59,10 @@ function rewritePortableText(text, skillName) {
       "references/devmuse/runtime/project-context/cli.mjs",
     )
     .replaceAll(
+      "Claude skills invoke\n`${CLAUDE_PLUGIN_ROOT}/runtime/cross-review/cli.mjs`. Portable skills invoke\ntheir vendored `references/devmuse/runtime/cross-review/cli.mjs`.",
+      "Codex skills invoke their vendored\n`references/devmuse/runtime/cross-review/cli.mjs`.",
+    )
+    .replaceAll(
       "${CLAUDE_PLUGIN_ROOT}/runtime/cross-review/cli.mjs",
       "references/devmuse/runtime/cross-review/cli.mjs",
     )
