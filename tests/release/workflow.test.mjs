@@ -23,7 +23,7 @@ test("the shared test:acceptance aggregate covers every required acceptance suit
   for (const suite of [
     "test:generated", "test:skills", "test:platforms", "test:routing", "test:hooks", "test:mermaid",
     "test:github-first", "test:project-context", "test:project-registry", "test:regression-judge",
-    "test:cross-review", "test:profiles", "test:token-benchmark", "test:release",
+    "test:cross-review", "test:profiles", "test:codex-dispatch", "test:token-benchmark", "test:release",
   ]) {
     assert.match(aggregate, new RegExp(`npm run ${suite.replace(":", "\\:")}\\b`), `test:acceptance omits ${suite}`);
   }
