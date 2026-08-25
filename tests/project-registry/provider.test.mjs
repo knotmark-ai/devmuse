@@ -21,14 +21,28 @@ test("an outage moves to PendingSync and NEVER silently demotes to Local", () =>
   assert.equal(providerTransition({ state: "PendingSync", event: "restore" }).state, "ProviderCanonical");
 });
 
-test("migration requires approval and a complete id map, preserved on success", () => {
+test("migration requires approval, a NON-EMPTY id map, and provenance, preserved on success (#68)", () => {
   assert.equal(providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true }).reason, "incomplete-migration");
+  // typeof null === "object" must NOT slip through; nor an array or an empty map.
+  for (const idMap of [null, [], {}]) {
+    assert.equal(
+      providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true, migration: { from: "xray", to: "qase", idMap, provenance: "p" } }).reason,
+      "incomplete-migration",
+      `idMap ${JSON.stringify(idMap)} should be rejected`,
+    );
+  }
+  // Missing provenance evidence is incomplete.
+  assert.equal(
+    providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true, migration: { from: "xray", to: "qase", idMap: { "tc:proj-1": "TR-9" } } }).reason,
+    "incomplete-migration",
+  );
   const migrated = providerTransition({
     state: "ProviderCanonical", event: "migrate", approved: true,
-    migration: { from: "xray", to: "testrail", idMap: { "tc:proj-1": "TR-9" } },
+    migration: { from: "xray", to: "testrail", idMap: { "tc:proj-1": "TR-9" }, provenance: "migrated 2026-08-25 by setup" },
   });
   assert.equal(migrated.state, "ProviderCanonical");
   assert.equal(migrated.migration.idMap["tc:proj-1"], "TR-9");
+  assert.equal(migrated.migration.provenance, "migrated 2026-08-25 by setup"); // evidence preserved
 });
 
 test("outcome classification: transient = unavailable, auth = denied (not an outage)", () => {

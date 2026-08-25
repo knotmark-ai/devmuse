@@ -28,11 +28,20 @@ export function providerTransition({ state = "Local", event, approved = false, m
   if (event === "migrate") {
     if (state !== "ProviderCanonical") return { status: "blocked", reason: "no-canonical-provider" };
     if (!approved) return { status: "blocked", reason: "approval-required" };
-    if (!migration || typeof migration.from !== "string" || typeof migration.to !== "string" || typeof migration.idMap !== "object") {
+    // A complete migration needs from/to, a NON-EMPTY id map (typeof null is
+    // "object", and an array or {} is not a real mapping), and provenance evidence.
+    // Migration preserves stable IDs and old->new locators + provenance (UC-C7).
+    const idMap = migration?.idMap;
+    const validIdMap = idMap !== null && typeof idMap === "object" && !Array.isArray(idMap) && Object.keys(idMap).length > 0;
+    if (!migration || typeof migration.from !== "string" || typeof migration.to !== "string"
+      || !validIdMap || typeof migration.provenance !== "string" || migration.provenance.length === 0) {
       return { status: "blocked", reason: "incomplete-migration" };
     }
-    // Migration preserves stable IDs and old->new locators + provenance (UC-C7).
-    return { status: "ok", state: "ProviderCanonical", migration: { from: migration.from, to: migration.to, idMap: migration.idMap } };
+    return {
+      status: "ok",
+      state: "ProviderCanonical",
+      migration: { from: migration.from, to: migration.to, idMap, provenance: migration.provenance },
+    };
   }
   if (event === "force-local") {
     // The ONLY path back to Local, and only with explicit approval (UC-C6:
