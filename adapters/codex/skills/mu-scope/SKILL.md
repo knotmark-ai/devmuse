@@ -285,3 +285,15 @@ Wait for confirmation.
 - **Consumed by:** mu-code (bounded), mu-debug (fix), or mu-arch (architectural)
 - **Terminal state:** per the Pipeline Graph (bootstrap)
 - **Template:** references/devmuse/knowledge/templates/scope.md
+
+## Optional: concurrent subagent dispatch (opt-in)
+
+This is an **opt-in suggestion**, not a default. It points to the canonical guide
+in the adapter's `HOST_POLICY.md` (§ *Optional: concurrent subagent dispatch*) —
+the single source of truth. The host manager and the user decide whether to spawn
+workers; **a conservative manager may decline, and concurrency is never forced.**
+It is not behavior-tested on Codex and claims no parity with the Claude fan-out.
+
+- Where `$mu-scope` decomposes: independent probes of separate subsystems may fan out; synthesis stays on the manager.
+- Prefer git-worktree isolation whenever workers mutate files; never share one
+  working tree for write work.

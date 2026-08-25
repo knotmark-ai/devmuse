@@ -208,3 +208,15 @@ Review and fix / Pipeline final requires verification of the changed behavior.
   `references/devmuse/knowledge/principles/chestertons-fence.md`.
 - Terminal state is a report or verified fixes plus the Delivery projection;
   repository integration remains a separate explicit action.
+
+## Optional: concurrent subagent dispatch (opt-in)
+
+This is an **opt-in suggestion**, not a default. It points to the canonical guide
+in the adapter's `HOST_POLICY.md` (§ *Optional: concurrent subagent dispatch*) —
+the single source of truth. The host manager and the user decide whether to spawn
+workers; **a conservative manager may decline, and concurrency is never forced.**
+It is not behavior-tested on Codex and claims no parity with the Claude fan-out.
+
+- Where `$mu-review` decomposes: requirements-coverage, security, and code-quality passes are independent lenses over the same diff — dispatch them as parallel workers, then merge findings on the manager.
+- Prefer git-worktree isolation whenever workers mutate files; never share one
+  working tree for write work.

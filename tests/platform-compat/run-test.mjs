@@ -236,3 +236,28 @@ const result = spawnSync(
 assert.equal(result.status, 0, result.error?.message ?? result.stderr);
 
 console.log("PASS: cross-platform plugin contract");
+
+// #54 — per-skill opt-in concurrent-dispatch pointers, generated from the one
+// canonical HOST_POLICY guide. Eligible skills carry the pointer; ineligible ones
+// do not; and it is opt-in/declinable (the "declined" affordance).
+const DISPATCH_ELIGIBLE = new Set(["mu-code", "mu-review", "mu-scope"]);
+const dispatchHeading = "## Optional: concurrent subagent dispatch (opt-in)";
+for (const skill of skillNames("plugin/skills")) {
+  const codexSkill = read(`adapters/codex/skills/${skill}/SKILL.md`);
+  if (DISPATCH_ELIGIBLE.has(skill)) {
+    // Eligible: carries the pointer, references the canonical HOST_POLICY guide,
+    // and states the declinable/opt-in nature.
+    assert.ok(codexSkill.includes(dispatchHeading), `eligible ${skill} missing dispatch pointer`);
+    assert.match(codexSkill, /HOST_POLICY\.md/, `${skill} pointer must cite the canonical guide`);
+    assert.match(codexSkill, /may decline, and concurrency is never forced/, `${skill} must state the declined affordance`);
+    // The per-skill note matches the one HOST_POLICY publishes for that skill (no drift).
+    const note = codexSkill.match(/Where `\$mu-[a-z]+` decomposes: (.+)/)?.[1];
+    assert.ok(note && hostPolicy.includes(note), `${skill} pointer text must match the canonical HOST_POLICY note`);
+  } else {
+    // Ineligible: no dispatch pointer at all.
+    assert.ok(!codexSkill.includes(dispatchHeading), `ineligible ${skill} must NOT carry a dispatch pointer`);
+  }
+}
+// HOST_POLICY publishes exactly the eligible skills' bullets, generated from the map.
+for (const skill of DISPATCH_ELIGIBLE) assert.ok(hostPolicy.includes(`\`$${skill}\``), `HOST_POLICY missing ${skill} bullet`);
+console.log("PASS: per-skill concurrent-dispatch pointers (eligible/ineligible/declined)");
