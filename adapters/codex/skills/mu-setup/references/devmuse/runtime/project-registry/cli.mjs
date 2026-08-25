@@ -35,7 +35,10 @@ import {
   readPreferences,
   writePreferences,
   resolveEffectiveRoutes,
+  containedRepoPath,
+  atomicWrite,
 } from "./index.mjs";
+import { parseProjectManifest } from "../project-context/manifest.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { xrayReadTestsRequest, normalizeXrayTest, xrayCapabilities } from "./providers/xray.mjs";
@@ -90,18 +93,28 @@ try {
     if (input.approved !== true) {
       write({ status: "blocked", reason: "approval-required" }, 1);
     } else {
-      // Validate the cases routing BEFORE persisting — the read path enforces the
-      // provider vocabulary via validateRouting, and the write path must too, or an
-      // invalid provider becomes durable config the read path then rejects (I-2).
+      const root = input.repo_root ?? process.cwd();
+      const text = serializeManifest(input.value);
+      // Validate the cases routing (provider vocabulary the parser delegates here).
       const routing = readRouting(input.value);
+      // Validate the COMPLETE serialized manifest with the canonical parser — project
+      // id/repository shape and in-repo artifact paths, not just routing (rejects an
+      // invalid id or an `../escape.md` artifact path).
+      const parsed = parseProjectManifest(text, { repoRoot: root });
       if (routing.status === "invalid") {
         write({ status: "blocked", reason: "invalid-routing", detail: routing.reason }, 1);
+      } else if (parsed.status !== "valid") {
+        write({ status: "blocked", reason: "invalid-manifest", detail: parsed.reason }, 1);
       } else {
-        const root = input.repo_root ?? process.cwd();
-        const file = path.join(root, ".devmuse", "project.yaml");
-        fs.mkdirSync(path.dirname(file), { recursive: true });
-        fs.writeFileSync(file, serializeManifest(input.value), { encoding: "utf8" });
-        write({ status: "written", file: ".devmuse/project.yaml" });
+        try {
+          // Resolve the target inside the repo (rejects a symlinked `.devmuse`
+          // escaping the repository), then write atomically.
+          const file = containedRepoPath(root, path.join(".devmuse", "project.yaml"));
+          atomicWrite(file, text);
+          write({ status: "written", file: ".devmuse/project.yaml" });
+        } catch (error) {
+          write({ status: "blocked", reason: error.code === "path-escapes-repo" ? "path-escapes-repo" : "write-failed" }, 1);
+        }
       }
     }
   } else if (command === "read-preferences") {

@@ -49,6 +49,34 @@ test("write-manifest persists a valid manifest", (t) => {
   assert.match(written, /test_cases: xray/);
 });
 
+test("write-manifest validates the WHOLE manifest, not just routing (#68)", (t) => {
+  const dir = tempRepo(t);
+  // An invalid project id is caught by the canonical parser, not just routing.
+  const badId = manifest({ test_cases: "xray" });
+  badId.project.id = "not a valid id";
+  const r1 = run(dir, { approved: true, repo_root: dir, value: badId });
+  assert.equal(r1.out.status, "blocked");
+  assert.equal(r1.out.reason, "invalid-manifest");
+  assert.equal(fs.existsSync(path.join(dir, ".devmuse", "project.yaml")), false);
+  // An artifact path escaping the repo is rejected as an unsafe path.
+  const badPath = manifest({ test_cases: "xray" });
+  badPath.artifacts.prd = "../escape.md";
+  const r2 = run(dir, { approved: true, repo_root: dir, value: badPath });
+  assert.equal(r2.out.status, "blocked");
+  assert.equal(r2.out.reason, "invalid-manifest");
+});
+
+test("write-manifest refuses to write through a symlinked .devmuse escaping the repo (#68)", (t) => {
+  const dir = tempRepo(t);
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-outside-"));
+  t.after(() => fs.rmSync(outside, { recursive: true, force: true }));
+  fs.symlinkSync(outside, path.join(dir, ".devmuse")); // .devmuse -> external dir
+  const { out } = run(dir, { approved: true, repo_root: dir, value: manifest({ test_cases: "xray" }) });
+  assert.equal(out.status, "blocked");
+  assert.equal(out.reason, "path-escapes-repo");
+  assert.equal(fs.existsSync(path.join(outside, "project.yaml")), false); // nothing written outside
+});
+
 test("write-manifest is still approval-gated", (t) => {
   const dir = tempRepo(t);
   const { out, code } = run(dir, { repo_root: dir, value: manifest({ test_cases: "xray" }) });
