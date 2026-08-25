@@ -69,11 +69,19 @@ export function atomicWrite(file, text) {
   const tmp = path.join(dir, `.${path.basename(file)}.tmp-${randomUUID()}`);
   const fd = fs.openSync(tmp, "wx", 0o644); // O_CREAT|O_EXCL — fails if tmp exists; never follows a symlink
   try {
-    fs.writeFileSync(fd, text, { encoding: "utf8" });
-  } finally {
-    fs.closeSync(fd);
+    try {
+      fs.writeFileSync(fd, text, { encoding: "utf8" });
+    } finally {
+      fs.closeSync(fd);
+    }
+    fs.renameSync(tmp, file);
+  } catch (error) {
+    // On any failure (write or rename), remove the temp file — never leave a
+    // half-written .tmp-* behind. After a successful rename the temp is gone, so
+    // this only fires on the error path.
+    fs.rmSync(tmp, { force: true });
+    throw error;
   }
-  fs.renameSync(tmp, file);
 }
 
 // Read one kind's assets. An absent file is an empty kind, not an error — a fresh
