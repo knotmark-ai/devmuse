@@ -83,6 +83,12 @@ test("the managed publisher refuses common provider tokens, inline passwords, an
     "sk-ant-api03-" + "A1b2C3d4E5".repeat(5) + "-x",
     "npm_" + "a".repeat(36),
     "DATABASE_URL=postgres://admin:s3cr3t@db.internal:5432/app",
+    // Free-form assignments for the sensitive-key vocabulary must also be rejected.
+    "api_key=plain-secret",
+    "client_secret=plain-secret",
+    "token=plain-secret",
+    "secret=plain-secret",
+    "OPENAI_API_KEY=plain-secret",
   ];
   for (const secret of secrets) {
     assert.throws(
