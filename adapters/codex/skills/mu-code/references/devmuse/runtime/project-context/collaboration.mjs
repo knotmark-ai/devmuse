@@ -70,6 +70,13 @@ function inspectPublishable(value, key = null) {
     if (/github_pat_[A-Za-z0-9_]{20,}/.test(value)) return "secret-rejected";
     if (/-----BEGIN (?:[A-Z ]+ )?PRIVATE KEY-----/.test(value) || /\bAKIA[A-Z0-9]{16}\b/.test(value)) return "secret-rejected";
     if (/(?:api[_-]?token|refresh[_-]?token|authorization)\s*[:=]\s*(?:bearer\s+)?[^\s,}]+/i.test(value)) return "secret-rejected";
+    // Provider token prefixes that appear as bare values (never behind a sensitive
+    // key), so the object-key screen alone would miss them in free-form content.
+    if (/\bsk-(?:proj|ant)-[A-Za-z0-9_-]{8,}/i.test(value)) return "secret-rejected";   // OpenAI project / Anthropic keys
+    if (/\bsk-[A-Za-z0-9]{20,}/.test(value)) return "secret-rejected";                   // classic OpenAI key
+    if (/\bnpm_[A-Za-z0-9]{20,}/.test(value)) return "secret-rejected";                  // npm automation token
+    if (/\bpassword\s*[:=]\s*[^\s,;}'"]+/i.test(value)) return "secret-rejected";        // inline password=...
+    if (/\b[a-z][a-z0-9+.-]*:\/\/[^\s/:@]+:[^\s/@]+@/i.test(value)) return "secret-rejected"; // credential-bearing URL (user:pass@host)
     if (/\brm\s+-rf\s+\/(?:\s|$)/i.test(value)) return "untrusted-instruction";
     return null;
   }

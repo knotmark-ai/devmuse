@@ -75,6 +75,24 @@ test("a manifest cannot smuggle markup or control characters into the session su
 });
 
 // Covers: UC-G7
+test("the managed publisher refuses common provider tokens, inline passwords, and credential URLs (#62)", () => {
+  // Exact reverse cases: each must be rejected end-to-end through renderManagedRevision.
+  const secrets = [
+    "password=hunter2",
+    "sk-proj-" + "A1b2C3d4E5".repeat(4),
+    "sk-ant-api03-" + "A1b2C3d4E5".repeat(5) + "-x",
+    "npm_" + "a".repeat(36),
+    "DATABASE_URL=postgres://admin:s3cr3t@db.internal:5432/app",
+  ];
+  for (const secret of secrets) {
+    assert.throws(
+      () => renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 1, content: `notes\n${secret}\n` }),
+      (error) => error.code === "secret-rejected",
+      `should reject: ${secret}`,
+    );
+  }
+});
+
 test("the managed publisher refuses to render content carrying a secret", () => {
   assert.throws(
     () => renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 1, content: "token: ghp_" + "a".repeat(36) + "\n" }),

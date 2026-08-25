@@ -5,7 +5,7 @@ import path from "node:path";
 import test from "node:test";
 
 import { projectDelivery } from "../../plugin/runtime/project-context/lifecycle.mjs";
-import { selectCurrentManagedRevision, renderManagedRevision } from "../../plugin/runtime/project-context/managed-block.mjs";
+import { selectCurrentManagedRevision, renderManagedRevision, replaceManagedRevision } from "../../plugin/runtime/project-context/managed-block.mjs";
 import { mergeCache, updateCache } from "../../plugin/runtime/project-context/cache.mjs";
 
 // Covers: UC-G6
@@ -33,6 +33,25 @@ test("merged work awaiting acceptance projects to MergedPendingDelivery, not the
 });
 
 // Covers: UC-G4
+test("replaceManagedRevision rejects the four illegal transitions and accepts a strictly newer one (#62)", () => {
+  const base = renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 5, content: "v5\n" });
+  const rev = (attrs) => renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 6, content: "v6\n", ...attrs });
+  // 1. cross-work replacement (work-A -> work-B)
+  assert.throws(() => replaceManagedRevision(base, rev({ workId: "issue-99" })), (e) => e.code === "managed-identity-mismatch");
+  // 2. backward revision (5 -> 1)
+  assert.throws(() => replaceManagedRevision(base, renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 1, content: "v1\n" })), (e) => e.code === "managed-revision-not-newer");
+  // 3. changed attempt_id
+  assert.throws(() => replaceManagedRevision(base, rev({ attemptId: "b" })), (e) => e.code === "managed-identity-mismatch");
+  // 4. scope -> scope-revision (kind change)
+  assert.throws(() => replaceManagedRevision(base, renderManagedRevision({ kind: "scope-revision", workId: "issue-62", attemptId: "a", revision: 6, content: "v6\n" })), (e) => e.code === "managed-identity-mismatch");
+  // A strictly-newer, same-identity revision is spliced in.
+  const updated = replaceManagedRevision(base, rev({}));
+  assert.match(updated, /revision=6/);
+  assert.doesNotMatch(updated, /revision=5/);
+  // A byte-identical re-post at the same revision is an idempotent no-op.
+  assert.equal(replaceManagedRevision(base, renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 5, content: "v5\n" })), base);
+});
+
 test("managed-revision selection is bound to the expected work identity", () => {
   const mine = renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 1, content: "mine\n" });
   // A foreign higher-revision block arriving in a comment (the finding's vector).
