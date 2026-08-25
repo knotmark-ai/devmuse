@@ -237,6 +237,40 @@ test("a review ref carrying an injected instruction is not embedded in the claud
   assert.match(ok.args[ok.args.indexOf("-p") + 1], /Review main\.\.\.HEAD/);
 });
 
+test("a flooding reviewer is killed and falls back instead of exhausting memory (#51)", async () => {
+  const child = fakeChild({ withStdout: true });
+  let killed = false;
+  child.kill = () => { killed = true; };
+  const promise = runCrossReview(
+    { status: "ready", reviewer: "claude", outputMode: "stdout", command: "claude", args: [], cwd: "/repo", env: {} },
+    { spawn: () => child },
+  );
+  child.stdout.emit("data", "x".repeat(6_000_000)); // > 5 MB cap
+  const result = await promise;
+  assert.equal(result.status, "fallback");
+  assert.equal(result.reason, "output-too-large");
+  assert.equal(killed, true);
+});
+
+test("an oversized reviewer output file falls back, never slurped into memory (#51)", async () => {
+  const fs = await import("node:fs");
+  const os = await import("node:os");
+  const path = await import("node:path");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-xr-big-"));
+  const outputPath = path.join(dir, "out.json");
+  fs.writeFileSync(outputPath, "y".repeat(6_000_000)); // > 5 MB cap
+  const child = fakeChild();
+  const promise = runCrossReview(
+    { status: "ready", reviewer: "codex", outputMode: "file", command: "codex", args: [], cwd: "/repo", env: {} },
+    { spawn: () => child, outputPath },
+  );
+  child.emit("close", 0);
+  const result = await promise;
+  fs.rmSync(dir, { recursive: true, force: true });
+  assert.equal(result.status, "fallback");
+  assert.equal(result.reason, "output-too-large");
+});
+
 test("a synchronous spawn failure returns a typed fallback, not a timer ReferenceError", async () => {
   const result = await runCrossReview(
     { status: "ready", reviewer: "codex", outputMode: "file", command: "x", args: [], cwd: "/repo", env: {} },
