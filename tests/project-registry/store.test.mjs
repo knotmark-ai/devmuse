@@ -25,6 +25,24 @@ test("init creates one empty file per kind and is idempotent", (t) => {
   assert.deepEqual(second.kept.sort(), [...ASSET_KINDS].sort());
 });
 
+test("init with routes creates files only for repository-owned kinds, never forking externally routed ones (#68)", (t) => {
+  const repo = tempRepo(t);
+  // test_cases routed to xray, product_requirements to jira → those kinds are NOT
+  // given local files; the rest (repository-owned) are.
+  const routes = { test_cases: "xray", product_requirements: "jira" };
+  const result = initRegistry(repo, { routes });
+  assert.deepEqual(result.created.sort(), ["acceptance_examples", "rules", "test_results"]);
+  assert.deepEqual(result.skipped.sort(), ["product_use_cases", "test_cases"]); // product_requirements route owns product_use_cases
+  assert.equal(fs.existsSync(registryPath(repo, "test_cases")), false); // no competing local authority
+  assert.equal(fs.existsSync(registryPath(repo, "product_use_cases")), false);
+  assert.ok(fs.existsSync(registryPath(repo, "rules")));
+  // A provider-outage rerun with the same routes stays idempotent and still skips.
+  const rerun = initRegistry(repo, { routes });
+  assert.deepEqual(rerun.created, []);
+  assert.deepEqual(rerun.kept.sort(), ["acceptance_examples", "rules", "test_results"]);
+  assert.deepEqual(rerun.skipped.sort(), ["product_use_cases", "test_cases"]);
+});
+
 test("a rerun after adding assets does not overwrite them", (t) => {
   const repo = tempRepo(t);
   initRegistry(repo);

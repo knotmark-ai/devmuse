@@ -79,10 +79,14 @@ digraph mu_setup {
 4. **Propose.** Build the v1→v2 migration with `propose-migration`, passing the
    inferred `cases:` block. **Present the full proposed configuration and the
    change list to the user before any tracked write** (UC-C5).
-5. **On approval**, write the v2 manifest and run `init` to create the
-   repository-backed registry files (idempotent — existing kind files are kept).
-   Never store credentials, cached authorization, or provider tokens in the
-   tracked configuration (UC-CR3). On decline, record why and stop.
+5. **On approval**, write the v2 manifest and run `init` **with the resolved
+   routes** to create registry files for **repository-owned kinds only** (idempotent
+   — existing kind files are kept). A kind routed to CI or an external provider
+   (Jira/Xray/Qase/…) is skipped — setup validates/provider-binds it but never
+   creates a local canonical file, or it would fork a competing authority for data
+   that system owns (the no-silent-fork rule, UC-C6). Never store credentials,
+   cached authorization, or provider tokens in the tracked configuration (UC-CR3).
+   On decline, record why and stop.
 6. **Report / rerun.** Run `status`; show per-kind presence and counts. Make no
    unrelated or destructive rewrite (UC-C5).
 

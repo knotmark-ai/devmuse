@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 
-import { ASSET_KINDS } from "./routing.mjs";
+import { ASSET_KINDS, repositoryOwnedKinds } from "./routing.mjs";
 import { serializeRegistryFile, parseRegistryFile } from "./registry.mjs";
 
 const KIND_SET = new Set(ASSET_KINDS);
@@ -95,16 +95,23 @@ export function writeKind(repoRoot, kind, assets) {
 // Initialize the repository-backed registry: create `registry/` plus an empty
 // file per kind. Idempotent — an existing kind file is left untouched (UC-C5, no
 // destructive rewrite), so a rerun only fills what is missing.
-export function initRegistry(repoRoot) {
+// Create empty registry files for repository-owned kinds only. When `routes` is
+// given, a kind routed to CI or an external provider is SKIPPED (never given a
+// local canonical file that would compete with the system that owns it, #68); with
+// no routes, every kind is repository-owned by default. Idempotent.
+export function initRegistry(repoRoot, { routes = null } = {}) {
+  const owned = new Set(routes ? repositoryOwnedKinds(routes) : ASSET_KINDS);
   const created = [];
   const kept = [];
+  const skipped = [];
   for (const kind of ASSET_KINDS) {
+    if (!owned.has(kind)) { skipped.push(kind); continue; } // externally routed — validate/bind, do not fork locally
     const file = registryPath(repoRoot, kind);
     if (fs.existsSync(file)) { kept.push(kind); continue; }
     writeKind(repoRoot, kind, []);
     created.push(kind);
   }
-  return { status: "initialized", created, kept };
+  return { status: "initialized", created, kept, skipped };
 }
 
 // Report current state without mutating anything (UC-C5 rerun).

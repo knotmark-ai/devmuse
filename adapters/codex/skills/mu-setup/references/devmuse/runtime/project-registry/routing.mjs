@@ -65,3 +65,21 @@ export function resolveProvider(routing, routeKey) {
   if (!ROUTE_KEY_SET.has(routeKey)) throw Object.assign(new Error(`unknown route key: ${routeKey}`), { code: "unknown-route-key" });
   return routing.routes[routeKey] ?? "repository";
 }
+
+// The route key that owns each asset kind. Names line up except that the
+// `product_requirements` route owns the `product_use_cases` kind.
+export const ROUTE_BY_KIND = Object.freeze({
+  product_use_cases: "product_requirements",
+  rules: "rules",
+  acceptance_examples: "acceptance_examples",
+  test_cases: "test_cases",
+  test_results: "test_results",
+});
+
+// The asset kinds whose effective route is the repository backend — the only kinds
+// mu-setup may create local canonical files for. A kind routed to CI or an external
+// provider must NOT get a repository file, or setup forks a competing local
+// authority for data another system owns (the no-silent-fork rule).
+export function repositoryOwnedKinds(routes = {}) {
+  return ASSET_KINDS.filter((kind) => (routes[ROUTE_BY_KIND[kind]] ?? "repository") === "repository");
+}
