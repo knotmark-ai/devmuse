@@ -49,9 +49,14 @@ export function extractClaudeStructuredOutput(raw) {
 // priority-tagged bullets:  `- [P1] <title> — <file>:<start>[-<end>]`, each with
 // an indented body. Parse that into findings; an empty/clean report yields `{findings:[]}`.
 const CODEX_PRIORITY = { P0: "critical", P1: "important", P2: "minor", P3: "minor" };
+// A codex review whose text is empty or explicitly says there is nothing to flag.
+const CODEX_CLEAN = /\bno (?:issues?|findings?|concerns?|problems?|comments?)\b|nothing to (?:flag|report)|looks good|lgtm/i;
+// `recognized` distinguishes a genuine clean review (empty or a clean sentinel, or
+// a report we parsed bullets from) from an UNRECOGNIZED format — if codex changes
+// its report shape, we must NOT silently return "clean" and drop real findings (#51).
 export function extractCodexReviewFindings(text) {
   const findings = [];
-  if (typeof text !== "string") return { findings };
+  if (typeof text !== "string") return { findings, recognized: false };
   for (const line of text.split(/\r?\n/)) {
     const bullet = line.match(/^\s*-\s*\[(P\d+)\]\s*(.+)$/);
     if (!bullet) continue;
@@ -69,7 +74,11 @@ export function extractCodexReviewFindings(text) {
     }
     findings.push({ severity, file, line: lineNo, summary });
   }
-  return { findings };
+  // Recognized when: we parsed at least one finding, OR the text is empty, OR it
+  // carries a clean-review sentinel. Non-empty prose with no bullets and no clean
+  // marker is an unrecognized shape → the caller degrades, not "clean".
+  const recognized = findings.length > 0 || text.trim() === "" || CODEX_CLEAN.test(text);
+  return { findings, recognized };
 }
 
 // Validate the structured payload rather than trusting a zero exit. Returns a
