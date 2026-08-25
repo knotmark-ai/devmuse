@@ -13,7 +13,7 @@ DevMuse augments Codex; it does not replace the host's normal agent loop.
 
 ## Optional: concurrent subagent dispatch (opt-in)
 
-This section is opt-in and is **not** behavior-tested on Codex; it claims no parity with the Claude adapter's fan-out. It only points out where DevMuse work decomposes and never overrides the host's manager — the manager and the user decide whether to spawn workers.
+This section is opt-in and suggestion-only. Its dispatch decision logic (eligible / ineligible / user-declined) is behaviorally tested via a model reasoning proxy (`test:codex-dispatch`); full execution on the Codex host itself is not guaranteed and it claims no parity with the Claude adapter's fan-out. It only points out where DevMuse work decomposes and never overrides the host's manager — the manager and the user decide whether to spawn workers.
 
 - Codex subagents (GA) run a small fixed number concurrently under a manager/worker model with git-worktree isolation and explorer/worker roles; `agents.max_concurrent_threads_per_session` in `config.toml` bounds them. (`agents.max_threads` is legacy, and there is no current official `max_depth` or `spawn_agents_on_csv` — do not rely on them.)
 - When a DevMuse skill yields independent units of work, you may run them as parallel workers instead of serially. Each eligible skill also carries this pointer in its own body (generated from this same source), so the guidance travels with the skill even when this file is not loaded:

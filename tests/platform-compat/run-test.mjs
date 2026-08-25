@@ -192,7 +192,8 @@ assert.match(
 // non-overriding — the constraints carried over from #50/#54.
 const hostPolicy = read("adapters/codex/HOST_POLICY.md");
 assert.match(hostPolicy, /concurrent subagent dispatch \(opt-in\)/);
-assert.match(hostPolicy, /not\*\* behavior-tested on Codex/);
+assert.match(hostPolicy, /behaviorally tested via a model reasoning proxy/);
+assert.match(hostPolicy, /full execution on the Codex host itself is not guaranteed/);
 assert.match(hostPolicy, /claims no parity with the Claude adapter/);
 assert.match(hostPolicy, /never overrides the host's manager/);
 assert.match(hostPolicy, /manager\/worker model with git-worktree isolation/);
