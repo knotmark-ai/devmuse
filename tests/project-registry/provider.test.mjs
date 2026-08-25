@@ -51,6 +51,30 @@ test("migration requires approval, a complete id map with non-empty targets, his
   assert.equal(migrated.migration.provenance, "migrated 2026-08-25 by setup");
 });
 
+test("migration evidence must be internally consistent, non-blank, and explicit (#68)", () => {
+  const complete = {
+    from: "xray", to: "testrail",
+    idMap: { "tc:proj-1": "TR-9" },
+    locatorHistory: { "tc:proj-1": { from: "XRAY-1", to: "TR-9" } },
+    links: [{ from: "tc:proj-1", type: "verifies", to: "duc:checkout" }],
+    provenance: "migrated by setup",
+  };
+  const migrate = (m) => providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true, migration: m });
+  // Contradiction: history target disagrees with the id map's canonical target.
+  assert.equal(migrate({ ...complete, locatorHistory: { "tc:proj-1": { from: "XRAY-1", to: "TR-WRONG" } } }).reason, "incomplete-migration");
+  // Blank provider / provenance / history / link fields are rejected (trim-aware).
+  assert.equal(migrate({ ...complete, from: "" }).reason, "incomplete-migration");
+  assert.equal(migrate({ ...complete, to: "  " }).reason, "incomplete-migration");
+  assert.equal(migrate({ ...complete, provenance: " " }).reason, "incomplete-migration");
+  assert.equal(migrate({ ...complete, locatorHistory: { "tc:proj-1": { from: " ", to: "TR-9" } } }).reason, "incomplete-migration");
+  assert.equal(migrate({ ...complete, links: [{ from: "", type: "verifies", to: "duc:x" }] }).reason, "incomplete-migration");
+  // Omitted links is incomplete — "no links" must be asserted explicitly, not assumed.
+  const omitted = { ...complete }; delete omitted.links;
+  assert.equal(migrate(omitted).reason, "incomplete-migration");
+  // An explicit empty links array IS accepted (asserting no cross-asset links).
+  assert.equal(migrate({ ...complete, links: [] }).status, "ok");
+});
+
 test("outcome classification: transient = unavailable, auth = denied (not an outage)", () => {
   assert.equal(classifyOutcome({ ok: true }).status, "available");
   assert.equal(classifyOutcome({ reason: "timeout" }).status, "unavailable");
