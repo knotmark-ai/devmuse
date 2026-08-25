@@ -113,15 +113,30 @@ export function selectCurrentManagedRevision({ body = "", comments = [], kind, w
   return { status: "selected", revision: highest, block: candidates[0] };
 }
 
+// The body carries only the BASE kind; `-revision` kinds are append-only comment
+// markers and must never be spliced into the body.
+const BODY_KINDS = new Set(["scope", "plan"]);
+
 export function replaceManagedRevision(body, managedRevision) {
-  const newKind = managedRevision.match(/^<!-- devmuse:([^:]+):start /)?.[1];
-  if (!newKind || !KINDS.has(newKind)) throw Object.assign(new Error("invalid managed revision"), { code: "invalid-managed-revision" });
+  // Normalize line endings up front so splice offsets (computed by parseDocument on
+  // a normalized source) align with the string we slice — a CRLF body otherwise
+  // misaligns and leaves a stray `-->` (bypass 1).
+  const revision = typeof managedRevision === "string" ? managedRevision.replace(/\r\n?/g, "\n") : "";
+  const newKind = revision.match(/^<!-- devmuse:([^:]+):start /)?.[1];
+  if (!newKind || !BODY_KINDS.has(newKind)) throw Object.assign(new Error("invalid managed revision"), { code: "invalid-managed-revision" });
   const family = familyFor(newKind);
-  const parsedNew = parseDocument(managedRevision, family);
-  if (parsedNew.status !== "valid" || parsedNew.blocks.length !== 1) throw Object.assign(new Error("invalid managed revision"), { code: "invalid-managed-revision" });
-  const parsedBody = parseDocument(body, family);
+  const parsedNew = parseDocument(revision, family);
+  // The candidate must be EXACTLY one complete block — no leading/trailing content,
+  // so a `<block> + password=…` or a second managed marker cannot ride along (bypass 3).
+  if (parsedNew.status !== "valid" || parsedNew.blocks.length !== 1 || parsedNew.blocks[0].raw !== revision.trim()) {
+    throw Object.assign(new Error("invalid managed revision"), { code: "invalid-managed-revision" });
+  }
+  const normalizedBody = typeof body === "string" ? body.replace(/\r\n?/g, "\n") : "";
+  const parsedBody = parseDocument(normalizedBody, family);
   if (parsedBody.status !== "valid") throw Object.assign(new Error("invalid managed body"), { code: parsedBody.status });
-  if (parsedBody.blocks.length === 0) return body ? `${body}\n${managedRevision}` : managedRevision;
+  // No existing block → append the base-kind block (a `-revision` marker was already
+  // rejected above, so it can never be written into the body here — bypass 2).
+  if (parsedBody.blocks.length === 0) return normalizedBody ? `${normalizedBody}\n${revision.trim()}` : revision.trim();
   const old = parsedBody.blocks[0];
   const next = parsedNew.blocks[0];
   // An in-place replacement must be the SAME managed object at a strictly newer
@@ -140,5 +155,7 @@ export function replaceManagedRevision(body, managedRevision) {
   if (next.revision < old.revision || (next.revision === old.revision && next.raw !== old.raw)) {
     throw Object.assign(new Error("managed revision is not strictly newer"), { code: "managed-revision-not-newer" });
   }
-  return `${body.slice(0, old.index)}${managedRevision}${body.slice(old.index + old.raw.length)}`;
+  // Splice against the SAME normalized source parseDocument measured, so surrounding
+  // human text is preserved exactly and no `-->` is left behind.
+  return `${normalizedBody.slice(0, old.index)}${revision.trim()}${normalizedBody.slice(old.index + old.raw.length)}`;
 }

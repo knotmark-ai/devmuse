@@ -75,7 +75,10 @@ function inspectPublishable(value, key = null) {
     if (/\bsk-(?:proj|ant)-[A-Za-z0-9_-]{8,}/i.test(value)) return "secret-rejected";   // OpenAI project / Anthropic keys
     if (/\bsk-[A-Za-z0-9]{20,}/.test(value)) return "secret-rejected";                   // classic OpenAI key
     if (/\bnpm_[A-Za-z0-9]{20,}/.test(value)) return "secret-rejected";                  // npm automation token
-    if (/\bpassword\s*[:=]\s*[^\s,;}'"]+/i.test(value)) return "secret-rejected";        // inline password=...
+    // Free-form `key = value` assignments for the same sensitive-key vocabulary the
+    // object-key screen uses — so a secret in raw content (api_key=, client_secret=,
+    // token=, secret=, OPENAI_API_KEY=, password=, …) is caught, not just as a map key.
+    if (/(?<![A-Za-z0-9])(?:access[_-]?token|api[_-]?key|api[_-]?token|authorization|aws[_-]?secret[_-]?access[_-]?key|client[_-]?secret|credentials?|github[_-]?token|oauth[_-]?token|passwd|password|private[_-]?key|refresh[_-]?token|secret|token)\s*[:=]\s*[^\s,;}'"]+/i.test(value)) return "secret-rejected";
     if (/\b[a-z][a-z0-9+.-]*:\/\/[^\s/:@]+:[^\s/@]+@/i.test(value)) return "secret-rejected"; // credential-bearing URL (user:pass@host)
     if (/\brm\s+-rf\s+\/(?:\s|$)/i.test(value)) return "untrusted-instruction";
     return null;

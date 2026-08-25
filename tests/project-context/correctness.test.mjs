@@ -42,14 +42,32 @@ test("replaceManagedRevision rejects the four illegal transitions and accepts a 
   assert.throws(() => replaceManagedRevision(base, renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 1, content: "v1\n" })), (e) => e.code === "managed-revision-not-newer");
   // 3. changed attempt_id
   assert.throws(() => replaceManagedRevision(base, rev({ attemptId: "b" })), (e) => e.code === "managed-identity-mismatch");
-  // 4. scope -> scope-revision (kind change)
-  assert.throws(() => replaceManagedRevision(base, renderManagedRevision({ kind: "scope-revision", workId: "issue-62", attemptId: "a", revision: 6, content: "v6\n" })), (e) => e.code === "managed-identity-mismatch");
+  // 4. scope -> scope-revision (a -revision comment kind is not a body kind)
+  assert.throws(() => replaceManagedRevision(base, renderManagedRevision({ kind: "scope-revision", workId: "issue-62", attemptId: "a", revision: 6, content: "v6\n" })), (e) => e.code === "invalid-managed-revision");
   // A strictly-newer, same-identity revision is spliced in.
   const updated = replaceManagedRevision(base, rev({}));
   assert.match(updated, /revision=6/);
   assert.doesNotMatch(updated, /revision=5/);
   // A byte-identical re-post at the same revision is an idempotent no-op.
   assert.equal(replaceManagedRevision(base, renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 5, content: "v5\n" })), base);
+});
+
+test("replaceManagedRevision closes the three envelope bypasses (CRLF / body -revision / trailing suffix) (#62)", () => {
+  const base = renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 5, content: "v5\n" });
+  const newer = renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 6, content: "v6\n" });
+  // 1. A CRLF body is spliced without misalignment — surrounding text preserved, no stray "-->".
+  const crlfBody = `human before\r\n${base}\r\nhuman after`.replace(/\n/g, "\r\n");
+  const spliced = replaceManagedRevision(crlfBody, newer);
+  assert.match(spliced, /revision=6/);
+  assert.doesNotMatch(spliced, /revision=5/);
+  assert.equal((spliced.match(/devmuse:scope:end -->/g) ?? []).length, 1); // exactly one block, no leftover marker
+  assert.match(spliced, /human before/);
+  assert.match(spliced, /human after/);
+  // 2. With no existing block, a -revision comment marker cannot be written into the body.
+  assert.throws(() => replaceManagedRevision("", renderManagedRevision({ kind: "scope-revision", workId: "issue-62", attemptId: "a", revision: 1, content: "c\n" })), (e) => e.code === "invalid-managed-revision");
+  // 3. A candidate with any trailing content (a second marker or a secret) is rejected.
+  assert.throws(() => replaceManagedRevision(base, `${newer}\npassword=hunter2`), (e) => e.code === "invalid-managed-revision");
+  assert.throws(() => replaceManagedRevision(base, `${newer}\n${renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 7, content: "extra\n" })}`), (e) => e.code === "invalid-managed-revision");
 });
 
 test("managed-revision selection is bound to the expected work identity", () => {
