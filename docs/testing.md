@@ -15,17 +15,18 @@ document groups them by execution cost instead of copying a directory listing.
 
 ```bash
 npm run build:adapters
-npm run test:generated
-npm run test:platforms
-npm run test:skills
-npm run test:project-context
-npm run test:routing
-npm run test:hooks
-npm run test:mermaid
-npm run test:token-benchmark
-npm run test:release
+npm run test:acceptance   # the single gate CI and the release job both run
 git diff --check
 ```
+
+`test:acceptance` is the one canonical aggregate (defined in `package.json`) that
+runs every required suite — generated-drift, skills, platforms, routing, hooks,
+Mermaid, GitHub-first, project-context, project-registry, regression-judge,
+cross-review, profiles, codex-dispatch, token-benchmark, and release. Both
+`ci.yml` and `release.yml` delegate to it, so CI and the release gate cannot
+drift. Its two binary-gated live tests — the cross-review smoke and the
+codex-dispatch behavioral suite — skip gracefully when the `claude`/`codex`
+binary is absent, so this command is deterministic on a machine without them.
 
 The platform contract compares the canonical and generated skill inventories,
 checks every vendored reference, validates host manifests and version alignment,

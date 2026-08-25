@@ -14,17 +14,17 @@ DevMuse 将确定性的契约检查与真实模型行为测试分开。修改路
 
 ```bash
 npm run build:adapters
-npm run test:generated
-npm run test:platforms
-npm run test:skills
-npm run test:project-context
-npm run test:routing
-npm run test:hooks
-npm run test:mermaid
-npm run test:token-benchmark
-npm run test:release
+npm run test:acceptance   # CI 与发布任务共用的唯一验收聚合
 git diff --check
 ```
+
+`test:acceptance` 是 `package.json` 里唯一的规范聚合命令，运行全部必需套件——
+generated-drift、skills、platforms、routing、hooks、Mermaid、GitHub-first、
+project-context、project-registry、regression-judge、cross-review、profiles、
+codex-dispatch、token-benchmark、release。`ci.yml` 与 `release.yml` 都委托给它，
+因此 CI 与发布门禁不会漂移。其中两个受二进制门控的实测套件——cross-review 冒烟测试
+与 codex-dispatch 行为套件——在缺少 `claude`/`codex` 二进制时会优雅跳过，所以在没有
+这些二进制的机器上该命令是确定性的。
 
 平台契约会比对规范源与生成结果的 Skill 清单，检查每个随包引用，验证宿主
 manifest 和版本一致性，并落实 Codex/Gemini 的原生能力策略。发布验证还会在
