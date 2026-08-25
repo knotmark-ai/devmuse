@@ -331,6 +331,26 @@ test("normalization validates structure over exit code and preserves provenance"
   assert.equal(normalizeExternalFindings({ findings: [{ severity: "critical", file: "x", line: 1, summary: "s" }] }, { reviewer: "codex" }).findings[0].reviewer, "codex");
 });
 
+test("a findings array of null/shapeless entries is malformed, not an ok clean review (#51)", () => {
+  // The reported case: {findings:[null]} must not return ok with a junk finding.
+  assert.equal(normalizeExternalFindings({ findings: [null] }, { reviewer: "codex" }).status, "invalid");
+  assert.equal(normalizeExternalFindings({ findings: [{}, { severity: "minor" }] }, { reviewer: "codex" }).status, "invalid"); // no summaries
+  // A genuinely empty findings array is a clean review, not malformed.
+  assert.equal(normalizeExternalFindings({ findings: [] }, { reviewer: "codex" }).status, "ok");
+  // A mix keeps the valid finding and drops the junk one.
+  const mixed = normalizeExternalFindings({ findings: [null, { severity: "important", summary: "real one" }] }, { reviewer: "codex" });
+  assert.equal(mixed.status, "ok");
+  assert.equal(mixed.findings.length, 1);
+  assert.equal(mixed.findings[0].summary, "real one");
+});
+
+test("a long changed-format report merely mentioning 'no issues' is not judged clean (#51)", () => {
+  const longMalformed = `Summary of the automated pass over the diff. ${"lorem ipsum ".repeat(30)} the tool reported no issues in this run but the format is unfamiliar.`;
+  assert.ok(longMalformed.length > 240);
+  assert.equal(extractCodexReviewFindings(longMalformed).recognized, false); // long prose ⇒ unrecognized, not clean
+  assert.equal(extractCodexReviewFindings("No issues found.").recognized, true); // short verdict ⇒ clean
+});
+
 test("merge surfaces contradictions instead of choosing a side", () => {
   const primary = [{ severity: "minor", file: "a", line: 1, summary: "p" }];
   const external = [

@@ -75,9 +75,12 @@ export function extractCodexReviewFindings(text) {
     findings.push({ severity, file, line: lineNo, summary });
   }
   // Recognized when: we parsed at least one finding, OR the text is empty, OR it
-  // carries a clean-review sentinel. Non-empty prose with no bullets and no clean
-  // marker is an unrecognized shape → the caller degrades, not "clean".
-  const recognized = findings.length > 0 || text.trim() === "" || CODEX_CLEAN.test(text);
+  // is a SHORT clean verdict (a clean sentinel, under 240 chars, with no priority
+  // marker). Long prose with no bullets — or text that merely mentions "no issues"
+  // inside a larger changed-format report — is an unrecognized shape → the caller
+  // degrades, never a silent "clean".
+  const looksClean = CODEX_CLEAN.test(text) && text.trim().length <= 240 && !/\[P\d+\]/i.test(text);
+  const recognized = findings.length > 0 || text.trim() === "" || looksClean;
   return { findings, recognized };
 }
 
@@ -95,11 +98,17 @@ export function normalizeExternalFindings(raw, { reviewer, model = null } = {}) 
   }
   const list = Array.isArray(payload) ? payload : payload?.findings;
   if (!Array.isArray(list)) return { status: "invalid", reason: "no-findings-array", findings: [] };
-  const findings = list.map((item) => ({
+  // A finding must be an object carrying a non-empty summary — a null or shapeless
+  // entry ({findings:[null]}) is malformed, not a real finding. Drop such entries;
+  // if a non-empty list yields NO valid finding, the payload is malformed, not "ok".
+  const usable = list.filter((item) => item && typeof item === "object" && !Array.isArray(item)
+    && typeof item.summary === "string" && item.summary.trim().length > 0);
+  if (list.length > 0 && usable.length === 0) return { status: "invalid", reason: "malformed-findings", findings: [] };
+  const findings = usable.map((item) => ({
     severity: normalizeSeverity(item?.severity),
     file: typeof item?.file === "string" ? item.file : null,
     line: Number.isInteger(item?.line) ? item.line : null,
-    summary: typeof item?.summary === "string" ? item.summary : String(item?.summary ?? ""),
+    summary: item.summary,
     reviewer: reviewer ?? "external",
     model,
   }));
