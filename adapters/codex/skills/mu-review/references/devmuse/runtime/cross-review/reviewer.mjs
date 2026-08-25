@@ -102,6 +102,12 @@ export function buildInvocation({
   const target = reviewer ?? RECIPROCAL[currentHost] ?? null;
   if (!target || !target.host) return { status: "unavailable", reason: "no-configured-reviewer" };
 
+  // Host equality is checked BEFORE the family label — a caller-supplied override
+  // like {host:"codex", family:"anthropic"} must never let a host review itself,
+  // no matter what family it claims (the no-self-review invariant).
+  if (target.host === currentHost) {
+    return { status: "same-family", reason: "reviewer-is-current-host", host: currentHost, reviewer: target.host };
+  }
   const hostFamily = familyOf(currentHost);
   const targetFamily = target.family ?? familyOf(target.host);
   if (hostFamily && targetFamily && hostFamily === targetFamily) {

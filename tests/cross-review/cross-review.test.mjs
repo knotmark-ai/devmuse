@@ -26,6 +26,16 @@ test("the current host is never its own reviewer", () => {
   assert.equal(buildInvocation({ currentHost: "codex", reviewer: { host: "codex", family: "openai" }, ...base }).status, "same-family");
 });
 
+test("a mislabeled override cannot make a host review itself — host equality wins over the family label (#51)", () => {
+  // currentHost codex + a reviewer claiming host:codex but family:anthropic must
+  // still be rejected: host equality is checked before the caller's family label.
+  const inv = buildInvocation({ currentHost: "codex", reviewer: { host: "codex", family: "anthropic" }, ...base });
+  assert.equal(inv.status, "same-family");
+  assert.equal(inv.reason, "reviewer-is-current-host");
+  // The genuine cross-host case still proceeds.
+  assert.equal(buildInvocation({ currentHost: "codex", reviewer: { host: "claude", family: "anthropic" }, ...base }).status, "ready");
+});
+
 test("an unconfigured non-reciprocal host has no capability, and never crashes", () => {
   assert.equal(buildInvocation({ currentHost: "hermes", ...base }).status, "unavailable");
 });
@@ -296,4 +306,29 @@ test("merge surfaces contradictions instead of choosing a side", () => {
   assert.equal(contradictions.length, 2);
   assert.ok(merged.some((f) => f.contested && f.externalSeverity === "critical"));
   assert.ok(merged.some((f) => f.file === "b" && f.contested));
+});
+
+test("opposite conclusions at the same line and same severity are a contradiction, not agreement (#51)", () => {
+  const primary = [{ severity: "important", file: "x.js", line: 5, summary: "line 5 is unsafe" }];
+  const external = [{ severity: "important", file: "x.js", line: 5, summary: "line 5 is safe", reviewer: "codex" }];
+  const { merged, contradictions } = mergeFindings(primary, external);
+  assert.equal(contradictions.length, 1); // same severity did NOT collapse it
+  const kept = merged.find((f) => f.file === "x.js");
+  assert.equal(kept.contested, true);
+  assert.equal(kept.externalSummary, "line 5 is safe"); // the opposing conclusion is preserved
+});
+
+test("multiple findings at one line and location-less findings are not collapsed (#51)", () => {
+  // Two distinct primary findings share x.js:1; both must survive.
+  const primary = [
+    { severity: "minor", file: "x.js", line: 1, summary: "unused import" },
+    { severity: "important", file: "x.js", line: 1, summary: "missing null guard" },
+    { severity: "minor", file: null, line: null, summary: "general: add a changelog" },
+  ];
+  const external = [{ severity: "minor", file: null, line: null, summary: "general: bump the version", reviewer: "codex" }];
+  const { merged } = mergeFindings(primary, external);
+  // Both x.js:1 primaries survive (not overwritten in a single map slot).
+  assert.equal(merged.filter((f) => f.file === "x.js" && f.line === 1).length, 2);
+  // Both location-less findings survive (not collapsed into one ":" slot).
+  assert.equal(merged.filter((f) => !f.file && f.summary.startsWith("general:")).length, 2);
 });
