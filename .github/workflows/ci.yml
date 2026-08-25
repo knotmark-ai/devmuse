@@ -42,44 +42,10 @@ jobs:
       - name: Build generated host adapters
         run: npm run build:adapters
 
-      - name: Reject generated adapter drift
-        run: npm run test:generated
-
-      - name: Validate skill metadata and description budget
-        run: npm run test:skills
-
-      - name: Validate cross-host contracts and manifests
-        run: npm run test:platforms
-
-      - name: Validate routing policy
-        run: npm run test:routing
-
-      - name: Test GitHub-first project context runtime
-        run: npm run test:project-context
-
-      - name: Test project-registry contract runtime
-        run: npm run test:project-registry
-
-      - name: Test regression auto-judge harness
-        run: npm run test:regression-judge
-
-      - name: Test cross-review runtime
-        run: npm run test:cross-review
-
-      - name: Test profile composition contract
-        run: npm run test:profiles
-
-      - name: Test destructive-command guard
-        run: npm run test:hooks
-
-      - name: Validate Mermaid compatibility
-        run: npm run test:mermaid
-
-      - name: Test token benchmark summarizer
-        run: npm run test:token-benchmark
-
-      - name: Test deterministic release contracts
-        run: npm run test:release
+      - name: Run all acceptance suites
+        # Single source of truth (package.json test:acceptance) shared with the
+        # release gate so CI and release can never drift out of sync.
+        run: npm run test:acceptance
 
       - name: Reject whitespace errors
         run: git diff --check

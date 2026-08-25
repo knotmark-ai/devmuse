@@ -11,8 +11,24 @@ test("UC-1 UC-R1: CI validates release code but cannot publish", () => {
   assert.match(ci, /pull_request:/);
   assert.match(ci, /branches:\s*\[main\]/);
   assert.match(ci, /permissions:\s*\n\s*contents:\s*read/);
-  assert.match(ci, /npm run test:release/);
+  // CI runs the shared acceptance aggregate (which includes test:release).
+  assert.match(ci, /npm run test:acceptance/);
   assert.doesNotMatch(ci, /release:publish|npm publish|contents:\s*write|id-token:\s*write/);
+});
+
+test("the shared test:acceptance aggregate covers every required acceptance suite (anti-drift)", () => {
+  const aggregate = JSON.parse(read("package.json")).scripts["test:acceptance"];
+  assert.ok(aggregate, "package.json must define test:acceptance");
+  // Both ci.yml and release.yml delegate to it, so this list is the single gate.
+  for (const suite of [
+    "test:generated", "test:skills", "test:platforms", "test:routing", "test:hooks", "test:mermaid",
+    "test:github-first", "test:project-context", "test:project-registry", "test:regression-judge",
+    "test:cross-review", "test:profiles", "test:token-benchmark", "test:release",
+  ]) {
+    assert.match(aggregate, new RegExp(`npm run ${suite.replace(":", "\\:")}\\b`), `test:acceptance omits ${suite}`);
+  }
+  // The release gate delegates to the same aggregate.
+  assert.match(read(".github/workflows/release.yml"), /npm run test:acceptance/);
 });
 
 test("UC-2 UC-3 UC-7 UC-R1 UC-R4: release workflow has pure dry run and gated mutations", () => {
