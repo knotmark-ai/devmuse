@@ -116,35 +116,39 @@ export function selectCurrentManagedRevision({ body = "", comments = [], kind, w
 // The body carries only the BASE kind; `-revision` kinds are append-only comment
 // markers and must never be spliced into the body.
 const BODY_KINDS = new Set(["scope", "plan"]);
+const ANY_MANAGED_START = /<!-- devmuse:(scope|scope-revision|plan|plan-revision):start\b/g;
 
 export function replaceManagedRevision(body, managedRevision) {
-  // Normalize line endings up front so splice offsets (computed by parseDocument on
-  // a normalized source) align with the string we slice — a CRLF body otherwise
-  // misaligns and leaves a stray `-->` (bypass 1).
   const revision = typeof managedRevision === "string" ? managedRevision.replace(/\r\n?/g, "\n") : "";
   const newKind = revision.match(/^<!-- devmuse:([^:]+):start /)?.[1];
   if (!newKind || !BODY_KINDS.has(newKind)) throw Object.assign(new Error("invalid managed revision"), { code: "invalid-managed-revision" });
   const family = familyFor(newKind);
   const parsedNew = parseDocument(revision, family);
   // The candidate must be EXACTLY one complete block — no leading/trailing content,
-  // so a `<block> + password=…` or a second managed marker cannot ride along (bypass 3).
+  // so a `<block> + password=…` or a second managed marker cannot ride along.
   if (parsedNew.status !== "valid" || parsedNew.blocks.length !== 1 || parsedNew.blocks[0].raw !== revision.trim()) {
     throw Object.assign(new Error("invalid managed revision"), { code: "invalid-managed-revision" });
   }
-  const normalizedBody = typeof body === "string" ? body.replace(/\r\n?/g, "\n") : "";
-  const parsedBody = parseDocument(normalizedBody, family);
+  // parseDocument normalizes internally for validation, but we splice against the
+  // ORIGINAL body so surrounding human text is preserved byte-for-byte (its CRLF and
+  // all). We never rewrite the whole body's line endings.
+  const original = typeof body === "string" ? body : "";
+  const parsedBody = parseDocument(original, family);
   if (parsedBody.status !== "valid") throw Object.assign(new Error("invalid managed body"), { code: parsedBody.status });
-  // No existing block → append the base-kind block (a `-revision` marker was already
-  // rejected above, so it can never be written into the body here — bypass 2).
-  if (parsedBody.blocks.length === 0) return normalizedBody ? `${normalizedBody}\n${revision.trim()}` : revision.trim();
-  const old = parsedBody.blocks[0];
   const next = parsedNew.blocks[0];
+  if (parsedBody.blocks.length === 0) {
+    // No block of this family. If the body already holds a managed block of ANOTHER
+    // family, blindly appending would create two managed blocks — that is a
+    // reconciliation situation, not an append.
+    if ([...original.matchAll(ANY_MANAGED_START)].some((m) => familyFor(m[1]) !== family)) {
+      throw Object.assign(new Error("managed block family conflict"), { code: "managed-family-conflict" });
+    }
+    return original ? `${original}\n${revision.trim()}` : revision.trim();
+  }
+  const old = parsedBody.blocks[0];
   // An in-place replacement must be the SAME managed object at a strictly newer
   // revision: identical kind, work_id, issue, and attempt_id (a stable attempt_id
-  // across body updates is the design). A different identity is a new block, never
-  // an overwrite — this rejects work-A→work-B, scope→scope-revision, and a changed
-  // attempt_id; a lower/equal revision rejects backward transitions (5→1), except a
-  // byte-identical re-post at the same revision, which is an idempotent no-op.
+  // across body updates is the design) — rejects work-A→work-B and changed attempt_id.
   const sameIdentity = old.kind === next.kind
     && old.attributes.work_id === next.attributes.work_id
     && (old.attributes.issue ?? null) === (next.attributes.issue ?? null)
@@ -152,10 +156,18 @@ export function replaceManagedRevision(body, managedRevision) {
   if (!sameIdentity) {
     throw Object.assign(new Error("managed revision identity mismatch"), { code: "managed-identity-mismatch" });
   }
+  // A byte-identical re-post at the same revision is an idempotent no-op — return the
+  // ORIGINAL body unchanged (do not even rewrite its line endings).
+  if (next.revision === old.revision && next.raw === old.raw) return original;
   if (next.revision < old.revision || (next.revision === old.revision && next.raw !== old.raw)) {
     throw Object.assign(new Error("managed revision is not strictly newer"), { code: "managed-revision-not-newer" });
   }
-  // Splice against the SAME normalized source parseDocument measured, so surrounding
-  // human text is preserved exactly and no `-->` is left behind.
-  return `${normalizedBody.slice(0, old.index)}${revision.trim()}${normalizedBody.slice(old.index + old.raw.length)}`;
+  // Locate the old block by its markers in the ORIGINAL body and replace just that
+  // span; everything around it (human text, its CRLF) is preserved verbatim.
+  const startMarker = `<!-- devmuse:${old.kind}:start`;
+  const endMarker = `<!-- devmuse:${old.kind}:end -->`;
+  const startIdx = original.indexOf(startMarker);
+  const endIdx = startIdx === -1 ? -1 : original.indexOf(endMarker, startIdx);
+  if (startIdx === -1 || endIdx === -1) throw Object.assign(new Error("invalid managed body"), { code: "malformed" });
+  return `${original.slice(0, startIdx)}${revision.trim()}${original.slice(endIdx + endMarker.length)}`;
 }

@@ -52,22 +52,34 @@ test("replaceManagedRevision rejects the four illegal transitions and accepts a 
   assert.equal(replaceManagedRevision(base, renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 5, content: "v5\n" })), base);
 });
 
-test("replaceManagedRevision closes the three envelope bypasses (CRLF / body -revision / trailing suffix) (#62)", () => {
+test("replaceManagedRevision preserves surrounding CRLF text byte-for-byte and keeps idempotence a true no-op (#62)", () => {
   const base = renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 5, content: "v5\n" });
   const newer = renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 6, content: "v6\n" });
-  // 1. A CRLF body is spliced without misalignment — surrounding text preserved, no stray "-->".
-  const crlfBody = `human before\r\n${base}\r\nhuman after`.replace(/\n/g, "\r\n");
+  const crlfBody = (`human before\n${base}\nhuman after`).replace(/\n/g, "\r\n"); // pure CRLF around the block
+  // Surrounding human text is preserved BYTE-FOR-BYTE (its CRLF intact); only the block changes.
   const spliced = replaceManagedRevision(crlfBody, newer);
+  assert.ok(spliced.startsWith("human before\r\n"), "leading CRLF text preserved");
+  assert.ok(spliced.endsWith("\r\nhuman after"), "trailing CRLF text preserved");
   assert.match(spliced, /revision=6/);
   assert.doesNotMatch(spliced, /revision=5/);
-  assert.equal((spliced.match(/devmuse:scope:end -->/g) ?? []).length, 1); // exactly one block, no leftover marker
-  assert.match(spliced, /human before/);
-  assert.match(spliced, /human after/);
-  // 2. With no existing block, a -revision comment marker cannot be written into the body.
+  assert.equal((spliced.match(/devmuse:scope:end -->/g) ?? []).length, 1);
+  // A byte-identical re-post at the same revision returns the ORIGINAL body UNCHANGED
+  // (does not rewrite CRLF → LF).
+  assert.equal(replaceManagedRevision(crlfBody, renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 5, content: "v5\n" })), crlfBody);
+});
+
+test("replaceManagedRevision rejects envelope bypasses and cross-family appends (#62)", () => {
+  const base = renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 5, content: "v5\n" });
+  const newer = renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 6, content: "v6\n" });
+  // A -revision comment marker is never written into the body.
   assert.throws(() => replaceManagedRevision("", renderManagedRevision({ kind: "scope-revision", workId: "issue-62", attemptId: "a", revision: 1, content: "c\n" })), (e) => e.code === "invalid-managed-revision");
-  // 3. A candidate with any trailing content (a second marker or a secret) is rejected.
+  // A candidate with any trailing content (a second marker or a secret) is rejected.
   assert.throws(() => replaceManagedRevision(base, `${newer}\npassword=hunter2`), (e) => e.code === "invalid-managed-revision");
   assert.throws(() => replaceManagedRevision(base, `${newer}\n${renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 7, content: "extra\n" })}`), (e) => e.code === "invalid-managed-revision");
+  // Appending a scope block to a body that already holds a PLAN block is a conflict,
+  // not two managed blocks.
+  const planBody = renderManagedRevision({ kind: "plan", workId: "issue-62", issue: 62, attemptId: "a", revision: 1, content: "p\n" });
+  assert.throws(() => replaceManagedRevision(planBody, base), (e) => e.code === "managed-family-conflict");
 });
 
 test("managed-revision selection is bound to the expected work identity", () => {
