@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 
-import { initRegistry, registryStatus, readKind, writeKind, registryPath } from "../../plugin/runtime/project-registry/store.mjs";
+import { initRegistry, registryStatus, readKind, writeKind, registryPath, atomicWrite } from "../../plugin/runtime/project-registry/store.mjs";
 import { ASSET_KINDS } from "../../plugin/runtime/project-registry/routing.mjs";
 
 function tempRepo(t) {
@@ -23,6 +23,24 @@ test("init creates one empty file per kind and is idempotent", (t) => {
   const second = initRegistry(repo);
   assert.deepEqual(second.created, []);
   assert.deepEqual(second.kept.sort(), [...ASSET_KINDS].sort());
+});
+
+test("atomicWrite never writes through a symlink and leaves no predictable temp file (#68)", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-atomic-"));
+  const outside = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-atomic-out-"));
+  t.after(() => { fs.rmSync(dir, { recursive: true, force: true }); fs.rmSync(outside, { recursive: true, force: true }); });
+  const external = path.join(outside, "secret.txt");
+  fs.writeFileSync(external, "SECRET");
+  const target = path.join(dir, "project.yaml");
+  fs.symlinkSync(external, target); // destination is a symlink pointing outside
+  atomicWrite(target, "new content");
+  // The external file is untouched — the atomic rename replaced the symlink rather
+  // than writing through it, and the O_EXCL temp create never followed a symlink.
+  assert.equal(fs.readFileSync(external, "utf8"), "SECRET");
+  assert.equal(fs.lstatSync(target).isSymbolicLink(), false);
+  assert.equal(fs.readFileSync(target, "utf8"), "new content");
+  // No leftover temp file, and the temp name was not the old predictable `.tmp-<pid>`.
+  assert.deepEqual(fs.readdirSync(dir).filter((f) => f.includes(".tmp-")), []);
 });
 
 test("init with routes creates files only for repository-owned kinds, never forking externally routed ones (#68)", (t) => {

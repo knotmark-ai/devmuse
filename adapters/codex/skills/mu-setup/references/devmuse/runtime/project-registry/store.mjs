@@ -58,11 +58,21 @@ export function containedRepoPath(repoRoot, relativeFile) {
 }
 
 // Durable, all-or-nothing write: a same-directory temp file then an atomic rename,
-// so a crash mid-write never leaves a half-written manifest.
+// so a crash mid-write never leaves a half-written file. The temp name is
+// UNPREDICTABLE and created with O_EXCL ("wx"): a pre-planted symlink at the temp
+// path is never followed. A predictable `.tmp-<pid>` symlink could otherwise make
+// writeFileSync write THROUGH it to a file outside the repo — the C-review found
+// this hole in the earlier containment fix, which validated only the final target.
 export function atomicWrite(file, text) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  const tmp = `${file}.tmp-${process.pid}`;
-  fs.writeFileSync(tmp, text, { encoding: "utf8", mode: 0o644 });
+  const dir = path.dirname(file);
+  fs.mkdirSync(dir, { recursive: true });
+  const tmp = path.join(dir, `.${path.basename(file)}.tmp-${randomUUID()}`);
+  const fd = fs.openSync(tmp, "wx", 0o644); // O_CREAT|O_EXCL — fails if tmp exists; never follows a symlink
+  try {
+    fs.writeFileSync(fd, text, { encoding: "utf8" });
+  } finally {
+    fs.closeSync(fd);
+  }
   fs.renameSync(tmp, file);
 }
 

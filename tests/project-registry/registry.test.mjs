@@ -134,10 +134,21 @@ test("an under-bound result is partial, not covered — unbound axes could have 
   const underBound = { boundRevisions: { requirement: "r1" } };
   const result = coverageStaleness(underBound, { requirement: "r1", test_case: "t1", code: "c1" });
   assert.equal(result.status, "partial");
-  assert.deepEqual(result.unboundAxes, ["test_case", "code"]);
+  assert.deepEqual(result.unboundAxes, ["test_case", "code", "environment"]);
   // An acceptance_example satisfies the source axis in place of a requirement.
-  const full = { boundRevisions: { acceptance_example: "e1", test_case: "t1", code: "c1" } };
+  const full = { boundRevisions: { acceptance_example: "e1", test_case: "t1", code: "c1" }, environment: "ci-linux" };
   assert.equal(coverageStaleness(full, { acceptance_example: "e1", test_case: "t1", code: "c1" }).status, "covered");
+});
+
+test("coverage without an environment binding is partial, not covered (#68)", () => {
+  // All revision axes match, but no environment recorded → not reproducible coverage.
+  const noEnv = { boundRevisions: { requirement: "r1", test_case: "t1", code: "c1" } };
+  const result = coverageStaleness(noEnv, { requirement: "r1", test_case: "t1", code: "c1" });
+  assert.equal(result.status, "partial");
+  assert.deepEqual(result.unboundAxes, ["environment"]);
+  // Add the environment and it is covered.
+  const withEnv = { ...noEnv, environment: "ci-linux" };
+  assert.equal(coverageStaleness(withEnv, { requirement: "r1", test_case: "t1", code: "c1" }).status, "covered");
 });
 
 // --- migration (proposal only, never writes) ---
