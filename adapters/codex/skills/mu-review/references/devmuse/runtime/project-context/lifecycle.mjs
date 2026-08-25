@@ -40,7 +40,11 @@ export function projectDelivery({ currentState, event, requiredPrs = [], accepta
     // MergedPendingDelivery backward to Reviewing (that would reopen review after
     // merge and break monotonicity).
     if (!allRequiredPrsResolved(requiredPrs)) return { currentState, issueAction: "keep_open", reason: "required-prs-remaining" };
-    if (!allPassed(acceptanceResults, { requireOne: true })) return { currentState, issueAction: "keep_open", reason: "acceptance-unverified" };
+    // The merge is confirmed. Work that is merged but still awaiting acceptance or
+    // external delivery is `MergedPendingDelivery`, never `Reviewing` — keeping the
+    // pre-merge state after merge misprojects the delivery lifecycle. Forward-only:
+    // this never moves an already-MergedPendingDelivery item backward.
+    if (!allPassed(acceptanceResults, { requireOne: true })) return { currentState: "MergedPendingDelivery", issueAction: "keep_open", reason: "acceptance-unverified" };
     if (!allPassed(externalTaskResults)) return { currentState: "MergedPendingDelivery", issueAction: "keep_open", reason: "external-work-remaining" };
     return { currentState: "Complete", issueAction: "close", reason: "all-acceptance-verified" };
   }

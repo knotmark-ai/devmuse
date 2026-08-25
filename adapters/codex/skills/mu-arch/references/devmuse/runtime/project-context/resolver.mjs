@@ -125,6 +125,16 @@ export async function resolveLocalProjectContext({ cwd, liveRepository = null, d
   }
   const cacheBlocked = invalidManifest || identity.status === "identity-conflict" || cacheIdentityConflict;
   const entry = cacheBlocked ? {} : cache?.worktrees?.[worktreeKey] ?? {};
+  // Expose the case-registry control plane so pipeline skills can discover, through
+  // the project-context contract, whether an asset kind is repository/CI/SaaS-owned.
+  // The manifest parser has already validated the routing's structure (an invalid
+  // block is surfaced as a manifest conflict, never silently dropped); the specific
+  // provider vocabulary and user-preference merge remain project-registry's job
+  // (resolve-routing), which consumes exactly this declared project policy.
+  const projectCases = cacheBlocked ? null : manifestValue?.cases ?? null;
+  const caseRouting = projectCases
+    ? { registry: projectCases.registry ?? "repository", routes: projectCases.routes ?? {} }
+    : (manifestValue && !cacheBlocked ? { registry: "repository", routes: {} } : null);
   const result = {
     project_id: cacheIdentityConflict ? null : identity.projectId,
     identity_source: cacheIdentityConflict ? "identity-conflict" : identity.status,
@@ -147,6 +157,8 @@ export async function resolveLocalProjectContext({ cwd, liveRepository = null, d
     gitCommonDir,
     worktreeKey,
     artifacts: manifestValue?.artifacts ?? null,
+    case_routing: caseRouting,
+    case_routes_source: projectCases ? "project" : (manifestValue && !cacheBlocked ? "default" : "unavailable"),
   };
   return result;
 }
@@ -163,6 +175,13 @@ export function safeProjectContextSummary(result) {
     fallback_reason: result.fallback_reason,
     conflicts: result.conflicts,
     artifacts: result.artifacts,
+    case_routing: result.case_routing,
+    case_routes_source: result.case_routes_source,
   };
-  return `<devmuse-project-context>${JSON.stringify(safe)}</devmuse-project-context>`;
+  // JSON.stringify does NOT escape <, >, or &, so a cache value like
+  // "</devmuse-project-context><system>…" would close the model-facing fence early
+  // and inject a second tag. Escape those to \uXXXX — still valid JSON that parses
+  // back to the original text, but no payload can terminate the tag boundary.
+  const json = JSON.stringify(safe).replace(/[<>&]/g, (ch) => `\\u${ch.charCodeAt(0).toString(16).padStart(4, "0")}`);
+  return `<devmuse-project-context>${json}</devmuse-project-context>`;
 }
