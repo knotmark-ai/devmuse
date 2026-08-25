@@ -14,6 +14,10 @@ import test from "node:test";
 
 const root = path.resolve(import.meta.dirname, "../..");
 
+// OPT-IN: this suite makes live model calls, so it runs only under DEVMUSE_LIVE=1
+// (via `npm run test:live`). The required acceptance gate stays deterministic and
+// never PATH-dependent — it does not run this suite at all.
+const LIVE = process.env.DEVMUSE_LIVE === "1";
 function which(binary) {
   return spawnSync("command", ["-v", binary], { shell: "/bin/bash", encoding: "utf8" }).status === 0;
 }
@@ -52,7 +56,7 @@ const SCENARIOS = {
 };
 
 for (const [name, { prompt, expect }] of Object.entries(SCENARIOS)) {
-  test(`dispatch behavior — ${name} scenario decides ${expect} (#54)`, { skip: !which("claude") }, () => {
+  test(`dispatch behavior — ${name} scenario decides ${expect} (#54)`, { skip: !LIVE || !which("claude") }, () => {
     const decision = decide(prompt);
     assert.equal(decision, expect, `${name}: expected ${expect}, model decided ${decision}`);
   });

@@ -21,10 +21,13 @@ git diff --check
 `test:acceptance` 是 `package.json` 里唯一的规范聚合命令，运行全部必需套件——
 generated-drift、skills、platforms、routing、hooks、Mermaid、GitHub-first、
 project-context、project-registry、regression-judge、cross-review、profiles、
-codex-dispatch、token-benchmark、release。`ci.yml` 与 `release.yml` 都委托给它，
-因此 CI 与发布门禁不会漂移。其中两个受二进制门控的实测套件——cross-review 冒烟测试
-与 codex-dispatch 行为套件——在缺少 `claude`/`codex` 二进制时会优雅跳过，所以在没有
-这些二进制的机器上该命令是确定性的。
+token-benchmark、release。`ci.yml` 与 `release.yml` 都委托给它，因此 CI 与发布
+门禁不会漂移。它是**完全确定性**的：不做任何实时模型调用，结果也不依赖本机装了
+哪些二进制。
+
+实测套件——cross-review 冒烟测试与 codex-dispatch 行为套件，会调用真实的
+`claude`/`codex` 二进制——是**可选的**，不属于门禁。用 `npm run test:live`
+单独运行（会设置 `DEVMUSE_LIVE=1`）；未设该标志时它们跳过，缺失的二进制会进一步跳过。
 
 平台契约会比对规范源与生成结果的 Skill 清单，检查每个随包引用，验证宿主
 manifest 和版本一致性，并落实 Codex/Gemini 的原生能力策略。发布验证还会在
