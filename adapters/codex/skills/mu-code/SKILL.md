@@ -239,3 +239,15 @@ the blocker is resolved or the user chooses an explicit alternative.
 - Bounded execution ends after its combined review.
 - Architectural execution chains to **mu-review** once, after integration.
 - Agent reference: `references/devmuse/agents/mu-coder.md`.
+
+## Optional: concurrent subagent dispatch (opt-in)
+
+This is an **opt-in suggestion**, not a default. It points to the canonical guide
+in the adapter's `HOST_POLICY.md` (§ *Optional: concurrent subagent dispatch*) —
+the single source of truth. The host manager and the user decide whether to spawn
+workers; **a conservative manager may decline, and concurrency is never forced.**
+It is not behavior-tested on Codex and claims no parity with the Claude fan-out.
+
+- Where `$mu-code` decomposes: executing an approved plan: architectural tasks with no shared-file contention and no producer/consumer interface between them are worker candidates; keep tasks that touch the same files or exchange a named output on one thread, in dependency order.
+- Prefer git-worktree isolation whenever workers mutate files; never share one
+  working tree for write work.
