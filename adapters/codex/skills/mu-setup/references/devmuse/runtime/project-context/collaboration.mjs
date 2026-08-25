@@ -61,7 +61,12 @@ export function chooseUpdateStrategy({ supportsConditionalUpdate, providerConfli
   return { action: "manual-or-local-fallback" };
 }
 
-const SENSITIVE_KEY = /^(?:access[_-]?token|api[_-]?(?:key|token)|authorization|auth(?:entication|orization)?[_-]?token|aws[_-]?secret[_-]?access[_-]?key|client[_-]?secret|credentials?|github[_-]?token|oauth[_-]?(?:cache|token)|password|private[_-]?key|refresh[_-]?token|secret|token)$/i;
+// ONE sensitive-key vocabulary, shared by the object-key screen and the raw-string
+// assignment screen, so they cannot drift (the reviewer repeatedly found words the
+// inline screen was missing — authToken, authenticationToken, oauthCache, …).
+const SENSITIVE_KEY_WORDS = "access[_-]?token|api[_-]?(?:key|token)|authorization|auth(?:entication|orization)?[_-]?token|aws[_-]?secret[_-]?access[_-]?key|client[_-]?secret|credentials?|github[_-]?token|oauth[_-]?(?:cache|token)|passwd|password|private[_-]?key|refresh[_-]?token|secret|token";
+const SENSITIVE_KEY = new RegExp(`^(?:${SENSITIVE_KEY_WORDS})$`, "i");
+const SENSITIVE_ASSIGNMENT = new RegExp(`(?<![A-Za-z0-9])(?:${SENSITIVE_KEY_WORDS})\\s*[:=]\\s*[^\\s,;}'"]+`, "i");
 
 function inspectPublishable(value, key = null) {
   if (key !== null && SENSITIVE_KEY.test(key) && value !== null && value !== "") return "secret-rejected";
@@ -78,7 +83,7 @@ function inspectPublishable(value, key = null) {
     // Free-form `key = value` assignments for the same sensitive-key vocabulary the
     // object-key screen uses — so a secret in raw content (api_key=, client_secret=,
     // token=, secret=, OPENAI_API_KEY=, password=, …) is caught, not just as a map key.
-    if (/(?<![A-Za-z0-9])(?:access[_-]?token|api[_-]?key|api[_-]?token|authorization|aws[_-]?secret[_-]?access[_-]?key|client[_-]?secret|credentials?|github[_-]?token|oauth[_-]?token|passwd|password|private[_-]?key|refresh[_-]?token|secret|token)\s*[:=]\s*[^\s,;}'"]+/i.test(value)) return "secret-rejected";
+    if (SENSITIVE_ASSIGNMENT.test(value)) return "secret-rejected";
     if (/\b[a-z][a-z0-9+.-]*:\/\/[^\s/:@]+:[^\s/@]+@/i.test(value)) return "secret-rejected"; // credential-bearing URL (user:pass@host)
     if (/\brm\s+-rf\s+\/(?:\s|$)/i.test(value)) return "untrusted-instruction";
     return null;

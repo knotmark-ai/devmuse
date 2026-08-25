@@ -89,6 +89,12 @@ test("the managed publisher refuses common provider tokens, inline passwords, an
     "token=plain-secret",
     "secret=plain-secret",
     "OPENAI_API_KEY=plain-secret",
+    // camelCase / oauth-cache variants the object-key vocabulary also covers.
+    "authToken=plain-secret",
+    "authenticationToken=plain-secret",
+    "authorizationToken=plain-secret",
+    "oauth_cache=plain-secret",
+    "oauthCache=plain-secret",
   ];
   for (const secret of secrets) {
     assert.throws(
