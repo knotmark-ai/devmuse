@@ -28,29 +28,31 @@ export function providerTransition({ state = "Local", event, approved = false, m
   if (event === "migrate") {
     if (state !== "ProviderCanonical") return { status: "blocked", reason: "no-canonical-provider" };
     if (!approved) return { status: "blocked", reason: "approval-required" };
-    // A complete migration needs from/to, a NON-EMPTY id map whose every entry maps
-    // a stable ID to a NON-EMPTY target locator (an empty target ID is not a real
-    // relocation), provenance evidence, AND it must preserve the old->new locator
-    // history and cross-asset links so traceability survives the move (UC-C7).
-    const idMap = migration?.idMap;
+    // A complete migration is not just PRESENT evidence — it is INTERNALLY
+    // CONSISTENT evidence (UC-C7): trimmed non-empty from/to providers, a non-empty
+    // id map to non-empty target locators, a locator history whose recorded target
+    // AGREES with the id map's target (no contradiction), an EXPLICIT links array
+    // (so "no links" is asserted, never assumed from omission), and non-empty
+    // provenance. Blank/whitespace evidence and contradictory history are rejected.
+    const nonEmpty = (value) => typeof value === "string" && value.trim().length > 0;
     const isPlainObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+    const idMap = migration?.idMap;
     const validIdMap = isPlainObject(idMap)
       && Object.keys(idMap).length > 0
-      && Object.entries(idMap).every(([id, target]) => typeof id === "string" && id.length > 0 && typeof target === "string" && target.trim().length > 0);
-    // Locator history: id -> { from, to } (both non-empty) for every migrated asset.
-    // Guarded by validIdMap (&& short-circuits) so it never inspects an invalid idMap.
+      && Object.entries(idMap).every(([id, target]) => nonEmpty(id) && nonEmpty(target));
+    // History target must AGREE with the id map's canonical target for every asset.
     const history = migration?.locatorHistory;
     const validHistory = validIdMap && isPlainObject(history)
       && Object.keys(history).every((id) => Object.hasOwn(idMap, id))
-      && Object.keys(idMap).every((id) => history[id] && typeof history[id].from === "string" && history[id].from.length > 0
-        && typeof history[id].to === "string" && history[id].to.length > 0);
-    // Cross-asset links preserved as a list of {from, type, to}.
-    const links = migration?.links ?? [];
+      && Object.keys(idMap).every((id) => history[id] && nonEmpty(history[id].from) && nonEmpty(history[id].to)
+        && history[id].to === idMap[id]); // contradiction (to !== canonical target) is rejected
+    // Links must be an EXPLICIT array (empty is fine only when explicitly asserted);
+    // an omitted `links` is incomplete, not silently "no links".
+    const links = migration?.links;
     const validLinks = Array.isArray(links)
-      && links.every((link) => link && typeof link.from === "string" && typeof link.type === "string" && typeof link.to === "string");
-    if (!migration || typeof migration.from !== "string" || typeof migration.to !== "string"
-      || !validIdMap || !validHistory || !validLinks
-      || typeof migration.provenance !== "string" || migration.provenance.length === 0) {
+      && links.every((link) => link && nonEmpty(link.from) && nonEmpty(link.type) && nonEmpty(link.to));
+    if (!migration || !nonEmpty(migration.from) || !nonEmpty(migration.to)
+      || !validIdMap || !validHistory || !validLinks || !nonEmpty(migration.provenance)) {
       return { status: "blocked", reason: "incomplete-migration" };
     }
     return {
