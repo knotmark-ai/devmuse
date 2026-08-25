@@ -101,36 +101,63 @@ function locationKey(finding) {
   return `${finding.file ?? ""}:${finding.line ?? ""}`;
 }
 
-// Merge primary and external findings. Findings at the same file:line where the
-// primary set found nothing OR disagrees on severity are flagged `contradiction`
-// so both are shown side by side; matching findings are kept once with both
-// provenances. Never drops or silently overrides either side.
+function hasLocation(finding) {
+  return Boolean(finding.file) || Number.isInteger(finding.line);
+}
+
+function normalizedSummary(finding) {
+  return String(finding.summary ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+// Two findings agree only when BOTH severity and normalized content match. Same
+// severity is not agreement — "line X is unsafe" and "line X is safe" are both
+// `important` yet opposite conclusions, and must surface as a contradiction (#4).
+function sameConclusion(a, b) {
+  return a.severity === b.severity && normalizedSummary(a) === normalizedSummary(b);
+}
+
+// Merge primary and external findings. An external finding is a `contradiction`
+// when the primary set flagged nothing at that location OR reached a different
+// conclusion (severity or content) there; agreeing findings are kept once with
+// both provenances. Never drops or silently overrides either side. A location is
+// a bucket of findings (many can share one line), and location-less findings are
+// each kept distinct rather than collapsed into a single ":" slot.
 export function mergeFindings(primary = [], external = []) {
+  const merged = [];
+  const contradictions = [];
   const byLocation = new Map();
   for (const finding of primary) {
+    if (!hasLocation(finding)) continue; // never key a location-less finding to ":"
     const key = locationKey(finding);
-    byLocation.set(key, { primary: finding, external: null });
+    if (!byLocation.has(key)) byLocation.set(key, []);
+    byLocation.get(key).push({ finding, matched: false });
   }
-  const contradictions = [];
-  const merged = [];
-  for (const finding of external) {
-    const key = locationKey(finding);
-    const existing = byLocation.get(key);
-    if (!existing) {
-      // The external reviewer flagged a location the primary review did not.
-      contradictions.push({ location: key, primary: null, external: finding });
-      merged.push({ ...finding, provenance: [finding.reviewer], contested: true });
-    } else if (existing.primary.severity !== finding.severity) {
-      contradictions.push({ location: key, primary: existing.primary, external: finding });
-      merged.push({ ...existing.primary, provenance: ["primary", finding.reviewer], contested: true, externalSeverity: finding.severity });
-    } else {
-      merged.push({ ...existing.primary, provenance: ["primary", finding.reviewer], contested: false });
+
+  for (const ext of external) {
+    const slot = hasLocation(ext) ? byLocation.get(locationKey(ext)) : null;
+    if (!slot || slot.length === 0) {
+      // A location (or location-less finding) the primary review did not raise.
+      contradictions.push({ location: hasLocation(ext) ? locationKey(ext) : null, primary: null, external: ext });
+      merged.push({ ...ext, provenance: [ext.reviewer], contested: true });
+      continue;
     }
-    if (existing) existing.external = finding;
+    const agree = slot.find((entry) => !entry.matched && sameConclusion(entry.finding, ext));
+    if (agree) {
+      agree.matched = true;
+      merged.push({ ...agree.finding, provenance: ["primary", ext.reviewer], contested: false });
+    } else {
+      // A primary exists here but disagrees; pair with the first unmatched one.
+      const counter = slot.find((entry) => !entry.matched) ?? slot[0];
+      counter.matched = true;
+      contradictions.push({ location: locationKey(ext), primary: counter.finding, external: ext });
+      merged.push({ ...counter.finding, provenance: ["primary", ext.reviewer], contested: true, externalSeverity: ext.severity, externalSummary: ext.summary });
+    }
   }
+  // Emit every primary no external matched — located-unmatched plus all location-less.
   for (const finding of primary) {
-    const key = locationKey(finding);
-    if (!byLocation.get(key).external) merged.push({ ...finding, provenance: ["primary"], contested: false });
+    if (!hasLocation(finding)) { merged.push({ ...finding, provenance: ["primary"], contested: false }); continue; }
+    const entry = byLocation.get(locationKey(finding))?.find((e) => e.finding === finding);
+    if (entry && !entry.matched) merged.push({ ...finding, provenance: ["primary"], contested: false });
   }
   return { merged, contradictions };
 }
