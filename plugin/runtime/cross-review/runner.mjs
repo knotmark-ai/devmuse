@@ -54,12 +54,16 @@ export async function runCrossReview(invocation, { spawn = nodeSpawn, timeoutMs 
       try {
         if (readOutput) raw = readOutput();                       // test injection
         else if (invocation.outputMode === "stdout") raw = extractClaudeStructuredOutput(stdout); // claude → stdout event stream
-        else {
+        else if (invocation.reviewer === "codex") {
           // codex → --output-last-message file. codex `exec review` ignores
           // --output-schema and writes a native review report, so parse that
-          // into findings rather than JSON.parsing prose (M4).
-          const fileText = fs.readFileSync(outputPath ?? "", "utf8");
-          raw = invocation.reviewer === "codex" ? extractCodexReviewFindings(fileText) : fileText;
+          // into findings rather than JSON.parsing prose (M4). If the report shape
+          // is unrecognized, degrade to a fallback rather than a silent clean review.
+          const parsed = extractCodexReviewFindings(fs.readFileSync(outputPath ?? "", "utf8"));
+          if (!parsed.recognized) return done({ status: "fallback", reason: "unrecognized-codex-format", exitCode: code, stderr: stderr.slice(0, 500) });
+          raw = { findings: parsed.findings };
+        } else {
+          raw = fs.readFileSync(outputPath ?? "", "utf8");
         }
       } catch {
         return done({ status: "fallback", reason: "no-output", exitCode: code, stderr: stderr.slice(0, 500) });

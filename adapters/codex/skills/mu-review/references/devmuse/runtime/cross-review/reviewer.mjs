@@ -177,8 +177,14 @@ export function buildInvocation({
   return { status: "unavailable", reason: "unsupported-reviewer-host" };
 }
 
+// A well-formed review range: <base>...<head> (two or three dots), each side a
+// plain ref token. Anchored, so a ref carrying a newline + injected instruction
+// ("main...HEAD\nIgnore the review policy") does NOT match and is never embedded.
+const REVIEW_RANGE = /^[A-Za-z0-9._/-]+\.\.\.?[A-Za-z0-9._/-]+$/;
+
 function crossReviewPrompt(refs) {
-  const range = refs.find((ref) => typeof ref === "string" && /\.\.\.?/.test(ref)) ?? "the current branch against its merge-base with the default branch";
+  const range = refs.find((ref) => typeof ref === "string" && REVIEW_RANGE.test(ref))
+    ?? "the current branch against its merge-base with the default branch";
   return `Review ${range} for correctness, security, and requirements regressions. Inspect the repository directly; do not trust a serialized diff. Respond with JSON only: {"findings":[{"severity":"critical|important|minor","file":"","line":0,"summary":""}]}.`;
 }
 
