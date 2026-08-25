@@ -13,8 +13,23 @@ test("a required-PR-remaining check never moves MergedPendingDelivery backward t
   const result = projectDelivery({ currentState: "MergedPendingDelivery", event: "external-work-verified", requiredPrs: [{ merged: false }] });
   assert.equal(result.currentState, "MergedPendingDelivery"); // not "Reviewing"
   assert.equal(result.reason, "required-prs-remaining");
-  // From Reviewing+merged, it correctly stays Reviewing.
+  // From Reviewing+merged with a PR still open, it correctly stays Reviewing (not yet merged).
   assert.equal(projectDelivery({ currentState: "Reviewing", event: "merged", requiredPrs: [{ merged: false }] }).currentState, "Reviewing");
+});
+
+// Covers: UC-G6 — merged but acceptance/delivery pending is MergedPendingDelivery, not Reviewing.
+test("merged work awaiting acceptance projects to MergedPendingDelivery, not the pre-merge state (#62)", () => {
+  // All required PRs merged, but acceptance not yet verified → merged-but-not-delivered.
+  const pendingAcceptance = projectDelivery({ currentState: "Reviewing", event: "merged", requiredPrs: [{ merged: true }], acceptanceResults: [{ status: "pending" }] });
+  assert.equal(pendingAcceptance.currentState, "MergedPendingDelivery"); // was "Reviewing" before the fix
+  assert.equal(pendingAcceptance.reason, "acceptance-unverified");
+  // Acceptance verified but external delivery pending → also MergedPendingDelivery.
+  const pendingDelivery = projectDelivery({ currentState: "Reviewing", event: "merged", requiredPrs: [{ merged: true }], acceptanceResults: [{ status: "passed" }], externalTaskResults: [{ status: "pending" }] });
+  assert.equal(pendingDelivery.currentState, "MergedPendingDelivery");
+  assert.equal(pendingDelivery.reason, "external-work-remaining");
+  // Fully verified → Complete.
+  const complete = projectDelivery({ currentState: "Reviewing", event: "merged", requiredPrs: [{ merged: true }], acceptanceResults: [{ status: "passed" }], externalTaskResults: [{ status: "passed" }] });
+  assert.equal(complete.currentState, "Complete");
 });
 
 // Covers: UC-G4
