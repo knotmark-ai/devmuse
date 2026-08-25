@@ -44,6 +44,28 @@ function containedRegistryPath(repoRoot, kind) {
   return file;
 }
 
+// Resolve a tracked-write target inside the repo, rejecting a path (or a symlinked
+// parent directory) that resolves outside it. Used by any writer that must not be
+// tricked into writing beyond the repository (e.g. a symlinked `.devmuse`).
+export function containedRepoPath(repoRoot, relativeFile) {
+  const file = path.resolve(repoRoot, relativeFile);
+  const root = realExistingPath(repoRoot);
+  const resolved = realExistingPath(file);
+  if (resolved !== root && !resolved.startsWith(`${root}${path.sep}`)) {
+    throw Object.assign(new Error("path escapes the repository"), { code: "path-escapes-repo" });
+  }
+  return file;
+}
+
+// Durable, all-or-nothing write: a same-directory temp file then an atomic rename,
+// so a crash mid-write never leaves a half-written manifest.
+export function atomicWrite(file, text) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const tmp = `${file}.tmp-${process.pid}`;
+  fs.writeFileSync(tmp, text, { encoding: "utf8", mode: 0o644 });
+  fs.renameSync(tmp, file);
+}
+
 // Read one kind's assets. An absent file is an empty kind, not an error — a fresh
 // project has no assets yet. A present-but-corrupt file is surfaced, not hidden.
 export function readKind(repoRoot, kind) {

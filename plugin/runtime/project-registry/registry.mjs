@@ -10,6 +10,22 @@ const KIND_SET = new Set(ASSET_KINDS);
 const ID_PATTERN = /^[a-z][a-z0-9-]{0,63}:[A-Za-z0-9._-]{1,128}$/; // e.g. "duc:checkout-flow"
 const RELATION_TYPES = new Set(["refines", "covers", "exemplifies", "verifies", "depends-on"]);
 
+// Each asset kind owns exactly one stable ID namespace, so an ID identifies its
+// lifecycle unambiguously and can never be mistaken for another kind's (#68).
+const PREFIX_BY_KIND = Object.freeze({
+  product_use_cases: "duc",
+  rules: "rule",
+  acceptance_examples: "ex",
+  test_cases: "tc",
+  test_results: "tr",
+});
+const KIND_BY_PREFIX = Object.freeze(Object.fromEntries(Object.entries(PREFIX_BY_KIND).map(([kind, prefix]) => [prefix, kind])));
+
+function idPrefix(id) {
+  const match = /^([a-z][a-z0-9-]{0,63}):/.exec(typeof id === "string" ? id : "");
+  return match ? match[1] : null;
+}
+
 // Deterministic canonical JSON: object keys sorted recursively, so a registry
 // file diffs cleanly in review regardless of insertion order (UC — Git-reviewable
 // truth). Arrays keep their order (the author's meaningful order).
@@ -45,13 +61,19 @@ export function validateAsset(asset) {
   if (!asset || typeof asset !== "object" || Array.isArray(asset)) return { status: "invalid", reason: "asset-not-a-map" };
   if (!ID_PATTERN.test(asset.id ?? "")) return { status: "invalid", reason: "invalid-id" };
   if (!KIND_SET.has(asset.kind)) return { status: "invalid", reason: "unknown-kind" };
+  // The ID namespace must match the kind — a `tc:` id in a product_use_cases asset
+  // is a corrupt identity, not a valid record (#68).
+  if (idPrefix(asset.id) !== PREFIX_BY_KIND[asset.kind]) return { status: "invalid", reason: "id-kind-mismatch" };
   if (asset.fields !== undefined && (asset.fields === null || typeof asset.fields !== "object" || Array.isArray(asset.fields))) {
     return { status: "invalid", reason: "fields-not-a-map" };
   }
   const relations = asset.relations ?? [];
   if (!Array.isArray(relations)) return { status: "invalid", reason: "relations-not-a-list" };
   for (const relation of relations) {
-    if (!relation || typeof relation !== "object" || !RELATION_TYPES.has(relation.type) || !ID_PATTERN.test(relation.to ?? "")) {
+    // A relation target must be a well-formed id in a RECOGNIZED asset namespace —
+    // a link into an unknown namespace is not a valid typed edge (#68).
+    if (!relation || typeof relation !== "object" || !RELATION_TYPES.has(relation.type)
+      || !ID_PATTERN.test(relation.to ?? "") || !KIND_BY_PREFIX[idPrefix(relation.to)]) {
       return { status: "invalid", reason: "invalid-relation" };
     }
   }

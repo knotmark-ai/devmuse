@@ -70,6 +70,18 @@ test("asset validation checks id, kind, and relations", () => {
   assert.equal(validateAsset({ id: "tc:x", kind: "test_cases", relations: [{ type: "verifies", to: "duc:y" }] }).status, "valid");
 });
 
+test("asset ID namespace is bound to its kind, and relation targets must use a known namespace (#68)", () => {
+  // A well-formed id in the wrong namespace for its kind is rejected.
+  assert.equal(validateAsset({ id: "tc:not-a-use-case", kind: "product_use_cases" }).reason, "id-kind-mismatch");
+  assert.equal(validateAsset({ id: "rule:a", kind: "test_results" }).reason, "id-kind-mismatch");
+  // Each kind accepts only its own prefix.
+  for (const [id, kind] of [["duc:a", "product_use_cases"], ["rule:a", "rules"], ["ex:a", "acceptance_examples"], ["tc:a", "test_cases"], ["tr:a", "test_results"]]) {
+    assert.equal(validateAsset({ id, kind }).status, "valid", `${id} should be valid for ${kind}`);
+  }
+  // A relation into an unrecognized namespace (a made-up prefix) is not a valid edge.
+  assert.equal(validateAsset({ id: "tc:x", kind: "test_cases", relations: [{ type: "verifies", to: "made:up" }] }).reason, "invalid-relation");
+});
+
 test("serialize/parse round-trips, sorts by id, and rejects a hand-edited revision", () => {
   const assets = [
     { id: "duc:b", kind: "product_use_cases", fields: { n: 2 } },
