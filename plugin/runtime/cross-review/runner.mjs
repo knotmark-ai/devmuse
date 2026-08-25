@@ -11,6 +11,22 @@ import { buildInvocation, FINDINGS_SCHEMA, ENV_TIMEOUT_MS } from "./reviewer.mjs
 import { normalizeExternalFindings, extractClaudeStructuredOutput, extractCodexReviewFindings } from "./findings.mjs";
 
 const DEFAULT_TIMEOUT_MS = 180_000;
+const MIN_TIMEOUT_MS = 1_000;
+const MAX_TIMEOUT_MS = 600_000;     // hard ceiling — a caller/env cannot set an unbounded timeout
+const MAX_OUTPUT_BYTES = 5_000_000; // cap accumulated stdout/stderr AND the output-file read
+
+function clampTimeout(value) {
+  const n = Number.isFinite(value) ? value : DEFAULT_TIMEOUT_MS;
+  return Math.min(Math.max(n, MIN_TIMEOUT_MS), MAX_TIMEOUT_MS);
+}
+
+// Read an output file with a size cap — a reviewer that writes a multi-gigabyte
+// file must not be slurped into memory.
+function readCappedFile(file) {
+  const size = fs.statSync(file).size;
+  if (size > MAX_OUTPUT_BYTES) throw Object.assign(new Error("output too large"), { code: "output-too-large" });
+  return fs.readFileSync(file, "utf8");
+}
 
 // Low-level: run a ready invocation. stdout is ALWAYS drained (an un-drained
 // pipe deadlocks the child once its buffer fills); the reviewer's findings are
@@ -39,13 +55,28 @@ export async function runCrossReview(invocation, { spawn = nodeSpawn, timeoutMs 
     timer = setTimeout(() => {
       try { child.kill("SIGKILL"); } catch { /* already gone */ }
       done({ status: "fallback", reason: "timeout" });
-    }, timeoutMs);
+    }, clampTimeout(timeoutMs));
 
     let stdout = "";
     let stderr = "";
-    // Drain both pipes so a large review never deadlocks the child (the B4b bug).
-    child.stdout?.on("data", (chunk) => { stdout += String(chunk); });
-    child.stderr?.on("data", (chunk) => { stderr += String(chunk); });
+    let outputBytes = 0;
+    let flooded = false;
+    // Drain both pipes so a large review never deadlocks the child (the B4b bug),
+    // but cap the total so a flooding reviewer cannot exhaust memory — kill and
+    // fall back once past MAX_OUTPUT_BYTES.
+    const capture = (isOut) => (chunk) => {
+      if (flooded) return;
+      const text = String(chunk);
+      outputBytes += Buffer.byteLength(text);
+      if (isOut) stdout += text; else stderr += text;
+      if (outputBytes > MAX_OUTPUT_BYTES) {
+        flooded = true;
+        try { child.kill("SIGKILL"); } catch { /* already gone */ }
+        done({ status: "fallback", reason: "output-too-large" });
+      }
+    };
+    child.stdout?.on("data", capture(true));
+    child.stderr?.on("data", capture(false));
     child.on("error", (error) => done({ status: "fallback", reason: "spawn-error", detail: error.code ?? error.message }));
     child.on("close", (code) => {
       // A reviewer that exited non-zero failed; do not trust partial output.
@@ -59,14 +90,15 @@ export async function runCrossReview(invocation, { spawn = nodeSpawn, timeoutMs 
           // --output-schema and writes a native review report, so parse that
           // into findings rather than JSON.parsing prose (M4). If the report shape
           // is unrecognized, degrade to a fallback rather than a silent clean review.
-          const parsed = extractCodexReviewFindings(fs.readFileSync(outputPath ?? "", "utf8"));
+          const parsed = extractCodexReviewFindings(readCappedFile(outputPath ?? ""));
           if (!parsed.recognized) return done({ status: "fallback", reason: "unrecognized-codex-format", exitCode: code, stderr: stderr.slice(0, 500) });
           raw = { findings: parsed.findings };
         } else {
-          raw = fs.readFileSync(outputPath ?? "", "utf8");
+          raw = readCappedFile(outputPath ?? "");
         }
-      } catch {
-        return done({ status: "fallback", reason: "no-output", exitCode: code, stderr: stderr.slice(0, 500) });
+      } catch (error) {
+        const reason = error.code === "output-too-large" ? "output-too-large" : "no-output";
+        return done({ status: "fallback", reason, exitCode: code, stderr: stderr.slice(0, 500) });
       }
       // Validate structured output rather than trusting exit code 0.
       const normalized = normalizeExternalFindings(raw, { reviewer: invocation.reviewer });
