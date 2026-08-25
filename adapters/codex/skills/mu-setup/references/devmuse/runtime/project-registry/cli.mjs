@@ -77,9 +77,11 @@ try {
   } else if (command === "read-routing") {
     write(readRouting(input.manifest ?? input.value ?? input));
   } else if (command === "init") {
-    // Tracked write — gated on explicit approval (present-before-write).
+    // Tracked write — gated on explicit approval (present-before-write). `routes`
+    // (the resolved effective routing) restricts creation to repository-owned kinds
+    // so setup never forks a local file for an externally routed kind (#68).
     if (input.approved !== true) write({ status: "blocked", reason: "approval-required" }, 1);
-    else write(initRegistry(input.repo_root ?? process.cwd()));
+    else write(initRegistry(input.repo_root ?? process.cwd(), { routes: input.routes ?? null }));
   } else if (command === "status") {
     write(registryStatus(input.repo_root ?? process.cwd()));
   } else if (command === "read-kind") {
