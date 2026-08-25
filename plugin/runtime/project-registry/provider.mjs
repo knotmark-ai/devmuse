@@ -28,19 +28,35 @@ export function providerTransition({ state = "Local", event, approved = false, m
   if (event === "migrate") {
     if (state !== "ProviderCanonical") return { status: "blocked", reason: "no-canonical-provider" };
     if (!approved) return { status: "blocked", reason: "approval-required" };
-    // A complete migration needs from/to, a NON-EMPTY id map (typeof null is
-    // "object", and an array or {} is not a real mapping), and provenance evidence.
-    // Migration preserves stable IDs and old->new locators + provenance (UC-C7).
+    // A complete migration needs from/to, a NON-EMPTY id map whose every entry maps
+    // a stable ID to a NON-EMPTY target locator (an empty target ID is not a real
+    // relocation), provenance evidence, AND it must preserve the old->new locator
+    // history and cross-asset links so traceability survives the move (UC-C7).
     const idMap = migration?.idMap;
-    const validIdMap = idMap !== null && typeof idMap === "object" && !Array.isArray(idMap) && Object.keys(idMap).length > 0;
+    const isPlainObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
+    const validIdMap = isPlainObject(idMap)
+      && Object.keys(idMap).length > 0
+      && Object.entries(idMap).every(([id, target]) => typeof id === "string" && id.length > 0 && typeof target === "string" && target.trim().length > 0);
+    // Locator history: id -> { from, to } (both non-empty) for every migrated asset.
+    // Guarded by validIdMap (&& short-circuits) so it never inspects an invalid idMap.
+    const history = migration?.locatorHistory;
+    const validHistory = validIdMap && isPlainObject(history)
+      && Object.keys(history).every((id) => Object.hasOwn(idMap, id))
+      && Object.keys(idMap).every((id) => history[id] && typeof history[id].from === "string" && history[id].from.length > 0
+        && typeof history[id].to === "string" && history[id].to.length > 0);
+    // Cross-asset links preserved as a list of {from, type, to}.
+    const links = migration?.links ?? [];
+    const validLinks = Array.isArray(links)
+      && links.every((link) => link && typeof link.from === "string" && typeof link.type === "string" && typeof link.to === "string");
     if (!migration || typeof migration.from !== "string" || typeof migration.to !== "string"
-      || !validIdMap || typeof migration.provenance !== "string" || migration.provenance.length === 0) {
+      || !validIdMap || !validHistory || !validLinks
+      || typeof migration.provenance !== "string" || migration.provenance.length === 0) {
       return { status: "blocked", reason: "incomplete-migration" };
     }
     return {
       status: "ok",
       state: "ProviderCanonical",
-      migration: { from: migration.from, to: migration.to, idMap, provenance: migration.provenance },
+      migration: { from: migration.from, to: migration.to, idMap, locatorHistory: history, links, provenance: migration.provenance },
     };
   }
   if (event === "force-local") {

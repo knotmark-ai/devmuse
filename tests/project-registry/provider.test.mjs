@@ -21,28 +21,34 @@ test("an outage moves to PendingSync and NEVER silently demotes to Local", () =>
   assert.equal(providerTransition({ state: "PendingSync", event: "restore" }).state, "ProviderCanonical");
 });
 
-test("migration requires approval, a NON-EMPTY id map, and provenance, preserved on success (#68)", () => {
+test("migration requires approval, a complete id map with non-empty targets, history, links, and provenance (#68)", () => {
+  const complete = {
+    from: "xray", to: "testrail",
+    idMap: { "tc:proj-1": "TR-9" },
+    locatorHistory: { "tc:proj-1": { from: "XRAY-1", to: "TR-9" } },
+    links: [{ from: "tc:proj-1", type: "verifies", to: "duc:checkout" }],
+    provenance: "migrated 2026-08-25 by setup",
+  };
   assert.equal(providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true }).reason, "incomplete-migration");
-  // typeof null === "object" must NOT slip through; nor an array or an empty map.
-  for (const idMap of [null, [], {}]) {
+  // typeof null === "object" must NOT slip through; nor an array, empty map, or an EMPTY target locator.
+  for (const idMap of [null, [], {}, { "tc:proj-1": "" }, { "tc:proj-1": "   " }]) {
     assert.equal(
-      providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true, migration: { from: "xray", to: "qase", idMap, provenance: "p" } }).reason,
+      providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true, migration: { ...complete, idMap, locatorHistory: {} } }).reason,
       "incomplete-migration",
       `idMap ${JSON.stringify(idMap)} should be rejected`,
     );
   }
-  // Missing provenance evidence is incomplete.
-  assert.equal(
-    providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true, migration: { from: "xray", to: "qase", idMap: { "tc:proj-1": "TR-9" } } }).reason,
-    "incomplete-migration",
-  );
-  const migrated = providerTransition({
-    state: "ProviderCanonical", event: "migrate", approved: true,
-    migration: { from: "xray", to: "testrail", idMap: { "tc:proj-1": "TR-9" }, provenance: "migrated 2026-08-25 by setup" },
-  });
+  // Missing provenance, missing locator history, or dropped links are all incomplete evidence.
+  assert.equal(providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true, migration: { ...complete, provenance: undefined } }).reason, "incomplete-migration");
+  assert.equal(providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true, migration: { ...complete, locatorHistory: undefined } }).reason, "incomplete-migration");
+  assert.equal(providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true, migration: { ...complete, links: "nope" } }).reason, "incomplete-migration");
+  // A complete migration preserves stable IDs, old->new locator history, links, and provenance.
+  const migrated = providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true, migration: complete });
   assert.equal(migrated.state, "ProviderCanonical");
   assert.equal(migrated.migration.idMap["tc:proj-1"], "TR-9");
-  assert.equal(migrated.migration.provenance, "migrated 2026-08-25 by setup"); // evidence preserved
+  assert.deepEqual(migrated.migration.locatorHistory["tc:proj-1"], { from: "XRAY-1", to: "TR-9" });
+  assert.deepEqual(migrated.migration.links, [{ from: "tc:proj-1", type: "verifies", to: "duc:checkout" }]);
+  assert.equal(migrated.migration.provenance, "migrated 2026-08-25 by setup");
 });
 
 test("outcome classification: transient = unavailable, auth = denied (not an outage)", () => {

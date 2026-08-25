@@ -43,6 +43,18 @@ test("atomicWrite never writes through a symlink and leaves no predictable temp 
   assert.deepEqual(fs.readdirSync(dir).filter((f) => f.includes(".tmp-")), []);
 });
 
+test("atomicWrite cleans up its temp file when the write/rename fails (#68)", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "devmuse-atomic-fail-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  // Make the rename fail: the target is a NON-EMPTY directory, so rename(tmp, target) throws.
+  const target = path.join(dir, "project.yaml");
+  fs.mkdirSync(target);
+  fs.writeFileSync(path.join(target, "keep"), "x"); // non-empty → rename-over fails
+  assert.throws(() => atomicWrite(target, "content"));
+  // The temp file must not be left behind on failure.
+  assert.deepEqual(fs.readdirSync(dir).filter((f) => f.includes(".tmp-")), []);
+});
+
 test("init with routes creates files only for repository-owned kinds, never forking externally routed ones (#68)", (t) => {
   const repo = tempRepo(t);
   // test_cases routed to xray, product_requirements to jira → those kinds are NOT
