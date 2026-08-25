@@ -50,7 +50,10 @@ export function extractClaudeStructuredOutput(raw) {
 // an indented body. Parse that into findings; an empty/clean report yields `{findings:[]}`.
 const CODEX_PRIORITY = { P0: "critical", P1: "important", P2: "minor", P3: "minor" };
 // A codex review whose text is empty or explicitly says there is nothing to flag.
-const CODEX_CLEAN = /\bno (?:issues?|findings?|concerns?|problems?|comments?)\b|nothing to (?:flag|report)|looks good|lgtm/i;
+// The WHOLE trimmed verdict must BE a clean phrase — anchored, allow-listed. A
+// short abnormal output ("No issues could be checked because the transport changed
+// format") merely CONTAINS "no issues" and must not read as clean (#51).
+const CODEX_CLEAN = /^(?:no issues(?: found)?|no findings|no concerns|no problems|nothing to (?:flag|report)|looks good|lgtm)[.!]?$/i;
 // `recognized` distinguishes a genuine clean review (empty or a clean sentinel, or
 // a report we parsed bullets from) from an UNRECOGNIZED format — if codex changes
 // its report shape, we must NOT silently return "clean" and drop real findings (#51).
@@ -79,7 +82,7 @@ export function extractCodexReviewFindings(text) {
   // marker). Long prose with no bullets — or text that merely mentions "no issues"
   // inside a larger changed-format report — is an unrecognized shape → the caller
   // degrades, never a silent "clean".
-  const looksClean = CODEX_CLEAN.test(text) && text.trim().length <= 240 && !/\[P\d+\]/i.test(text);
+  const looksClean = CODEX_CLEAN.test(text.trim()) && !/\[P\d+\]/i.test(text);
   const recognized = findings.length > 0 || text.trim() === "" || looksClean;
   return { findings, recognized };
 }
@@ -98,16 +101,17 @@ export function normalizeExternalFindings(raw, { reviewer, model = null } = {}) 
   }
   const list = Array.isArray(payload) ? payload : payload?.findings;
   if (!Array.isArray(list)) return { status: "invalid", reason: "no-findings-array", findings: [] };
-  // A finding must be an object carrying a non-empty summary — a null or shapeless
-  // entry ({findings:[null]}) is malformed, not a real finding. Drop such entries;
-  // if a non-empty list yields NO valid finding, the payload is malformed, not "ok".
-  const usable = list.filter((item) => item && typeof item === "object" && !Array.isArray(item)
-    && typeof item.summary === "string" && item.summary.trim().length > 0);
-  if (list.length > 0 && usable.length === 0) return { status: "invalid", reason: "malformed-findings", findings: [] };
-  const findings = usable.map((item) => ({
-    severity: normalizeSeverity(item?.severity),
-    file: typeof item?.file === "string" ? item.file : null,
-    line: Number.isInteger(item?.line) ? item.line : null,
+  // EVERY item must be a well-formed finding (an object with a non-empty summary).
+  // A single null/shapeless entry means the structured output is untrustworthy, so
+  // fail CLOSED — do not silently drop it and trust the rest (#51). An empty array
+  // is a clean review (no findings), which is fine.
+  const wellFormed = (item) => item && typeof item === "object" && !Array.isArray(item)
+    && typeof item.summary === "string" && item.summary.trim().length > 0;
+  if (!list.every(wellFormed)) return { status: "invalid", reason: "malformed-findings", findings: [] };
+  const findings = list.map((item) => ({
+    severity: normalizeSeverity(item.severity),
+    file: typeof item.file === "string" ? item.file : null,
+    line: Number.isInteger(item.line) ? item.line : null,
     summary: item.summary,
     reviewer: reviewer ?? "external",
     model,

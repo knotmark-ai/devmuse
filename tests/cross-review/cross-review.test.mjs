@@ -331,24 +331,29 @@ test("normalization validates structure over exit code and preserves provenance"
   assert.equal(normalizeExternalFindings({ findings: [{ severity: "critical", file: "x", line: 1, summary: "s" }] }, { reviewer: "codex" }).findings[0].reviewer, "codex");
 });
 
-test("a findings array of null/shapeless entries is malformed, not an ok clean review (#51)", () => {
-  // The reported case: {findings:[null]} must not return ok with a junk finding.
+test("normalization fails CLOSED on any malformed finding item — never silently drops (#51)", () => {
   assert.equal(normalizeExternalFindings({ findings: [null] }, { reviewer: "codex" }).status, "invalid");
   assert.equal(normalizeExternalFindings({ findings: [{}, { severity: "minor" }] }, { reviewer: "codex" }).status, "invalid"); // no summaries
+  // Jeff's exact reverse case: a mix of a malformed and a real item must NOT be trusted.
+  assert.equal(normalizeExternalFindings({ findings: [null, { summary: "real finding" }] }, { reviewer: "codex" }).status, "invalid");
   // A genuinely empty findings array is a clean review, not malformed.
   assert.equal(normalizeExternalFindings({ findings: [] }, { reviewer: "codex" }).status, "ok");
-  // A mix keeps the valid finding and drops the junk one.
-  const mixed = normalizeExternalFindings({ findings: [null, { severity: "important", summary: "real one" }] }, { reviewer: "codex" });
-  assert.equal(mixed.status, "ok");
-  assert.equal(mixed.findings.length, 1);
-  assert.equal(mixed.findings[0].summary, "real one");
+  // An all-well-formed list is trusted.
+  const ok = normalizeExternalFindings({ findings: [{ severity: "important", summary: "real one" }] }, { reviewer: "codex" });
+  assert.equal(ok.status, "ok");
+  assert.equal(ok.findings[0].summary, "real one");
 });
 
-test("a long changed-format report merely mentioning 'no issues' is not judged clean (#51)", () => {
-  const longMalformed = `Summary of the automated pass over the diff. ${"lorem ipsum ".repeat(30)} the tool reported no issues in this run but the format is unfamiliar.`;
-  assert.ok(longMalformed.length > 240);
-  assert.equal(extractCodexReviewFindings(longMalformed).recognized, false); // long prose ⇒ unrecognized, not clean
-  assert.equal(extractCodexReviewFindings("No issues found.").recognized, true); // short verdict ⇒ clean
+test("only a WHOLE clean verdict is judged clean — a short error containing 'no issues' is not (#51)", () => {
+  // Jeff's exact reverse case: a short transport/parser failure that merely contains "no issues".
+  assert.equal(extractCodexReviewFindings("No issues could be checked because the review transport changed format.").recognized, false);
+  assert.equal(extractCodexReviewFindings("error: review transport failed").recognized, false);
+  // Genuine whole-verdict clean phrases are still recognized.
+  for (const clean of ["No issues found.", "no findings", "LGTM", "Nothing to report"]) {
+    assert.equal(extractCodexReviewFindings(clean).recognized, true, `'${clean}' should be clean`);
+  }
+  // Long prose mentioning "no issues" is still unrecognized.
+  assert.equal(extractCodexReviewFindings(`Summary. ${"x ".repeat(200)} reported no issues.`).recognized, false);
 });
 
 test("merge surfaces contradictions instead of choosing a side", () => {
