@@ -22,11 +22,15 @@ git diff --check
 `test:acceptance` is the one canonical aggregate (defined in `package.json`) that
 runs every required suite — generated-drift, skills, platforms, routing, hooks,
 Mermaid, GitHub-first, project-context, project-registry, regression-judge,
-cross-review, profiles, codex-dispatch, token-benchmark, and release. Both
-`ci.yml` and `release.yml` delegate to it, so CI and the release gate cannot
-drift. Its two binary-gated live tests — the cross-review smoke and the
-codex-dispatch behavioral suite — skip gracefully when the `claude`/`codex`
-binary is absent, so this command is deterministic on a machine without them.
+cross-review, profiles, token-benchmark, and release. Both `ci.yml` and
+`release.yml` delegate to it, so CI and the release gate cannot drift. It is
+**fully deterministic**: it makes no live model calls and its result does not
+depend on which binaries are installed.
+
+The live tests — the cross-review smoke and the codex-dispatch behavioral suite,
+which invoke the real `claude`/`codex` binaries — are **opt-in** and NOT part of
+the gate. Run them separately with `npm run test:live` (sets `DEVMUSE_LIVE=1`);
+they skip unless that flag is set, and further skip any binary that is absent.
 
 The platform contract compares the canonical and generated skill inventories,
 checks every vendored reference, validates host manifests and version alignment,

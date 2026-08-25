@@ -9,6 +9,10 @@ import { normalizeExternalFindings, mergeFindings, extractClaudeStructuredOutput
 
 const base = { projectDir: "/repo", outputPath: "/tmp/out.json", schemaPath: "/tmp/schema.json", refs: ["main...HEAD"] };
 
+// Live tests (they invoke the real `codex`/`claude` binaries) are OPT-IN via
+// DEVMUSE_LIVE=1 so the required acceptance gate is fully deterministic and never
+// PATH-dependent. Run them with `npm run test:live`.
+const LIVE = process.env.DEVMUSE_LIVE === "1";
 function which(binary) {
   return spawnSync("command", ["-v", binary], { shell: "/bin/bash", encoding: "utf8" }).status === 0;
 }
@@ -325,7 +329,7 @@ test("runReview owns a private temp dir + schema and cleans it up", async () => 
 // The fake-spawn tests above passed even when the flags were wrong; this asserts
 // every flag we build is actually recognized by the installed CLI's help.
 
-test("every codex flag we build is accepted by the installed codex", { skip: !which("codex") }, () => {
+test("every codex flag we build is accepted by the installed codex", { skip: !LIVE || !which("codex") }, () => {
   const help = helpText("codex", ["exec", "review"]);
   const inv = buildInvocation({ currentHost: "claude", ...base });
   for (const flag of inv.args.filter((a) => a.startsWith("--"))) {
@@ -333,7 +337,7 @@ test("every codex flag we build is accepted by the installed codex", { skip: !wh
   }
 });
 
-test("every claude flag we build is accepted by the installed claude", { skip: !which("claude") }, () => {
+test("every claude flag we build is accepted by the installed claude", { skip: !LIVE || !which("claude") }, () => {
   const help = helpText("claude", []);
   const inv = buildInvocation({ currentHost: "codex", ...base });
   for (const flag of inv.args.filter((a) => a.startsWith("--"))) {
@@ -345,7 +349,7 @@ test("every claude flag we build is accepted by the installed claude", { skip: !
 // --json-schema VALUE and asserts it is not rejected as malformed. A file path
 // (the C2 bug) exits 1 with "--json-schema is not valid JSON"; inline JSON parses.
 // Tolerant of auth/network failure — it only checks the flag-parse error is absent.
-test("claude accepts our inline --json-schema value, not a file path (live, catches C2)", { skip: !which("claude") }, () => {
+test("claude accepts our inline --json-schema value, not a file path (live, catches C2)", { skip: !LIVE || !which("claude") }, () => {
   const inv = buildInvocation({ currentHost: "codex", ...base });
   const schemaValue = inv.args[inv.args.indexOf("--json-schema") + 1];
   const r = spawnSync("claude", [
