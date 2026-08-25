@@ -79,9 +79,11 @@ export function renderManagedRevision({ kind, workId, issue = null, attemptId, r
     throw Object.assign(new Error("managed plan requires issue"), { code: "invalid-managed-revision" });
   }
   const normalized = normalizeContent(content);
-  // This is the one deterministic publication gate: refuse to render a block
-  // whose content carries a secret or an untrusted-instruction pattern, so a
-  // secret can never reach an Issue/PR body through the managed path (UC-G7).
+  // Best-effort publication gate: refuse to render a block whose content matches a
+  // known secret or untrusted-instruction pattern (provider token prefixes,
+  // credential-bearing URLs, inline password=…, etc.). A regex screen cannot
+  // guarantee arbitrary-secret detection — treat it as a strong filter, not an
+  // absolute guarantee (UC-G7).
   if (sanitizePublishable(normalized).status !== "safe") {
     throw Object.assign(new Error("managed content rejected"), { code: "secret-rejected" });
   }
@@ -121,5 +123,22 @@ export function replaceManagedRevision(body, managedRevision) {
   if (parsedBody.status !== "valid") throw Object.assign(new Error("invalid managed body"), { code: parsedBody.status });
   if (parsedBody.blocks.length === 0) return body ? `${body}\n${managedRevision}` : managedRevision;
   const old = parsedBody.blocks[0];
+  const next = parsedNew.blocks[0];
+  // An in-place replacement must be the SAME managed object at a strictly newer
+  // revision: identical kind, work_id, issue, and attempt_id (a stable attempt_id
+  // across body updates is the design). A different identity is a new block, never
+  // an overwrite — this rejects work-A→work-B, scope→scope-revision, and a changed
+  // attempt_id; a lower/equal revision rejects backward transitions (5→1), except a
+  // byte-identical re-post at the same revision, which is an idempotent no-op.
+  const sameIdentity = old.kind === next.kind
+    && old.attributes.work_id === next.attributes.work_id
+    && (old.attributes.issue ?? null) === (next.attributes.issue ?? null)
+    && old.attributes.attempt_id === next.attributes.attempt_id;
+  if (!sameIdentity) {
+    throw Object.assign(new Error("managed revision identity mismatch"), { code: "managed-identity-mismatch" });
+  }
+  if (next.revision < old.revision || (next.revision === old.revision && next.raw !== old.raw)) {
+    throw Object.assign(new Error("managed revision is not strictly newer"), { code: "managed-revision-not-newer" });
+  }
   return `${body.slice(0, old.index)}${managedRevision}${body.slice(old.index + old.raw.length)}`;
 }
