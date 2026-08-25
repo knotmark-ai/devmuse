@@ -72,6 +72,23 @@ test("mu-prd speaks one profile vocabulary — the axis identifiers, never inven
   assert.match(muPrd, /\*\*`end-user-app` profile\*\* in full depth/);
 });
 
+test("case-registry ownership: mu-prd owns Product Use Cases + Rules, mu-scope references them (#68)", () => {
+  const registry = read("plugin/knowledge/principles/case-registry.md");
+  const muScope = read("plugin/skills/mu-scope/SKILL.md");
+  // The contract home says mu-prd creates/updates Product Use Cases + Rules with stable IDs.
+  assert.match(registry, /\*\*`mu-prd`\*\* creates\/updates Product Use Cases and Rules/);
+  // mu-prd now integrates: it OWNS the long-lived duc:/rule: records, persists them via
+  // the registry runtime, and cites the contract — the previous contradiction is gone.
+  assert.match(muPrd, /### 2a\. Case registry integration/);
+  assert.match(muPrd, /\*\*owner\*\* of the long-lived \*\*Product Use Cases\*\*/);
+  assert.match(muPrd, /project-registry\/cli\.mjs/);
+  assert.match(muPrd, /case-registry\.md/);
+  assert.doesNotMatch(muPrd, /Do not pre-enumerate UCs here/); // the old wrong-owner instruction
+  // mu-scope references the product case IDs and owns only the delivery-specific delta.
+  assert.match(muScope, /reference the affected product cases by their stable IDs/);
+  assert.match(muScope, /case-registry\.md/);
+});
+
 test("both worked examples exist and carry the UC-DR3 banner", () => {
   for (const file of ["plugin/knowledge/examples/reference-booking.md", "plugin/knowledge/examples/reference-ai-plugin.md"]) {
     const body = read(file);

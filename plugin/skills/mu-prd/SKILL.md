@@ -137,7 +137,7 @@ add a screen/state/tiering slot a profile merely offers (UC-DR2).**
 #### Common core (every profile)
 
 1. **Purpose and users** — who it is for, the target persona(s), the problem.
-2. **Per-feature specs** — for each MVP feature: what it does, why, user-facing rules (edge cases in user terms, not code). **Scope boundary:** these are product-level rules — mu-scope later enumerates all concrete paths (happy / edge / error use cases) per feature. Do not pre-enumerate UCs here. Guarantees that survive retries and races ("double-clicking never creates two orders") are rules, not use cases — they live in the object model, and a feature touching a modeled object cites its states by name.
+2. **Per-feature specs** — for each MVP feature: what it does, why, the long-lived **Product Use Cases** it serves (the stable product scenarios), and user-facing rules (edge cases in user terms, not code). **Ownership boundary:** the Product Use Cases and Rules are mu-prd's to own — they are the durable requirement records (see Case registry integration below). What mu-prd does NOT enumerate is the concrete *delivery paths* — the happy/edge/error/reverse coverage of a given change; mu-scope owns those per delivery and references your Product Use Case IDs. So: Product Use Cases + Rules here; delivery-path coverage in mu-scope. Guarantees that survive retries and races ("double-clicking never creates two orders") are rules, not use cases — they live in the object model, and a feature touching a modeled object cites its states by name.
 3. **Open questions / assumptions** — things not yet decided that downstream work must resolve.
 
 #### Profile-activated sections (add only the axes that apply)
@@ -158,6 +158,21 @@ metrics → instrumentation is added whenever the product has a measurable funne
 **Depth:** lightweight carries the core (purpose + key per-feature specs + open
 questions) at minimal detail; full carries every activated section at launch
 depth. Depth changes *how much*, profile changes *which*.
+
+### 2a. Case registry integration (when present)
+
+When the project has a case registry (a v2 manifest with a `cases:` block, from
+`/mu-setup`), mu-prd is the **owner** of the long-lived **Product Use Cases**
+(`duc:`) and **Rules** (`rule:`): persist each as a stable-ID record in its
+canonical provider via `${CLAUDE_PLUGIN_ROOT}/runtime/project-registry/cli.mjs`
+(portable skills use their vendored copy) — writes are approval-gated (`approved:
+true`) and never store credentials, per
+`@../../knowledge/principles/case-registry.md`. Reuse an existing case's ID on
+update; never mint a second ID for the same scenario. Downstream, mu-scope
+**references** these IDs and owns only the delivery-specific delta (acceptance
+examples, edge/error/reverse coverage, the regression boundary); mu-arch/mu-plan/
+mu-code carry the same IDs through. Where no registry exists, this is additive and
+skipped — the PRD prose stands on its own.
 
 ### 3. Product Object Model (conditional)
 
