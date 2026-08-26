@@ -6,6 +6,14 @@ const KINDS = new Set(["scope", "scope-revision", "plan", "plan-revision"]);
 const WORK_ID = /^[A-Za-z0-9._:-]{1,128}$/;
 const ATTRIBUTE = /^[a-z0-9_]+=[^\s]+$/;
 
+// ONE numeric domain shared by the renderer and the parser: 1..999_999_999. The
+// parser's `[1-9]\d{0,8}` regex accepts exactly this range, so anything the renderer
+// emits must be re-selectable — the two can never accept different domains.
+const MAX_MANAGED_NUMBER = 999_999_999;
+function validManagedNumber(value) {
+  return Number.isInteger(value) && value >= 1 && value <= MAX_MANAGED_NUMBER;
+}
+
 function normalizeContent(content) {
   return `${String(content).replace(/\r\n?/g, "\n").replace(/\n+$/, "")}\n`;
 }
@@ -73,11 +81,13 @@ function parseDocument(text, family) {
 }
 
 export function renderManagedRevision({ kind, workId, issue = null, attemptId, revision, content } = {}) {
-  if (!KINDS.has(kind) || !WORK_ID.test(workId ?? "") || !WORK_ID.test(attemptId ?? "") || !Number.isInteger(revision) || revision < 1) {
+  // Render only what the parser can read back (same numeric domain), and never
+  // stringify a non-string content into the block ([object Object]/undefined).
+  if (!KINDS.has(kind) || !WORK_ID.test(workId ?? "") || !WORK_ID.test(attemptId ?? "") || !validManagedNumber(revision) || typeof content !== "string") {
     throw Object.assign(new Error("invalid managed revision"), { code: "invalid-managed-revision" });
   }
   const family = familyFor(kind);
-  if ((family === "plan") !== (Number.isInteger(issue) && issue > 0)) {
+  if ((family === "plan") !== validManagedNumber(issue)) {
     throw Object.assign(new Error("managed plan requires issue"), { code: "invalid-managed-revision" });
   }
   const normalized = normalizeContent(content);

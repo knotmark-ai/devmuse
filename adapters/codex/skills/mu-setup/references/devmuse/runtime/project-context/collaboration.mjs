@@ -72,25 +72,37 @@ const SENSITIVE_KEY = new RegExp(`^(?:${SENSITIVE_KEY_WORDS})$`, "i");
 // value char class excluded quotes and the separator had to abut the key.
 const SENSITIVE_ASSIGNMENT = new RegExp(`(?<![A-Za-z0-9])(?:${SENSITIVE_KEY_WORDS})["']?\\s*[:=]\\s*["']?\\S`, "i");
 
+// Conservative Markdown/HTML → plain-text projection. Managed blocks are Markdown,
+// so a secret can be dressed up: `` `token`: … ``, `**token**: …`, `[token]: …`,
+// `<code>token</code>: …`. Formatting characters sit between the key and the
+// separator, so the raw screen misses them; we also scan this projection.
+function toPlainText(string) {
+  return string
+    .replace(/<\/?[A-Za-z][^>]*>/g, "") // HTML tags (<code>, </code>, <b>, …)
+    .replace(/[`*_~[\]]/g, "")          // markdown code / emphasis / reference markers
+    .replace(/^\s*>+\s?/gm, "");        // blockquote markers
+}
+
+function scanString(string) {
+  if (/gh[pousr]_[A-Za-z0-9_]{20,}/.test(string)) return "secret-rejected";
+  if (/github_pat_[A-Za-z0-9_]{20,}/.test(string)) return "secret-rejected";
+  if (/-----BEGIN (?:[A-Z ]+ )?PRIVATE KEY-----/.test(string) || /\bAKIA[A-Z0-9]{16}\b/.test(string)) return "secret-rejected";
+  if (/(?:api[_-]?token|refresh[_-]?token|authorization)\s*[:=]\s*(?:bearer\s+)?[^\s,}]+/i.test(string)) return "secret-rejected";
+  if (/\bsk-(?:proj|ant)-[A-Za-z0-9_-]{8,}/i.test(string)) return "secret-rejected";   // OpenAI project / Anthropic keys
+  if (/\bsk-[A-Za-z0-9]{20,}/.test(string)) return "secret-rejected";                   // classic OpenAI key
+  if (/\bnpm_[A-Za-z0-9]{20,}/.test(string)) return "secret-rejected";                  // npm automation token
+  if (SENSITIVE_ASSIGNMENT.test(string)) return "secret-rejected";                      // key=value for the sensitive vocabulary
+  if (/\b[a-z][a-z0-9+.-]*:\/\/[^\s/:@]+:[^\s/@]+@/i.test(string)) return "secret-rejected"; // credential-bearing URL (user:pass@host)
+  if (/\brm\s+-rf\s+\/(?:\s|$)/i.test(string)) return "untrusted-instruction";
+  return null;
+}
+
 function inspectPublishable(value, key = null) {
   if (key !== null && SENSITIVE_KEY.test(key) && value !== null && value !== "") return "secret-rejected";
   if (typeof value === "string") {
-    if (/gh[pousr]_[A-Za-z0-9_]{20,}/.test(value)) return "secret-rejected";
-    if (/github_pat_[A-Za-z0-9_]{20,}/.test(value)) return "secret-rejected";
-    if (/-----BEGIN (?:[A-Z ]+ )?PRIVATE KEY-----/.test(value) || /\bAKIA[A-Z0-9]{16}\b/.test(value)) return "secret-rejected";
-    if (/(?:api[_-]?token|refresh[_-]?token|authorization)\s*[:=]\s*(?:bearer\s+)?[^\s,}]+/i.test(value)) return "secret-rejected";
-    // Provider token prefixes that appear as bare values (never behind a sensitive
-    // key), so the object-key screen alone would miss them in free-form content.
-    if (/\bsk-(?:proj|ant)-[A-Za-z0-9_-]{8,}/i.test(value)) return "secret-rejected";   // OpenAI project / Anthropic keys
-    if (/\bsk-[A-Za-z0-9]{20,}/.test(value)) return "secret-rejected";                   // classic OpenAI key
-    if (/\bnpm_[A-Za-z0-9]{20,}/.test(value)) return "secret-rejected";                  // npm automation token
-    // Free-form `key = value` assignments for the same sensitive-key vocabulary the
-    // object-key screen uses — so a secret in raw content (api_key=, client_secret=,
-    // token=, secret=, OPENAI_API_KEY=, password=, …) is caught, not just as a map key.
-    if (SENSITIVE_ASSIGNMENT.test(value)) return "secret-rejected";
-    if (/\b[a-z][a-z0-9+.-]*:\/\/[^\s/:@]+:[^\s/@]+@/i.test(value)) return "secret-rejected"; // credential-bearing URL (user:pass@host)
-    if (/\brm\s+-rf\s+\/(?:\s|$)/i.test(value)) return "untrusted-instruction";
-    return null;
+    // Scan both the raw source and a Markdown-stripped projection, so a secret
+    // dressed in inline-code/bold/reference/HTML formatting is still caught.
+    return scanString(value) ?? scanString(toPlainText(value)) ?? null;
   }
   if (Array.isArray(value)) {
     for (const item of value) {
