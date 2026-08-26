@@ -82,6 +82,20 @@ test("replaceManagedRevision rejects envelope bypasses and cross-family appends 
   assert.throws(() => replaceManagedRevision(planBody, base), (e) => e.code === "managed-family-conflict");
 });
 
+test("managed parsing/replacement fails closed on pathological revision and non-string body (#62)", () => {
+  const base = renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 5, content: "x\n" });
+  // A 400-digit revision would parse to Infinity → the block is malformed, not selected.
+  const huge = base.replace("revision=5", `revision=${"9".repeat(400)}`);
+  assert.equal(selectCurrentManagedRevision({ body: huge, comments: [], kind: "scope" }).status, "malformed");
+  // A non-string body is a caller error — never coerced to empty (which would discard input).
+  for (const bad of [42, true, { body: "x" }, ["x"]]) {
+    assert.throws(() => replaceManagedRevision(bad, base), (e) => e.code === "invalid-managed-body", `body ${JSON.stringify(bad)}`);
+  }
+  // null/undefined mean "no body yet" — a fresh create, not an error.
+  assert.equal(replaceManagedRevision(null, base), base);
+  assert.equal(replaceManagedRevision(undefined, base), base);
+});
+
 test("managed-revision selection is bound to the expected work identity", () => {
   const mine = renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 1, content: "mine\n" });
   // A foreign higher-revision block arriving in a comment (the finding's vector).
