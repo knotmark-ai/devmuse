@@ -82,6 +82,22 @@ test("replaceManagedRevision rejects envelope bypasses and cross-family appends 
   assert.throws(() => replaceManagedRevision(planBody, base), (e) => e.code === "managed-family-conflict");
 });
 
+test("renderer and parser share one numeric domain; content must be a string (#62)", () => {
+  // Round-trip invariant: everything the renderer emits must be selectable (the two
+  // share the 1..999999999 domain), and out-of-domain values are refused by BOTH.
+  const max = renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 999999999, content: "x\n" });
+  assert.equal(selectCurrentManagedRevision({ body: max, comments: [], kind: "scope" }).status, "selected");
+  for (const bad of [1000000000, Number.MAX_SAFE_INTEGER, 0, 1.5]) {
+    assert.throws(() => renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: bad, content: "x\n" }), (e) => e.code === "invalid-managed-revision", `revision ${bad}`);
+  }
+  // A plan issue shares the same domain.
+  assert.throws(() => renderManagedRevision({ kind: "plan", workId: "issue-62", issue: 1000000000, attemptId: "a", revision: 1, content: "x\n" }), (e) => e.code === "invalid-managed-revision");
+  // Non-string / missing content is refused — never stringified to [object Object]/undefined.
+  for (const content of [{ a: 1 }, undefined, null, 42, ["x"]]) {
+    assert.throws(() => renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 1, content }), (e) => e.code === "invalid-managed-revision", `content ${JSON.stringify(content)}`);
+  }
+});
+
 test("managed parsing/replacement fails closed on pathological revision and non-string body (#62)", () => {
   const base = renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 5, content: "x\n" });
   // A 400-digit revision would parse to Infinity → the block is malformed, not selected.

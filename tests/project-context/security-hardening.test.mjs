@@ -75,6 +75,26 @@ test("a manifest cannot smuggle markup or control characters into the session su
 });
 
 // Covers: UC-G7
+test("Markdown-formatted secrets are caught via the plain-text projection, benign Markdown stays safe (#62)", () => {
+  // Formatting sits between the key and the separator — raw screen misses it, the
+  // Markdown→plain projection catches it. (The publication format IS Markdown.)
+  const dressed = [
+    "`token`: plain-secret",
+    "**token**: plain-secret",
+    "[token]: plain-secret",
+    "<code>token</code>: plain-secret",
+    "`api_key=sk-live-abc`",
+  ];
+  for (const secret of dressed) {
+    assert.equal(runCli("sanitize", { value: secret }).out.status, "secret-rejected", `raw: ${secret}`);
+    assert.throws(() => renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 1, content: `notes\n${secret}\n` }), (e) => e.code === "secret-rejected");
+  }
+  // Ordinary Markdown with no sensitive key must NOT be flagged.
+  for (const benign of ["## Heading with **bold**", "See `runReview()` and the [docs](x).", "> a normal design quote"]) {
+    assert.equal(runCli("sanitize", { value: benign }).out.status, "safe", `benign: ${benign}`);
+  }
+});
+
 test("the replace-managed CLI fails closed on a non-string body instead of exiting 0 and dropping it (#62)", () => {
   const rev = renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 1, content: "x\n" });
   const bad = runCli("replace-managed", { body: 42, managedRevision: rev });
