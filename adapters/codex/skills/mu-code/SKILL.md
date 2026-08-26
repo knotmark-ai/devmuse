@@ -11,8 +11,8 @@ Execute the evidence already selected by mu-scope:
 
 - **Bounded:** an inline contract with affected files, 1–3 use cases, and a
   verification command.
-- **Architectural:** an approved implementation plan, normally under
-  `docs/plans/`, with task and UC traceability.
+- **Architectural:** approved implementation plan evidence from a managed Draft
+  PR revision or dated local fallback, with task and UC traceability.
 
 The implementation loop owns coding, tests, and task-level self-checks.
 Independent review has one owner: bounded work gets one combined main-thread
@@ -21,6 +21,24 @@ review; architectural work gets one final mu-review after all tasks integrate.
 **Core principle:** tight implementation loop, one review boundary.
 
 Announce the selected path at the start.
+
+## Project Context Binding
+
+When the project has a case registry (`/mu-setup`), preserve the case IDs the
+plan carries through implementation and tests per
+`references/devmuse/knowledge/principles/case-registry.md`.
+
+Read `references/devmuse/knowledge/principles/project-context.md` and run `resolve` before
+architectural execution. In GitHub-first mode, the first meaningful commit
+binds the exact-work Draft PR. Before each remote evidence change, run
+`authorize`; update task/UC progress and verification with `render-managed`, and
+run `recover-attempt` for an indeterminate create/comment. Human or platform
+tasks and the required PR set remain in the Issue. Run `project-delivery` from
+verified facts at handoff; a merge is not delivery completion.
+
+Use the packaged `project-context/cli.mjs`. When it is unavailable, apply the
+same decisions with host-native tools and record the binding. Cached capability
+never substitutes for a fresh operation check and active grant.
 
 ## Entry Gate
 
@@ -122,6 +140,10 @@ For each task:
    inside the stated write set.
 5. Record files, commands, results, and concerns; then mark the task complete.
 
+When GitHub is canonical, publish that record as the next managed plan revision
+without copying Issue-owned external work into the PR. A local fallback updates
+its existing plan evidence under the same work ID.
+
 When a task receives input from or sends output to an external system, apply
 `references/devmuse/knowledge/principles/defensive-boundary.md` before implementing that
 boundary.
@@ -169,6 +191,12 @@ GREEN:    write the minimum implementation and run it to green
 REFACTOR: improve structure while the same tests stay green
 ```
 
+During REFACTOR, read `references/devmuse/knowledge/principles/code-quality.md` and sweep
+the actual diff through every category. Translate mechanisms and examples into
+the repository's language. REFACTOR is complete when every changed element has
+either the prescribed correction or concrete evidence that its current shape
+is earned.
+
 Configuration-only, generated-code, or throwaway-prototype exceptions require
 the user's explicit approval. A test that passes before implementation is not a
 red test; correct it until it fails for the missing behavior.
@@ -211,3 +239,15 @@ the blocker is resolved or the user chooses an explicit alternative.
 - Bounded execution ends after its combined review.
 - Architectural execution chains to **mu-review** once, after integration.
 - Agent reference: `references/devmuse/agents/mu-coder.md`.
+
+## Optional: concurrent subagent dispatch (opt-in)
+
+This is an **opt-in suggestion**, not a default. It points to the canonical guide
+in the adapter's `HOST_POLICY.md` (§ *Optional: concurrent subagent dispatch*) —
+the single source of truth. The host manager and the user decide whether to spawn
+workers; **a conservative manager may decline, and concurrency is never forced.**
+It is not behavior-tested on Codex and claims no parity with the Claude fan-out.
+
+- Where `$mu-code` decomposes: executing an approved plan: architectural tasks with no shared-file contention and no producer/consumer interface between them are worker candidates; keep tasks that touch the same files or exchange a named output on one thread, in dependency order.
+- Prefer git-worktree isolation whenever workers mutate files; never share one
+  working tree for write work.

@@ -24,6 +24,8 @@ DevMuse adds value where a host needs product framing, risk classification, trac
 - `mu-code` stays out of ordinary Codex implementation. It may invoke automatically only when the user asks to execute a mu-scope `bounded execution` contract or an approved DevMuse plan; a generic coding request, design, or unapproved specification does not pass the gate.
 - Hermes keeps plugin skills out of its startup index by default. This preserves its progressive-disclosure and learning model instead of loading a second global workflow.
 - Claude keeps the full bootstrap because it is the only adapter whose routing, subagents, and guard hook are currently behavior-tested in this repository.
+- The Codex `HOST_POLICY.md` carries an **opt-in** section pointing out where DevMuse work decomposes (independent `mu-code` tasks, `mu-review` lenses, `mu-scope` probes) so a user may dispatch concurrent Codex workers. It is not behavior-tested on Codex and claims no parity with Claude's fan-out; the host manager stays authoritative.
+- `mu-review` cross-review is host-aware and reciprocal: Claude Code reviews with Codex, Codex reviews with Claude Code, and another host uses a configured different-family reviewer or has none. The current host is never its own reviewer, depth is bounded to one, and the runtime prefers an existing local subscription login over an API key. A missing CLI, expired auth, timeout, or malformed output never blocks the primary review.
 
 These defaults are intentionally conservative. Automatic `mu-code` takeover is
 contract-gated; explicit invocation remains available for users who want to

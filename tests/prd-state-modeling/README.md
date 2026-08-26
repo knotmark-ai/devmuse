@@ -11,15 +11,29 @@ Each prompt instructs the agent to simulate the skill against a fixed product br
 # transcript lands in /tmp/devmuse-tests/<ts>/prd-state-modeling/
 ```
 
-Judge the transcript manually or hand it to a subagent with the criteria table below.
+Judge the transcript manually, or use the auto-judge:
+
+```bash
+./run-test.sh prompts/<scenario>.txt 6 --judge   # run, then score in one step
+./judge.sh <scenario> [transcript.json]          # score an existing transcript
+```
+
+`judge.sh` builds a grading prompt from this file's criteria table (the single
+source of truth — `parse-criteria.mjs` reads the rows below, nothing duplicates
+them), hands the transcript to a headless `claude` judge, and parses a
+per-criterion verdict. `overall` is recomputed from the sub-verdicts, so a judge
+that marks any criterion `fail` cannot return an overall pass; an unparseable
+judge response is an error, never a silent pass. The deterministic parser and
+verdict logic are covered by `npm run test:regression-judge` (no model needed);
+the judge invocation itself needs the `claude` CLI.
 
 ## Scenarios and pass criteria
 
 | Prompt | Simulates | Pass criteria |
 |---|---|---|
 | `full-stateful-booking.txt` | Full-mode create, meeting-room booking (approval + check-in + no-show) | Object model triggers (quotes trigger text); closed state list with no "等/etc."; every transition has actor + boundary semantics (inclusive/exclusive, named clock); pending-occupies-slot surfaced as invariant/fork; terminal states no-revival; duplicate-submission guarantee present |
-| `vague-groupbuy-dialogue.txt` | Full-mode §-interview, user gives vague group-buy answers | All six lifecycle gaps covered ([a] group states exhaustive, [b] participant order as separate machine, [c] boundary-instant race, [d] duplicate submission, [e] refund-failure state, [f] post-confirmation cascade); coverage traced to skill/principle text, not domain luck |
-| `stateless-cli-no-trigger.txt` | Lightweight create, stateless CLI tool | Object model does NOT fire (quotes trigger text evaluated); zero state machines written anywhere; output limited to the 3 lightweight sections |
+| `vague-groupbuy-dialogue.txt` | Full-mode §-interview, user gives vague group-buy answers | group states exhaustive; participant order modeled as a separate machine; boundary-instant race handled; duplicate submission guaranteed; refund-failure state present; post-confirmation cascade covered; coverage traced to skill/principle text, not domain luck |
+| `stateless-cli-no-trigger.txt` | Lightweight create, stateless CLI tool | Object model does NOT fire (quotes trigger text evaluated); zero state machines written anywhere; no user-facing-app sections (information architecture, wireframes, tiering) are invented — the CLI command/flag surface is this profile's core, not a UI |
 | `variation-subscription.txt` | Full-mode, SaaS subscription (domain absent from principle examples) | ≥3 machines identified (subscription, charge, seat candidate); grace-period hidden state caught; cancel-timing fork caught; catches traced to domain-agnostic detectors (lifecycle sentence blanks, classification table, self-check) |
 | `lightweight-stateful.txt` | Lightweight create, stateful product, repo without CONTEXT.md | Machine written to CONTEXT.md §6, **not** into the PRD body — lightweight changes the model's size, not its home; CONTEXT.md created from `knowledge/templates/context-md.md`; PRD body cites state names only |
 | `update-stance-machines.txt` | `/mu-prd update` on a PRD whose machines live in CONTEXT.md §6, dual gap-fill+sync changes | Both files loaded (quotes branch text); state edits land in CONTEXT.md, PRD body cites names; terminal-state change surfaced as user fork; sync covers machine-vs-code drift; self-check re-run per touched machine; **two History rows — machine change in CONTEXT.md §7, PRD body change in the PRD**; prefix = highest-priority sub-type |

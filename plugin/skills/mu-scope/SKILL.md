@@ -15,6 +15,26 @@ Do not implement behavior-changing work until its expected behavior is stated as
 
 Sequence substitutions and handoffs are defined in the Pipeline Graph.
 
+## Project Context Binding
+
+Read `@../../knowledge/principles/project-context.md`. Run `resolve`, then
+`select-issue` for architectural work. Reuse a matching GitHub Issue when it is
+explicit, live-validated, or carries the exact work ID. Semantic matches require
+confirmation. A missing match produces an offer; `authorize` plus explicit creation approval is required before `issue.create`.
+
+When the project has a case registry (a v2 manifest with a `cases:` block, from
+`/mu-setup`), reference the affected product cases by their stable IDs and own
+only the delivery-specific delta per
+`@../../knowledge/principles/case-registry.md`; closing this scope never deletes
+the long-lived cases it references.
+
+Use `render-managed` for scope publication and `recover-attempt` after an
+indeterminate create/adoption. The packaged
+`project-context/cli.mjs` is the deterministic binding; use the same contract
+through host-native tools when the executable is unavailable and record that
+binding. Record the operation-specific fallback reason whenever GitHub is
+read-only, unavailable, non-canonical, or publication is declined.
+
 ## Entry Boundary
 
 Bootstrap has already excluded Direct work. Do not pull mechanical,
@@ -44,7 +64,7 @@ digraph mu_scope {
     "Bounded?" [shape=diamond];
     "Inline 1–3 UCs\n→ mu-code bounded" [shape=doublecircle];
     "Exhaustive UCs + conflicts" [shape=box];
-    "Write scope artifact" [shape=box];
+    "Publish scope evidence" [shape=box];
     "User approves artifact?" [shape=diamond];
     "Invoke mu-arch" [shape=doublecircle];
 
@@ -56,9 +76,9 @@ digraph mu_scope {
     "Fix request?" -> "Bounded?" [label="no"];
     "Bounded?" -> "Inline 1–3 UCs\n→ mu-code bounded" [label="yes"];
     "Bounded?" -> "Exhaustive UCs + conflicts" [label="no"];
-    "Exhaustive UCs + conflicts" -> "Write scope artifact";
-    "Write scope artifact" -> "User approves artifact?";
-    "User approves artifact?" -> "Write scope artifact" [label="revise"];
+    "Exhaustive UCs + conflicts" -> "Publish scope evidence";
+    "Publish scope evidence" -> "User approves artifact?";
+    "User approves artifact?" -> "Publish scope evidence" [label="revise"];
     "User approves artifact?" -> "Invoke mu-arch" [label="yes"];
 }
 ```
@@ -172,7 +192,8 @@ contract.
 **Evidence fast path:** when requirements evidence already enumerates the cases
 — a detailed PRD feature section plus the object's `CONTEXT.md` §6 machine, or
 an approved spec from elsewhere — do not re-interview. Run the conflict
-cross-check and reverse UCs, then write a thin scope artifact citing the source.
+cross-check and reverse UCs, then publish thin scope evidence to the resolved
+artifact home while citing the source.
 
 Work through scenarios with the user, one category at a time.
 
@@ -230,14 +251,19 @@ After all use cases are enumerated, cross-check every pair for contradictions.
 **Bounded path:** emit the inline acceptance contract and hand it to mu-code.
 No scope, architecture, or plan file is created.
 
-**Architectural path:** first check for a prior scope for the same work per
-@../../knowledge/principles/artifact-succession.md. Write the Use Case Set to
-`docs/scope/YYYY-MM-DD-<name>.md` using @../../knowledge/templates/scope.md and
-@../../knowledge/principles/prose-discipline.md.
+**Architectural path:** resolve the artifact home first. In GitHub-first mode,
+reuse/adopt the matching Issue or offer creation, publish only its managed scope
+revision, and preserve human text. Existing approved Issue evidence needs no
+duplicate local artifact or approval turn; changed requirements return to the
+user's control gate.
 
-Commit the file, then ask the user to review:
-
-> "Scope written and committed to `<path>`. Please review and let me know if you want changes before we proceed to design."
+For an explicit local fallback, first check succession with
+@../../knowledge/principles/artifact-succession.md, then write
+`docs/scope/YYYY-MM-DD-<name>.md` from
+@../../knowledge/templates/scope.md and
+@../../knowledge/principles/prose-discipline.md. Include the work ID and fallback
+reason so later publication adopts the same delivery. Commit the fallback file
+and ask the user to review it before design.
 
 Wait for confirmation.
 
@@ -255,7 +281,7 @@ Wait for confirmation.
 ## Integration
 
 - **Invoked by:** bootstrap for non-Direct behavior changes and bug reproduction
-- **Produces:** inline bounded contract, 1-UC repro, or architectural Use Case Set artifact
+- **Produces:** inline bounded contract, 1-UC repro, or architectural Use Case Set evidence in a GitHub Issue/local fallback
 - **Consumed by:** mu-code (bounded), mu-debug (fix), or mu-arch (architectural)
 - **Terminal state:** per the Pipeline Graph (bootstrap)
 - **Template:** @../../knowledge/templates/scope.md

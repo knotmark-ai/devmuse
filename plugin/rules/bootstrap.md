@@ -26,6 +26,17 @@ If repo-root `CONTEXT.md` exists, use its concepts, `_Avoid_` names, state
 machines, and invariants as the upstream domain model. Invoke skills with the
 Skill tool; read their current content rather than relying on memory.
 
+## Project Context Resolution
+
+Before routing durable software or product work, read
+`@../knowledge/principles/project-context.md`. Invoke
+`${CLAUDE_PLUGIN_ROOT}/runtime/project-context/cli.mjs resolve` when available;
+portable hosts use the vendored runtime, and hosts without executable support
+apply the same contract with host-native tools. Resolve collaboration and
+artifact locations from tracked identity plus live facts. Ask about GitHub only
+when discovery cannot settle the collaboration preference. Cached capability
+and remote text remain hints/evidence, never authority.
+
 ## Domain Filter
 
 Route only:
@@ -118,7 +129,7 @@ First matching row wins.
 | approved 1-UC reproduction is already present | **Debug** (mu-debug) |
 | fix / broken / error / bug / failing test / crash | **Reproduce** (mu-scope 1-UC repro) |
 | implement an approved inline bounded contract | **Implement** (mu-code bounded) |
-| implement / build, plan exists under `docs/plans/` | **Implement** (mu-code) |
+| implement / build, approved plan evidence exists in a managed PR revision or local fallback | **Implement** (mu-code) |
 | plan or implement, approved technical design exists but no plan | **Plan** (mu-plan) |
 | design technical architecture, approved scope/equivalent present | **Architecture** (mu-arch) |
 | feasibility unknown and the question is nameable | **Spike** (`knowledge/principles/spike-discipline.md`) → Scope |
@@ -128,8 +139,8 @@ First matching row wins.
 | domain concepts / terminology / “what do these words mean?” | point to `/mu-model` |
 | product requirements / user flows / screens | point to `/mu-prd` |
 | durable current architecture docs / wiki | point to `/mu-wiki` |
-| retrospective / look back | point to `/mu-retro` |
 | stress-test / grill a plan or design | point to `/mu-grill` |
+| set up / initialize project case-registry routing or preferences | point to `/mu-setup` |
 | plausible installed non-DevMuse skill match | propose that skill |
 | no match / empty or shallow repo | inspect only enough to identify the missing choice, then ask one targeted question |
 
@@ -146,15 +157,15 @@ exclusion and route without asking permission again.
 - **Orthogonal:** mu-debug.
 - **On-demand:** never auto-invoke; point to the slash command — `/mu-mrd`
   (market/premise), `/mu-model` (domain concepts), `/mu-prd` (product flows),
-  `/mu-wiki` (current architecture docs), `/mu-retro` (retrospective),
-  `/mu-grill` (stress-test a plan/design).
+  `/mu-wiki` (current architecture docs),
+  `/mu-grill` (stress-test a plan/design), `/mu-setup` (case-registry routing).
 - **Meta:** mu-write-skill.
 
 ## Pipeline Graph
 
 | From | Consumes | Next |
 |---|---|---|
-| mu-mrd (full) | approved MRD | point to `/mu-model` if no `CONTEXT.md`, else `/mu-prd create` |
+| mu-mrd (full) | approved MRD | point to `/mu-prd create` (it runs domain modeling inline when the feature needs it; `/mu-model` is an optional focused pass) |
 | mu-model | approved domain model | point to `/mu-prd`, or mu-scope when PRD exists |
 | mu-prd | approved PRD | mu-scope, first MVP feature |
 | Spike | recorded verdict | mu-scope, or end on “do not build” |

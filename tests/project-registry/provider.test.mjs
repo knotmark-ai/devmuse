@@ -1,0 +1,129 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { providerTransition, classifyOutcome, PROVIDER_STATES } from "../../plugin/runtime/project-registry/provider.mjs";
+import { xrayCapabilities, xrayReadTestsRequest, normalizeXrayTest } from "../../plugin/runtime/project-registry/providers/xray.mjs";
+
+// --- provider state machine ---
+
+test("adoption requires approval and starts from Local", () => {
+  assert.equal(providerTransition({ state: "Local", event: "adopt" }).reason, "approval-required");
+  assert.equal(providerTransition({ state: "Local", event: "adopt", approved: true }).state, "ProviderCanonical");
+  assert.equal(providerTransition({ state: "ProviderCanonical", event: "adopt", approved: true }).reason, "already-provider-backed");
+});
+
+test("an outage moves to PendingSync and NEVER silently demotes to Local", () => {
+  const out = providerTransition({ state: "ProviderCanonical", event: "outage" });
+  assert.equal(out.state, "PendingSync");
+  // The only path back to Local is an explicit, approved force-local (UC-C6).
+  assert.equal(providerTransition({ state: "PendingSync", event: "force-local" }).reason, "approval-required");
+  assert.equal(providerTransition({ state: "PendingSync", event: "force-local", approved: true }).state, "Local");
+  assert.equal(providerTransition({ state: "PendingSync", event: "restore" }).state, "ProviderCanonical");
+});
+
+test("migration requires approval, a complete id map with non-empty targets, history, links, and provenance (#68)", () => {
+  const complete = {
+    from: "xray", to: "testrail",
+    idMap: { "tc:proj-1": "TR-9" },
+    locatorHistory: { "tc:proj-1": { from: "XRAY-1", to: "TR-9" } },
+    links: [{ from: "tc:proj-1", type: "verifies", to: "duc:checkout" }],
+    provenance: "migrated 2026-08-25 by setup",
+  };
+  assert.equal(providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true }).reason, "incomplete-migration");
+  // typeof null === "object" must NOT slip through; nor an array, empty map, or an EMPTY target locator.
+  for (const idMap of [null, [], {}, { "tc:proj-1": "" }, { "tc:proj-1": "   " }]) {
+    assert.equal(
+      providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true, migration: { ...complete, idMap, locatorHistory: {} } }).reason,
+      "incomplete-migration",
+      `idMap ${JSON.stringify(idMap)} should be rejected`,
+    );
+  }
+  // Missing provenance, missing locator history, or dropped links are all incomplete evidence.
+  assert.equal(providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true, migration: { ...complete, provenance: undefined } }).reason, "incomplete-migration");
+  assert.equal(providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true, migration: { ...complete, locatorHistory: undefined } }).reason, "incomplete-migration");
+  assert.equal(providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true, migration: { ...complete, links: "nope" } }).reason, "incomplete-migration");
+  // A complete migration preserves stable IDs, old->new locator history, links, and provenance.
+  const migrated = providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true, migration: complete });
+  assert.equal(migrated.state, "ProviderCanonical");
+  assert.equal(migrated.migration.idMap["tc:proj-1"], "TR-9");
+  assert.deepEqual(migrated.migration.locatorHistory["tc:proj-1"], { from: "XRAY-1", to: "TR-9" });
+  assert.deepEqual(migrated.migration.links, [{ from: "tc:proj-1", type: "verifies", to: "duc:checkout" }]);
+  assert.equal(migrated.migration.provenance, "migrated 2026-08-25 by setup");
+});
+
+test("migration evidence must be internally consistent, non-blank, and explicit (#68)", () => {
+  const complete = {
+    from: "xray", to: "testrail",
+    idMap: { "tc:proj-1": "TR-9" },
+    locatorHistory: { "tc:proj-1": { from: "XRAY-1", to: "TR-9" } },
+    links: [{ from: "tc:proj-1", type: "verifies", to: "duc:checkout" }],
+    provenance: "migrated by setup",
+  };
+  const migrate = (m) => providerTransition({ state: "ProviderCanonical", event: "migrate", approved: true, migration: m });
+  // Contradiction: history target disagrees with the id map's canonical target.
+  assert.equal(migrate({ ...complete, locatorHistory: { "tc:proj-1": { from: "XRAY-1", to: "TR-WRONG" } } }).reason, "incomplete-migration");
+  // Blank provider / provenance / history / link fields are rejected (trim-aware).
+  assert.equal(migrate({ ...complete, from: "" }).reason, "incomplete-migration");
+  assert.equal(migrate({ ...complete, to: "  " }).reason, "incomplete-migration");
+  assert.equal(migrate({ ...complete, provenance: " " }).reason, "incomplete-migration");
+  assert.equal(migrate({ ...complete, locatorHistory: { "tc:proj-1": { from: " ", to: "TR-9" } } }).reason, "incomplete-migration");
+  assert.equal(migrate({ ...complete, links: [{ from: "", type: "verifies", to: "duc:x" }] }).reason, "incomplete-migration");
+  // Omitted links is incomplete — "no links" must be asserted explicitly, not assumed.
+  const omitted = { ...complete }; delete omitted.links;
+  assert.equal(migrate(omitted).reason, "incomplete-migration");
+  // An explicit empty links array IS accepted (asserting no cross-asset links).
+  assert.equal(migrate({ ...complete, links: [] }).status, "ok");
+});
+
+test("outcome classification: transient = unavailable, auth = denied (not an outage)", () => {
+  assert.equal(classifyOutcome({ ok: true }).status, "available");
+  assert.equal(classifyOutcome({ reason: "timeout" }).status, "unavailable");
+  assert.equal(classifyOutcome({ reason: "5xx" }).status, "unavailable");
+  assert.equal(classifyOutcome({ reason: "unauthorized" }).status, "denied");
+  assert.equal(PROVIDER_STATES.length, 3);
+});
+
+// --- Xray reference adapter (fixtures, no network) ---
+
+test("the read request is project-scoped and carries no credentials", () => {
+  assert.equal(xrayReadTestsRequest({ baseUrl: "http://insecure", projectKey: "PROJ" }).reason, "bad-base-url");
+  assert.equal(xrayReadTestsRequest({ baseUrl: "https://x.atlassian.net", projectKey: "bad key" }).reason, "bad-project-key");
+  const built = xrayReadTestsRequest({ baseUrl: "https://x.atlassian.net", projectKey: "PROJ", since: "2026-01-01" });
+  assert.equal(built.status, "ready");
+  assert.match(built.request.query.jql, /project = PROJ AND issuetype = Test/);
+  assert.match(built.request.query.jql, /updated >= "2026-01-01"/);
+  // No Authorization header — the transport applies auth from the credential store.
+  assert.equal("Authorization" in built.request.headers, false);
+  assert.equal(JSON.stringify(built).toLowerCase().includes("token"), false);
+});
+
+test("a provider test record normalizes to a registry reference, not a payload copy", () => {
+  const normalized = normalizeXrayTest({ key: "PROJ-12", fields: { summary: "Login works", status: { name: "Approved" }, updated: "2026-08-01T00:00:00Z" } });
+  assert.equal(normalized.status, "ok");
+  assert.equal(normalized.asset.id, "tc:proj-12");
+  assert.equal(normalized.asset.kind, "test_cases");
+  assert.deepEqual(normalized.asset.locator, { provider: "xray", ref: "PROJ-12" });
+  assert.equal(normalized.asset.fields.title, "Login works");
+  assert.equal(normalized.providerRevision, "xray:2026-08-01T00:00:00Z");
+});
+
+test("the read request rejects injection-prone input (URL userinfo/query, non-ISO since)", () => {
+  const bad = (input) => xrayReadTestsRequest(input).reason;
+  assert.equal(bad({ baseUrl: "http://x.atlassian.net", projectKey: "PROJ" }), "bad-base-url"); // not https
+  assert.equal(bad({ baseUrl: "https://u:p@x.atlassian.net", projectKey: "PROJ" }), "bad-base-url"); // userinfo
+  assert.equal(bad({ baseUrl: "https://x.atlassian.net?a=1", projectKey: "PROJ" }), "bad-base-url"); // query
+  assert.equal(bad({ baseUrl: "https://x.atlassian.net", projectKey: "PROJ", since: '2026" OR "1"="1' }), "bad-since"); // JQL injection attempt
+  assert.equal(xrayReadTestsRequest({ baseUrl: "https://x.atlassian.net", projectKey: "PROJ", since: "2026-01-01" }).status, "ready");
+});
+
+test("record normalization rejects a malformed key or timestamp", () => {
+  assert.equal(normalizeXrayTest({ nope: 1 }).reason, "bad-key");
+  assert.equal(normalizeXrayTest({ key: "not a key" }).reason, "bad-key");
+  assert.equal(normalizeXrayTest({ key: "PROJ-12", fields: { updated: "whenever" } }).reason, "bad-updated");
+  assert.equal(normalizeXrayTest({ key: "PROJ-12", fields: { updated: "2026-08-01T00:00:00.000+0000" } }).status, "ok"); // Jira offset form
+});
+
+test("capabilities are declared design-time-only until validated against live", () => {
+  assert.equal(xrayCapabilities().validated_against_live, false);
+  assert.equal(xrayCapabilities().test_cases_crud, true);
+});

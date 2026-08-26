@@ -14,16 +14,20 @@ DevMuse 将确定性的契约检查与真实模型行为测试分开。修改路
 
 ```bash
 npm run build:adapters
-npm run test:generated
-npm run test:platforms
-npm run test:skills
-npm run test:routing
-npm run test:hooks
-npm run test:mermaid
-npm run test:token-benchmark
-npm run test:release
+npm run test:acceptance   # CI 与发布任务共用的唯一验收聚合
 git diff --check
 ```
+
+`test:acceptance` 是 `package.json` 里唯一的规范聚合命令，运行全部必需套件——
+generated-drift、skills、platforms、routing、hooks、Mermaid、GitHub-first、
+project-context、project-registry、regression-judge、cross-review、profiles、
+token-benchmark、release。`ci.yml` 与 `release.yml` 都委托给它，因此 CI 与发布
+门禁不会漂移。它是**完全确定性**的：不做任何实时模型调用，结果也不依赖本机装了
+哪些二进制。
+
+实测套件——cross-review 冒烟测试与 codex-dispatch 行为套件，会调用真实的
+`claude`/`codex` 二进制——是**可选的**，不属于门禁。用 `npm run test:live`
+单独运行（会设置 `DEVMUSE_LIVE=1`）；未设该标志时它们跳过，缺失的二进制会进一步跳过。
 
 平台契约会比对规范源与生成结果的 Skill 清单，检查每个随包引用，验证宿主
 manifest 和版本一致性，并落实 Codex/Gemini 的原生能力策略。发布验证还会在
@@ -31,6 +35,16 @@ manifest 和版本一致性，并落实 Codex/Gemini 的原生能力策略。发
 
 `routing-policy` 是 Direct、有界、架构三种流程，只读检查、review 模式、
 已退休制品以及 `docs/wiki/` 单一归属的回归契约。
+
+`npm run test:project-context` 使用确定性的 fake 平台输入，覆盖 manifest 校验、
+稳定身份、linked-worktree 缓存、逐操作授权、managed revision、create 恢复、
+交付投影和工作流接线。各个具名场景及预期结果见
+[`tests/project-context/live-scenarios.md`](../tests/project-context/live-scenarios.md)；
+这些场景不会授权或执行 GitHub 写入。
+
+真实 GitHub 检查属于另一层，必须获得明确授权。写路径应使用一次性 fixture
+仓库或 `--dry-run`；在本仓库 dogfood 时使用只读 Issue/PR 查询。fake adapter
+通过证明决策契约正确，live 检查证明当前宿主绑定和平台状态可用。
 
 ## 发布验证
 
@@ -79,6 +93,24 @@ bash tests/prd-state-modeling/run-test.sh \
 
 bootstrap 场景覆盖只读理解、精确执行、看似很小的契约改动、持久 Wiki
 请求、不熟悉区域的重构、只报告审查以及 review-and-fix。
+
+## 模型更替回归例程（model-churn）
+
+每次模型发布都会重新破坏技能触发，因此 prd-state-modeling 套件只有针对
+**当前实际使用的模型**运行才有意义。**在每次默认模型变更后**，以及修改任一
+流水线技能、`state-modeling.md`、`domain-model.md`、`project-profiles.md` 或
+bootstrap 路由规则后，都要重跑整套：
+
+```bash
+bash tests/prd-state-modeling/run-all.sh          # 运行并自动评分每个场景
+SCENARIOS="stateless-cli-no-trigger" \
+  bash tests/prd-state-modeling/run-all.sh        # 或指定子集
+```
+
+`run-all.sh` 用无头 `claude` 运行每个场景，用 `judge.sh`（#41 的自动评分器——
+标准单一来源，任一标准不过则该场景不过）对照 README 标准评分，任何场景回归或
+无法评分则以非零退出。确定性的解析/裁决逻辑由 `npm run test:regression-judge`
+覆盖；运行本身需要 `claude` CLI，是手动/CI 步骤，不属于快速 `npm` 套件。
 
 ## 架构执行端到端测试
 

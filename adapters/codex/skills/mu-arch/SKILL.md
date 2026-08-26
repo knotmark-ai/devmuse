@@ -15,7 +15,20 @@ Start by understanding the current project context, then ask questions one at a 
 Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
 </HARD-GATE>
 
-**Input evidence (guided, per the Pipeline Graph):** design needs requirements evidence before any approach talk — an approved scope artifact (default), or an equivalent that already enumerates the feature's cases (e.g., a detailed PRD feature section plus the object's `CONTEXT.md` §6 machine). With an equivalent, record it under Requirements Reference and run mu-scope's evidence fast path first — its non-duplicated trio (Quick Probe, conflict cross-check, reverse UCs) as one report, one confirmation — then design. With no evidence at all, recommend mu-scope and offer the alternatives; the user decides, and an override is flagged in the spec.
+**Input evidence (guided, per the Pipeline Graph):** design needs requirements evidence before any approach talk — an approved Issue-managed scope, a local fallback scope artifact, or an equivalent that already enumerates the feature's cases (e.g., a detailed PRD feature section plus the object's `CONTEXT.md` §6 machine). With an equivalent, record it under Requirements Reference and run mu-scope's evidence fast path first — its non-duplicated trio (Quick Probe, conflict cross-check, reverse UCs) as one report, one confirmation — then design. With no evidence at all, recommend mu-scope and offer the alternatives; the user decides, and an override is flagged in the spec.
+
+## Project Context Binding
+
+Read `references/devmuse/knowledge/principles/project-context.md` and run `resolve` before
+loading requirements evidence. Use `render-managed` only to normalize evidence
+received from a managed Issue; technical design and ADRs remain repository
+files. Invoke the packaged `project-context/cli.mjs`, or apply the same contract
+with host-native tools and record the binding when executable support is absent.
+
+When the project has a case registry (`/mu-setup`), map the selected cases to
+domain invariants, contracts, and technical realization by citing their stable
+IDs — never restate requirement prose — per
+`references/devmuse/knowledge/principles/case-registry.md`.
 
 ## Phase 0: Stance Detection
 
@@ -53,13 +66,13 @@ Every project goes through this process. A todo list, a single-function utility,
 You MUST create a task for each of these items and complete them in order:
 
 0. **Succession, then stance** — first references/devmuse/knowledge/principles/artifact-succession.md: new file, or the same one? Then §Phase 0 decides how the same one is entered. Branch routing below assumes both are picked and confirmed.
-1. **Read the requirements evidence** — the scope artifact, or the recorded equivalent (PRD section + `CONTEXT.md` §6 machine); understand all cases, conflicts, and constraints
+1. **Read the requirements evidence** — the managed Issue, local scope artifact, or recorded equivalent (PRD section + `CONTEXT.md` §6 machine); understand all cases, conflicts, and constraints
 2. **Explore project context** — check files, docs, recent commits
 3. **Find architecture doc** — look for existing architecture/design docs in the project (README, docs/, ARCHITECTURE.md, DESIGN.md, docs/wiki/_index.md, or similar). If found, read it. If not found or unclear, ask the user.
 4. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
 5. **Grill for technical direction** — apply references/devmuse/knowledge/principles/grilling.md (one question per message with a recommendation, facts self-served, decisions to the user, converge every fork); **technical direction only** (not "what to build" — that's in the scope)
 6. **Propose 2-3 approaches** — with trade-offs, your recommendation, impact on existing architecture, and **UC coverage per approach**. Apply inversion test per approach. **Record ADR** for the selected approach (see §Architecture Decision Records).
-7. **C4 positioning** — identify which C4 levels the approved approach touches per references/devmuse/knowledge/principles/architecture-assessment.md. **Draw only the neighbourhood this change touches**, with the ➕/✏️/➖ overlay; cite `docs/wiki/` pages for the surrounding picture instead of redrawing it. No wiki present → draw what the change needs and record that no architecture map exists.
+7. **C4 positioning** — identify the project's profile(s) per references/devmuse/knowledge/principles/project-profiles.md (profiles compose; take the union when unsure), then which C4 levels the approved approach touches per references/devmuse/knowledge/principles/architecture-assessment.md. The profile selects which sections and diagrams this design emits; a concern from references/devmuse/knowledge/principles/nfr-checklist.md adds a conditional section only when its trigger fires. **Draw only the neighbourhood this change touches**, with the ➕/✏️/➖ overlay; cite `docs/wiki/` pages for the surrounding picture instead of redrawing it. No wiki present → draw what the change needs and record that no architecture map exists.
 8. **Functional design** — based on C4 components identified in step 7, design the details:
    - **Within components:** data model (schema changes), state machine (if entity has lifecycle — see §Conditional Design Tools)
    - **Between components:** interface contracts (API endpoints, message formats), sequence diagrams per scenario (if multi-party interaction — see §Conditional Design Tools)
@@ -133,10 +146,10 @@ digraph mu_design {
 
 **Understanding the idea:**
 
-**When a scope artifact exists (normal case):**
-- The scope answers "what to build" — DO NOT re-ask purpose, user scenarios, or success criteria
+**When requirements evidence exists:**
+- The evidence answers "what to build" — DO NOT re-ask purpose, user scenarios, or success criteria
 - Focus clarifying questions on TECHNICAL DIRECTION: approach preferences, performance constraints, compatibility requirements, integration points
-- The use cases from scope are your design constraints — your design must cover all of them
+- Its use cases are your design constraints — your design must cover all of them
 
 - Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
 - If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then design the first sub-project through the normal flow. Each sub-project gets its own spec → plan → implementation cycle. Scope decomposition is handled by mu-scope. If the scope covers multiple subsystems, mu-scope should have decomposed it before reaching mu-arch.
@@ -242,7 +255,7 @@ Pre-existing specs with inline ADR bodies stay as they are — moving them retro
 
 ## Domain Language
 
-Naming is a cross-cutting concern like ADRs. **If `CONTEXT.md` does not exist and this design introduces domain concepts rather than only technical components, recommend `/mu-model` first — non-blocking, the user may decline.** Before coining any component or concept name, read the repo-root `CONTEXT.md` (if present) and reuse its terms — including respecting `_Avoid_` lists. When the design coins a new name and the user approves it, add the entry (definition + `_Avoid_` synonyms) to `CONTEXT.md` in the same commit as the design doc, per the qualification test in `references/devmuse/knowledge/principles/domain-model.md`.
+Naming is a cross-cutting concern like ADRs. **When this design introduces domain concepts rather than only technical components, run the domain-modeling method inline (references/devmuse/knowledge/principles/domain-model.md) and update the architecture set's `domain_model` member — `/mu-model` is the optional dedicated tool, not a required prior step.** Before coining any component or concept name, read the repo-root `CONTEXT.md` (if present) and reuse its terms — including respecting `_Avoid_` lists. When the design coins a new name and the user approves it, add the entry (definition + `_Avoid_` synonyms) to `CONTEXT.md` in the same commit as the design doc, per the qualification test in `references/devmuse/knowledge/principles/domain-model.md`.
 
 ## After the Design
 
@@ -258,7 +271,7 @@ Naming is a cross-cutting concern like ADRs. **If `CONTEXT.md` does not exist an
 
 ```markdown
 ## Requirements Reference
-- Requirements evidence: docs/scope/YYYY-MM-DD-<name>.md (or the recorded equivalent — e.g., docs/prd/YYYY-MM-DD-<product>.md §<feature> + its CONTEXT.md §6 machines, per the Pipeline Graph's evidence rule)
+- Requirements evidence: <managed Issue URL or local scope path> (or the recorded equivalent — e.g., docs/prd/YYYY-MM-DD-<product>.md §<feature> + its CONTEXT.md §6 machines, per the Pipeline Graph's evidence rule)
 - Covers: UC-1, UC-2, UC-3, ... (or the evidence's case identifiers)
 - NFRs: NFR-1, NFR-2, ...
 ```

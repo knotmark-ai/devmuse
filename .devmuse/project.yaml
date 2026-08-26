@@ -1,0 +1,12 @@
+schema_version: 1
+project:
+  id: "github:R_kgDOR1XohQ"
+  repository: "github.com/knotmark-ai/devmuse"
+collaboration:
+  provider: github
+  mode: github-first
+artifacts:
+  prd: null
+  architecture:
+    index: docs/architecture.md
+    domain_model: CONTEXT.md

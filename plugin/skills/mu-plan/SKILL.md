@@ -15,10 +15,27 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Announce at start:** "I'm using the mu-plan skill to create the implementation plan."
 
-**Context:** The plan is written in the main checkout; worktree isolation happens later, at mu-code Step 1.
+**Context:** Resolve the active collaboration surface before authoring; worktree
+isolation happens later, at mu-code Step 1.
 
-**Save plans to:** `docs/plans/YYYY-MM-DD-<feature-name>.md` — drafted per @../../knowledge/principles/prose-discipline.md
-- (User preferences for plan location override this default)
+## Project Context Binding
+
+When the project has a case registry (`/mu-setup`), carry the affected case IDs
+through tasks and tests so each test records which cases it exercises, per
+`@../../knowledge/principles/case-registry.md`.
+
+Read `@../../knowledge/principles/project-context.md` and run `resolve`. In
+GitHub-first mode, the first meaningful commit is the Draft PR boundary: find or
+create that exact-work Draft PR, run `authorize` for each mutation, and publish
+a `render-managed` managed plan revision. Run `recover-attempt` after an
+indeterminate PR/comment create. The packaged `project-context/cli.mjs` is the
+deterministic binding; use the same contract with host-native tools when it is
+unavailable and record the binding.
+
+Offline, non-GitHub, read-only, or declined publication selects the dated
+`docs/plans/YYYY-MM-DD-<feature-name>.md` fallback drafted per
+@../../knowledge/principles/prose-discipline.md. Record the work ID and fallback
+reason. A user-selected artifact location still overrides either default.
 
 ## Process Flow
 
@@ -51,9 +68,12 @@ digraph mu_plan {
 
 ## Prior Plan Check
 
-Before writing: is there an earlier plan for this same work? One question, per @../../knowledge/principles/artifact-succession.md. An **unconsumed** plan — no `[x]` checkboxes, no commits referencing its tasks — is revised **in place**, filename and date unchanged. A consumed one gets a new file with `Supersedes:` / `Extends:` written in **both** directions.
-
-Skip silently when `docs/plans/` is empty.
+Before writing, select the highest valid managed plan revision or the active
+fallback plan for the same work ID. An unconsumed fallback plan — no `[x]`
+checkboxes and no commits referencing its tasks — is revised in place. A
+consumed fallback gets a new file with bidirectional `Supersedes:` / `Extends:`
+per @../../knowledge/principles/artifact-succession.md. Managed PR revisions use
+the monotonic revision and conflict rules in the project-context contract.
 
 ## Scope Check
 
@@ -171,14 +191,14 @@ git commit -m "feat: add specific feature"
 - Exact commands with expected output
 - Reference relevant skills with @ syntax
 - DRY, YAGNI, TDD, frequent commits
-- Include `Covers: UC-xxx` per task when a scope artifact exists — this tells the coder which use cases to trace in tests
+- Include `Covers: UC-xxx` per task when requirements evidence carries UC IDs — this tells the coder which use cases to trace in tests
 
 ## Plan Review Loop
 
 After writing the complete plan:
 
 1. Dispatch the **mu-reviewer subagent in `review-plan` mode** with precisely crafted review context — never your session history. This keeps the reviewer focused on the plan, not your thought process.
-   - Provide: `PLAN_FILE_PATH` (path to the plan document), `SPEC_FILE_PATH` (path to spec document)
+   - Provide exactly one of `PLAN_FILE_PATH` or `PLAN_EVIDENCE_URL`, plus `SPEC_FILE_PATH`.
    - The reviewer will validate inputs, build an anchor list (UC-IDs, task numbers, file paths) from the documents, and only emit findings tied to those anchors — preventing hallucinated UCs / class names / file paths.
    - When the Cross-Task Contract is present, the reviewer also verifies every
      shared spec constraint and producer/consumer edge closes exactly.
@@ -192,7 +212,7 @@ After writing the complete plan:
 
 ## Execution Handoff
 
-After saving and reviewing the plan, announce its path and hand it to mu-code
+After publishing/saving and reviewing the plan, announce its evidence location and hand it to mu-code
 per the Pipeline Graph. **mu-code selects the execution mode** from task count,
 coupling, write-set overlap, and subagent availability; a user preference already
 stated in the conversation overrides that default. Do not add a mode-selection
@@ -201,6 +221,6 @@ question solely because two implementations are available.
 ## Integration
 
 - **Invoked by:** the Pipeline Graph (after mu-arch), or directly when a design spec exists
-- **Produces:** Implementation plan at `docs/plans/<name>.md`
+- **Produces:** reviewed implementation plan evidence in a Draft PR managed revision or dated local fallback
 - **Consumed by:** mu-code (reads plan, executes tasks)
 - **Terminal state:** per the Pipeline Graph (bootstrap)

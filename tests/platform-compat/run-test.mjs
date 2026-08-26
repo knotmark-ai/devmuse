@@ -109,8 +109,8 @@ for (const skill of [
   "mu-model",
   "mu-prd",
   "mu-wiki",
-  "mu-retro",
   "mu-grill",
+  "mu-setup",
   "mu-plan",
   "mu-review",
   "mu-write-skill",
@@ -136,12 +136,67 @@ assert.match(
 assert.match(muCode, /Automatic invocation requires both conditions/);
 assert.match(muCode, /generic specification.*is not enough/);
 
+for (const skill of ["mu-scope", "mu-arch", "mu-plan", "mu-code", "mu-review"]) {
+  assert.ok(
+    fs.existsSync(path.join(
+      root,
+      "adapters/codex/skills",
+      skill,
+      "references/devmuse/knowledge/principles/project-context.md",
+    )),
+    `${skill} lacks the packaged project-context principle`,
+  );
+  assert.ok(
+    fs.existsSync(path.join(
+      root,
+      "adapters/codex/skills",
+      skill,
+      "references/devmuse/runtime/project-context/cli.mjs",
+    )),
+    `${skill} lacks the packaged project-context runtime`,
+  );
+}
+assert.ok(
+  fs.existsSync(path.join(
+    root,
+    "adapters/codex/skills/mu-scope/references/devmuse/knowledge/principles/artifact-succession.md",
+  )),
+  "mu-scope lacks the packaged fallback succession contract",
+);
+
+// Cross-review runtime is vendored into mu-review, and the reviewer direction is
+// reciprocal: the generated Codex adapter reviews with Claude Code, never Codex.
+assert.ok(
+  fs.existsSync(path.join(root, "adapters/codex/skills/mu-review/references/devmuse/runtime/cross-review/cli.mjs")),
+  "mu-review lacks the packaged cross-review runtime",
+);
+const codexReview = read("adapters/codex/skills/mu-review/SKILL.md");
+assert.match(codexReview, /`Codex -> Claude Code`/);
+assert.doesNotMatch(codexReview, /`Claude Code -> Codex`/);
+assert.match(codexReview, /"current_host":"codex"/);
+assert.doesNotMatch(codexReview, /"current_host":"claude"/);
+const claudeReview = read("plugin/skills/mu-review/SKILL.md");
+assert.match(claudeReview, /`Claude Code -> Codex`/);
+assert.match(claudeReview, /"current_host":"claude"/);
+
 assert.match(read("adapters/codex/HOST_POLICY.md"), /native `\/plan`/);
 assert.match(read("adapters/codex/HOST_POLICY.md"), /native `\/review`/);
+assert.match(read("adapters/codex/HOST_POLICY.md"), /GitHub-first/);
+assert.match(read("adapters/codex/HOST_POLICY.md"), /host-native capability and approval/);
+assert.doesNotMatch(read("adapters/codex/HOST_POLICY.md"), /GitHub write permission is cached/);
 assert.match(
   read("adapters/codex/HOST_POLICY.md"),
   /sandbox, approval, and administrator policy authoritative/,
 );
+// Opt-in concurrent-dispatch guidance must stay opt-in, untested-on-Codex, and
+// non-overriding — the constraints carried over from #50/#54.
+const hostPolicy = read("adapters/codex/HOST_POLICY.md");
+assert.match(hostPolicy, /concurrent subagent dispatch \(opt-in\)/);
+assert.match(hostPolicy, /behaviorally tested via a model reasoning proxy/);
+assert.match(hostPolicy, /full execution on the Codex host itself is not guaranteed/);
+assert.match(hostPolicy, /claims no parity with the Claude adapter/);
+assert.match(hostPolicy, /never overrides the host's manager/);
+assert.match(hostPolicy, /manager\/worker model with git-worktree isolation/);
 assert.ok(!fs.existsSync(path.join(root, "adapters/codex/hooks")));
 assert.match(read("plugin/GEMINI.md"), /native Plan Mode/);
 assert.match(read("plugin/GEMINI.md"), /policy engine and approval mode authoritative/);
@@ -182,3 +237,28 @@ const result = spawnSync(
 assert.equal(result.status, 0, result.error?.message ?? result.stderr);
 
 console.log("PASS: cross-platform plugin contract");
+
+// #54 — per-skill opt-in concurrent-dispatch pointers, generated from the one
+// canonical HOST_POLICY guide. Eligible skills carry the pointer; ineligible ones
+// do not; and it is opt-in/declinable (the "declined" affordance).
+const DISPATCH_ELIGIBLE = new Set(["mu-code", "mu-review", "mu-scope"]);
+const dispatchHeading = "## Optional: concurrent subagent dispatch (opt-in)";
+for (const skill of skillNames("plugin/skills")) {
+  const codexSkill = read(`adapters/codex/skills/${skill}/SKILL.md`);
+  if (DISPATCH_ELIGIBLE.has(skill)) {
+    // Eligible: carries the pointer, references the canonical HOST_POLICY guide,
+    // and states the declinable/opt-in nature.
+    assert.ok(codexSkill.includes(dispatchHeading), `eligible ${skill} missing dispatch pointer`);
+    assert.match(codexSkill, /HOST_POLICY\.md/, `${skill} pointer must cite the canonical guide`);
+    assert.match(codexSkill, /may decline, and concurrency is never forced/, `${skill} must state the declined affordance`);
+    // The per-skill note matches the one HOST_POLICY publishes for that skill (no drift).
+    const note = codexSkill.match(/Where `\$mu-[a-z]+` decomposes: (.+)/)?.[1];
+    assert.ok(note && hostPolicy.includes(note), `${skill} pointer text must match the canonical HOST_POLICY note`);
+  } else {
+    // Ineligible: no dispatch pointer at all.
+    assert.ok(!codexSkill.includes(dispatchHeading), `ineligible ${skill} must NOT carry a dispatch pointer`);
+  }
+}
+// HOST_POLICY publishes exactly the eligible skills' bullets, generated from the map.
+for (const skill of DISPATCH_ELIGIBLE) assert.ok(hostPolicy.includes(`\`$${skill}\``), `HOST_POLICY missing ${skill} bullet`);
+console.log("PASS: per-skill concurrent-dispatch pointers (eligible/ineligible/declined)");

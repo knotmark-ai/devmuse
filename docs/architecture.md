@@ -87,6 +87,31 @@ Skills and agents reference knowledge via `@` relative paths within the plugin:
 The adapter boundary is deliberate: workflow content is shared, while invocation,
 subagent, hook, memory, and safety semantics remain host-native.
 
+## Project context runtime
+
+The host-neutral decision contract lives in
+`plugin/knowledge/principles/project-context.md`; executable resolution lives
+under `plugin/runtime/project-context/`. The resolver combines the tracked
+`.devmuse/project.yaml`, Git identity, a live provider read when available, and
+recoverable Git-common hints into one authority-aware result for workflow
+skills. The checkout path is diagnostic only. Cache entries can accelerate
+discovery across linked worktrees, but never store credentials, grants, or
+write authority.
+
+```text
+tracked manifest ─┐
+Git identity ─────┼─→ project-context resolver ─→ scope / arch / plan / code / review
+live provider ────┤
+Git-common hint ──┘
+```
+
+Claude's SessionStart hook injects only a sanitized, read-only summary as a
+startup optimization; every consequential workflow resolves again and every
+GitHub mutation checks its exact capability and active authorization. Other
+hosts resolve on demand. Generated Codex skills vendor the same decision
+contract and runtime, so absence of the Claude hook changes loading mechanics,
+not collaboration semantics.
+
 ---
 
 ## Content

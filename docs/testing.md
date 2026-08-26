@@ -15,15 +15,22 @@ document groups them by execution cost instead of copying a directory listing.
 
 ```bash
 npm run build:adapters
-npm run test:platforms
-npm run test:skills
-npm run test:routing
-npm run test:hooks
-npm run test:mermaid
-npm run test:token-benchmark
-npm run test:release
+npm run test:acceptance   # the single gate CI and the release job both run
 git diff --check
 ```
+
+`test:acceptance` is the one canonical aggregate (defined in `package.json`) that
+runs every required suite — generated-drift, skills, platforms, routing, hooks,
+Mermaid, GitHub-first, project-context, project-registry, regression-judge,
+cross-review, profiles, token-benchmark, and release. Both `ci.yml` and
+`release.yml` delegate to it, so CI and the release gate cannot drift. It is
+**fully deterministic**: it makes no live model calls and its result does not
+depend on which binaries are installed.
+
+The live tests — the cross-review smoke and the codex-dispatch behavioral suite,
+which invoke the real `claude`/`codex` binaries — are **opt-in** and NOT part of
+the gate. Run them separately with `npm run test:live` (sets `DEVMUSE_LIVE=1`);
+they skip unless that flag is set, and further skip any binary that is absent.
 
 The platform contract compares the canonical and generated skill inventories,
 checks every vendored reference, validates host manifests and version alignment,
@@ -34,6 +41,20 @@ system skill is available.
 The routing-policy test is the regression contract for Direct, bounded, and
 architectural ceremony; read-only inspection; review modes; retired artifacts;
 and single-owner rules such as `docs/wiki/`.
+
+`npm run test:project-context` exercises manifest validation, stable identity,
+linked-worktree cache behavior, operation-scoped authorization, managed
+revisions, create recovery, delivery projection, and workflow wiring with
+deterministic fake provider inputs. Individual named scenarios and expected
+results are documented in
+[`tests/project-context/live-scenarios.md`](../tests/project-context/live-scenarios.md).
+They do not authorize or perform a GitHub mutation.
+
+Live GitHub checks are a separate, explicitly authorized layer. Use a
+disposable fixture repository or `--dry-run` for mutation paths; use read-only
+Issue/PR queries when dogfooding against this repository. A passing fake
+adapter proves the decision contract, while a live check proves the current
+host binding and provider state.
 
 ## Release Verification
 
@@ -87,6 +108,27 @@ bash tests/prd-state-modeling/run-test.sh \
 The bootstrap prompt covers read-only understanding, exact execution,
 deceptively small contract changes, durable wiki requests, unfamiliar refactors,
 report-only review, and review-and-fix.
+
+## Model-churn regression routine
+
+Every model release re-breaks skill triggering, so the prd-state-modeling suite
+is only meaningful against the model actually in use. **Rerun the whole suite on
+every default-model change**, and after any change to the pipeline skills,
+`state-modeling.md`, `domain-model.md`, `project-profiles.md`, or the bootstrap
+routing rules:
+
+```bash
+bash tests/prd-state-modeling/run-all.sh          # run + auto-judge every scenario
+SCENARIOS="stateless-cli-no-trigger" \
+  bash tests/prd-state-modeling/run-all.sh        # or a named subset
+```
+
+`run-all.sh` runs each scenario through headless `claude`, judges the transcript
+against the README criteria with `judge.sh` (the #41 auto-judge — single source
+of criteria, any failed criterion fails the scenario), and exits non-zero if any
+scenario regressed or could not be judged. The deterministic parser/verdict logic
+is covered by `npm run test:regression-judge`; the runs themselves need the
+`claude` CLI and are a manual/CI step, not part of the fast `npm` suites.
 
 ## Architectural Execution E2E
 

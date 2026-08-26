@@ -35,16 +35,12 @@ jobs:
       - name: Build generated host adapters
         run: npm run build:adapters
 
-      - name: Validate deterministic contracts
+      - name: Validate all acceptance suites
+        # Single source of truth (package.json test:acceptance) so the release gate
+        # and CI can never drift — it includes github-first, profiles, and the
+        # regression-judge contract the tag gate previously omitted.
         run: |
-          npm run test:generated
-          npm run test:skills
-          npm run test:platforms
-          npm run test:routing
-          npm run test:hooks
-          npm run test:mermaid
-          npm run test:token-benchmark
-          npm run test:release
+          npm run test:acceptance
           git diff --check
 
   package:

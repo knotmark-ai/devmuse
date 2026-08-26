@@ -7,13 +7,13 @@ description: "Build or maintain the project's domain model in CONTEXT.md — con
 
 > **Validation status — `create` is unproven.** The `update` paths, including `update(sync)`, were derived from two real runs (aflaj restructure, devmuse rebuild). The `create` path is reasoned from Event Modeling and Four-Color archetypes and has **never been run on a project starting from zero**. Report what breaks: https://github.com/knotmark-ai/devmuse/issues/47
 
-**Scope:** the concept structure a project is built on — what exists, what has a lifecycle, what depends on what, who produces and maintains each thing. Runs **before** PRD and design work. For product requirements use **mu-prd** after this; for technical architecture use **mu-arch**.
+**Scope:** the concept structure a project is built on — what exists, what has a lifecycle, what depends on what, who produces and maintains each thing. This is the **optional dedicated tool** for a focused domain-modeling pass; it is **not** a required gate before PRD or design work — mu-prd and mu-arch run this same method inline when a feature or design needs it (references/devmuse/knowledge/principles/domain-model.md). Use `/mu-model` when the domain is worth modeling on its own before requirements or design.
 
-Produces the domain model at repo-root `CONTEXT.md` per references/devmuse/knowledge/principles/domain-model.md, using references/devmuse/knowledge/templates/context-md.md.
+Produces the domain model at the architecture set's `domain_model` member (repo-root `CONTEXT.md` by default) per references/devmuse/knowledge/principles/domain-model.md, using references/devmuse/knowledge/templates/context-md.md.
 
-<HARD-GATE>
-Do NOT hand off to mu-prd, mu-arch, or any downstream skill until the model is written to `CONTEXT.md` and the user has approved it. A model agreed in conversation but not persisted is not a model — the next session starts from zero.
-</HARD-GATE>
+<PERSIST-BEFORE-HANDOFF>
+When you DO run a modeling pass, persist it: a model agreed in conversation but not written to the `domain_model` member is not a model — the next session starts from zero. Write and get approval before handing the model to downstream work.
+</PERSIST-BEFORE-HANDOFF>
 
 ## Why this exists
 

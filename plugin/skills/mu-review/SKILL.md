@@ -28,6 +28,25 @@ discard work. Those actions require an explicit request.
 
 Announce the selected mode before inspection.
 
+## Project Context Binding
+
+Read `@../../knowledge/principles/project-context.md`. For Pipeline final, run
+`resolve`, then publish sanitized review evidence with `render-managed` only
+after `authorize` succeeds for the exact Issue/PR operation. Apply the packaged
+`project-context/cli.mjs`, or the same contract through host-native tools with
+the binding recorded when executable support is absent.
+
+When the project has a case registry (`/mu-setup`), the review-coverage pass
+traces each affected case ID to a test and result and marks coverage **stale**,
+not merely covered, when a bound revision moved, per
+`@../../knowledge/principles/case-registry.md`.
+
+Run `project-delivery` with the required PR set, acceptance evidence, and every
+external work item. Consume its canonical `current_state`, `issue_action`, and
+`reason`: merge evidence with pending human/platform work keeps the Issue open.
+Close it only when `issue_action` is `close` and the exact `issue.update`
+operation has fresh capability plus an active grant.
+
 ## Process
 
 ### 1. Resolve review scope
@@ -61,6 +80,11 @@ when evidence triggers them:
 When the diff changes an external-system boundary, load
 `@../../knowledge/principles/defensive-boundary.md` for the code-quality pass.
 
+For every code-quality pass, load
+`@../../knowledge/principles/code-quality.md`. Apply all categories in the
+primary language's idioms and keep each violated principle as a distinct
+finding category; consolidate repeated occurrences only within that category.
+
 For committed ranges, dispatch `@../../agents/mu-reviewer.md` in the applicable
 `review-code`, `review-coverage`, and `review-security` modes. Validate required
 inputs before dispatch. For uncommitted-only content, review the complete patch
@@ -70,9 +94,32 @@ directly; never invent a SHA range that omits it.
 If a reviewer reports files not reviewed, continue with a fresh pass over only
 those files until every file is reviewed or its limitation is explicit.
 
-Optional cross-review by another model occurs only when the user explicitly
-requests it, or after a high-risk signal is presented and the user accepts the
-extra cost. Tool absence is silent; do not turn it into an installation flow.
+#### Host-aware reciprocal cross-review
+
+Cross-review means an independent **different-model-family** review, not "always
+run Codex." The reviewer is chosen relative to this host — reviewer direction:
+`Claude Code -> Codex`. Codex delegates to Claude Code; another host uses an
+explicitly configured different-family reviewer or has no capability. The current
+host is never its own reviewer, and a reviewer subprocess never starts a second
+cross-review (depth 1).
+
+It runs **only** when the user explicitly requests it, or after a high-risk
+signal is presented and the user accepts the extra cost. Tool absence, expired
+auth, timeout, or malformed output is silent and never blocks the primary
+review; do not turn a missing CLI into an installation flow.
+
+Do not hand-build the reviewer command. The runtime constructs a read-only,
+ephemeral, project-scoped invocation with quoted argument arrays (no `eval`, no
+shell, no aliases), a private temp dir for its output schema, and an existing
+local subscription/session login preferred over an API key. Claude skills invoke
+`${CLAUDE_PLUGIN_ROOT}/runtime/cross-review/cli.mjs`. Portable skills invoke
+their vendored `references/devmuse/runtime/cross-review/cli.mjs`.
+
+- `run` with `{"current_host":"claude", "project_dir":"…", "refs":["<base>...HEAD"]}` builds the invocation (owning its schema + output temp dir), executes it under a bounded timeout, and returns normalized findings or a typed `fallback` — or `skipped` for a typed denial (`unavailable`, `same-family`, `recursion-blocked`). `plan` prints the argv without running.
+- `normalize`/`merge` map reviewer output into DevMuse severities and surface contradictions side by side, preserving reviewer provenance. Validate structured output rather than trusting exit code 0; never print, copy, or commit OAuth caches, API keys, or tokens.
+- Overrides are host-native env vars, never shell aliases: `DEVMUSE_CROSS_REVIEW_BINARY`, `DEVMUSE_CROSS_REVIEW_CONFIG_HOME` (mapped to `CODEX_HOME` / `CLAUDE_CONFIG_DIR`), and `DEVMUSE_CROSS_REVIEW_TIMEOUT_MS`.
+
+Present contradictory conclusions side by side; do not silently choose one.
 
 ### 3. Produce anchored findings
 
@@ -120,6 +167,10 @@ Fresh evidence precedes every completion claim:
 5. Report exact commands and results, including pre-existing or unresolved
    failures.
 
+For Pipeline final, record the final review disposition and sanitized command
+evidence in the managed PR revision. Keep Issue-owned external work linked,
+without duplicating its state into the PR.
+
 Standalone review may run safe diagnostic tests when useful, but its primary
 completion criterion is exhaustive diff coverage rather than a passing build.
 Review and fix / Pipeline final requires verification of the changed behavior.
@@ -156,5 +207,5 @@ Review and fix / Pipeline final requires verification of the changed behavior.
 - Uses `@../../agents/mu-reviewer.md` for committed-range review passes.
 - Refactoring/removal review applies
   `@../../knowledge/principles/chestertons-fence.md`.
-- Terminal state is a report or verified fixes; repository integration is a
-  separate explicit action.
+- Terminal state is a report or verified fixes plus the Delivery projection;
+  repository integration remains a separate explicit action.

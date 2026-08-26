@@ -1,0 +1,50 @@
+// Coverage staleness. A Test Result is the anchor: it records the revisions of
+// the requirement/example, the test case, and the code it ran against, plus the
+// environment. Coverage is stale when any bound asset revision differs from the
+// asset's current revision — so "covered" never hides a requirement or test that
+// moved after its last run (UC-C10, AC#11). `environment` is a recorded axis,
+// never a substitute for a revision axis.
+
+const REVISION_AXES = Object.freeze(["requirement", "acceptance_example", "test_case", "code"]);
+
+// result: { boundRevisions: { requirement?, acceptance_example?, test_case?, code? }, environment? } | null
+// current: { requirement?, acceptance_example?, test_case?, code? } — current revisions of the bound assets
+export function coverageStaleness(result, current = {}) {
+  if (!result || typeof result !== "object" || !result.boundRevisions || typeof result.boundRevisions !== "object") {
+    return { status: "uncovered", staleAxes: [] };
+  }
+  const bound = result.boundRevisions;
+  const boundAxes = REVISION_AXES.filter((axis) => bound[axis] !== undefined && bound[axis] !== null);
+  // A result that bound nothing is not coverage — never "covered".
+  if (boundAxes.length === 0) return { status: "uncovered", staleAxes: [] };
+  // Every bound axis needs a current revision to compare against; without it we
+  // cannot assert coverage — report `unknown`, never a positive "covered".
+  const missingAxes = boundAxes.filter((axis) => current[axis] === undefined || current[axis] === null);
+  if (missingAxes.length > 0) {
+    return { status: "unknown", staleAxes: [], missingAxes, environment: result.environment ?? null };
+  }
+  const staleAxes = boundAxes.filter((axis) => current[axis] !== bound[axis]);
+  if (staleAxes.length > 0) return { status: "stale", staleAxes, environment: result.environment ?? null };
+  // A genuine coverage claim must bind the source of truth (a requirement or an
+  // acceptance example), the test case, AND the code it ran against. A result
+  // that binds only some of these is `partial` — never "covered", since the
+  // unbound axes could have drifted unseen (M-2).
+  // A complete coverage record binds the source (requirement or acceptance
+  // example), the test case, the code it ran against, AND the environment it ran
+  // in — a "covered" claim with an unknown environment is not reproducible coverage.
+  const hasSource = bound.requirement != null || bound.acceptance_example != null;
+  const hasEnvironment = result.environment != null && result.environment !== "";
+  const complete = hasSource && bound.test_case != null && bound.code != null && hasEnvironment;
+  if (!complete) {
+    const unboundAxes = ["requirement_or_acceptance_example", "test_case", "code", "environment"]
+      .filter((axis) => {
+        if (axis === "requirement_or_acceptance_example") return !hasSource;
+        if (axis === "environment") return !hasEnvironment;
+        return bound[axis] == null;
+      });
+    return { status: "partial", staleAxes: [], unboundAxes, environment: result.environment ?? null };
+  }
+  return { status: "covered", staleAxes: [], environment: result.environment };
+}
+
+export { REVISION_AXES };

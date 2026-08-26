@@ -9,7 +9,14 @@ description: "Define product requirements — user flows, object lifecycles, scr
 
 Independent of the feature-level pipeline. Product-level skill that runs **once per product**, not per feature. Reads the MRD as input; outputs PRD that becomes input for per-feature mu-scope.
 
-**Domain model check (before Phase 0):** if repo-root `CONTEXT.md` does not exist, recommend `/mu-model` first — the PRD's surfaces are a projection of the model's ownership table, and its state names come from the model. Non-blocking: the user may decline, in which case flag "no domain model" in the PRD header and coin names as you go.
+**Domain modeling (folded in, not a gate):** when a feature introduces
+lifecycle-bearing objects or new domain vocabulary, run the domain-modeling
+method inline (references/devmuse/knowledge/principles/domain-model.md) and write to the
+architecture set's `domain_model` member — the PRD's surfaces are a projection of
+that model's ownership table, and its state names come from it. `/mu-model`
+remains the optional dedicated tool for a focused pass; it is **not** a required
+step before this skill. When the project has no domain concepts worth modeling,
+flag "no domain model" in the PRD header and coin names as you go.
 
 <HARD-GATE>
 Do NOT invoke mu-scope or any feature-level skill until the user has approved the PRD artifact. The PRD must cover all MVP features from the MRD when a full-mode MRD exists; otherwise, the features the user names.
@@ -52,15 +59,20 @@ mu-prd has two independent concepts: **Stance** (Phase 0) and **Depth Mode** (li
 Phase 0 parses only the stance token; Depth Mode Selection parses only the depth token.
 
 
-## Depth Mode Selection
+## Profile and Depth Selection
 
-| Signal | Depth mode | Scope |
+Two orthogonal axes compose the section set (see references/devmuse/knowledge/principles/project-profiles.md):
+
+- **Profile** — *what kind of product this is* — selects **which** sections exist. The product axis values are `end-user-app` / `developer-tool` / `library-sdk` / `data-ai` (see the axis table in references/devmuse/knowledge/principles/project-profiles.md — use those names, not ad-hoc ones). An `end-user-app` has information architecture, core user flows, key screens, and tiering; a `library-sdk` or `developer-tool` has a public/command surface and no screens; a `data-ai` product has data-flow and model/tool-boundary sections. Compose profiles; take the union when more than one applies. Never emit a section a profile does not populate from the project's own evidence.
+- **Depth** — *how much ceremony the stakes justify* — selects **how much** of each section to carry.
+
+| Signal | Depth | Scope |
 |---|---|---|
-| Solo dev, small project, "lightweight PRD", `/mu-prd lightweight` | **Lightweight** | Core flows + key specs only |
-| Team project, investor-facing, formal product, `/mu-prd full` | **Full** | All 9 sections |
+| Solo dev, small project, "lightweight PRD", `/mu-prd lightweight` | **Lightweight** | The profile's core sections only (for `end-user-app`: core flows + key specs + open questions) |
+| Team project, investor-facing, formal product, `/mu-prd full` | **Full** | The profile's full section set |
 | Unclear | One probe: "Stakes — hobby / internal tool / public launch?" hobby → lightweight; internal → lightweight; launch → full |
 
-**Length scales with stakes:** hobby ≈ a page or two; internal ≈ a few pages; launch ≈ as long as its features require. Depth mode picks the section set; stakes calibrate how much each section carries.
+**Length scales with stakes:** hobby ≈ a page or two; internal ≈ a few pages; launch ≈ as long as its features require. Profile picks the section set; depth and stakes calibrate how much each section carries. The full section list below is the `end-user-app` profile — the default when a project is a user-facing application, not what every project emits.
 
 ## Process Flow
 
@@ -111,26 +123,55 @@ If not found, ask the user to provide market context inline. Log "no MRD referen
 
 ### 2. PRD Sections
 
-Produce sections one at a time, approving each before moving on. Drive each section's open points per references/devmuse/knowledge/principles/grilling.md — one question per message with a recommendation, facts self-served, converge every fork before the section is approved.
+The section set is **composed** from the project's profile axes
+(references/devmuse/knowledge/principles/project-profiles.md), not a fixed list: common core
++ the sections each activated axis adds + concern-triggered sections. Depth
+(lightweight/full) scales how much each carries. Produce sections one at a time,
+approving each before moving on. Drive each section's open points per
+references/devmuse/knowledge/principles/grilling.md — one question per message with a
+recommendation, facts self-served, converge every fork before the section is
+approved. **Emit a section only when the project's evidence populates it — never
+add a screen/state/tiering slot a profile merely offers (UC-DR2).**
 
-#### Full mode (9 sections)
+#### Common core (every profile)
 
-1. **Persona deepening** — concrete scenarios for the target persona(s). "A day in the life" / usage contexts.
-2. **Information architecture / feature map** — hierarchy of features, navigation structure
-3. **Core user flows** — journey maps or sequence diagrams for primary tasks
-4. **Key screen wireframes** — text/mermaid wireframes for critical screens. Use Visual Companion for mockups when visual questions arise.
-5. **Per-feature specs** — for each MVP feature: what it does, why, user-facing rules (edge cases in user terms, not code). **Scope boundary:** these are product-level rules (what the user sees and agrees to) — mu-scope later enumerates all concrete paths (happy / edge / error use cases) through those rules on a per-feature basis. Do not pre-enumerate UCs here. Guarantees that survive retries and races ("double-clicking never creates two orders", "a lapsed booking cannot be revived") are rules, not use cases — they live in the object model, and a feature touching a modeled object cites its states by name.
-6. **Tiering rules** — free vs paid behavioral boundaries (quotas, features, upgrade triggers)
-7. **Non-functional requirements** — performance targets, privacy/compliance needs, accessibility, localization
-8. **Success metrics → instrumentation** — which events to track for each flow; how funnel metrics are computed
-9. **Open questions / assumptions** — things not yet decided that downstream work must resolve
+1. **Purpose and users** — who it is for, the target persona(s), the problem.
+2. **Per-feature specs** — for each MVP feature: what it does, why, the long-lived **Product Use Cases** it serves (the stable product scenarios), and user-facing rules (edge cases in user terms, not code). **Ownership boundary:** the Product Use Cases and Rules are mu-prd's to own — they are the durable requirement records (see Case registry integration below). What mu-prd does NOT enumerate is the concrete *delivery paths* — the happy/edge/error/reverse coverage of a given change; mu-scope owns those per delivery and references your Product Use Case IDs. So: Product Use Cases + Rules here; delivery-path coverage in mu-scope. Guarantees that survive retries and races ("double-clicking never creates two orders") are rules, not use cases — they live in the object model, and a feature touching a modeled object cites its states by name.
+3. **Open questions / assumptions** — things not yet decided that downstream work must resolve.
 
-#### Lightweight mode (3 sections)
+#### Profile-activated sections (add only the axes that apply)
 
-Minimum viable PRD for solo/small projects:
-1. **Core user flow(s)** — 1-3 primary flows only
-2. **Key per-feature specs** — MVP features, minimal detail
-3. **Open questions** — what to defer
+- **`end-user-app` product / `gui` surface** — information architecture & feature map; core user flows (journey/sequence maps); key screen wireframes (text/mermaid; use Visual Companion for mockups); tiering rules (free vs paid quotas/triggers). *(These four are the classic "full mode" — they belong to the user-facing app profile, not to every project.)*
+- **`cli` surface** — command/flag grammar, exit-code and output contract (no screens).
+- **`library-sdk` / `api` surface** — public API/endpoint surface, request/response and error shapes, versioning/compat contract.
+- **`data-ai` product** — data flow and lineage; model/tool boundary; evaluation and guardrails; cost/latency envelope.
+- **`plugin-agent` implementation** — host-relationship boundary; invocation/routing and capability/permission model.
+
+#### Concern-triggered sections
+
+Scan references/devmuse/knowledge/principles/nfr-checklist.md; add a section only where a
+trigger fires (performance, security/PII, transactions, multitenancy, public
+API, AI/model-tool boundary, accessibility & localization, compliance…). Success
+metrics → instrumentation is added whenever the product has a measurable funnel.
+
+**Depth:** lightweight carries the core (purpose + key per-feature specs + open
+questions) at minimal detail; full carries every activated section at launch
+depth. Depth changes *how much*, profile changes *which*.
+
+### 2a. Case registry integration (when present)
+
+When the project has a case registry (a v2 manifest with a `cases:` block, from
+`/mu-setup`), mu-prd is the **owner** of the long-lived **Product Use Cases**
+(`duc:`) and **Rules** (`rule:`): persist each as a stable-ID record in its
+canonical provider via `references/devmuse/runtime/project-registry/cli.mjs`
+(portable skills use their vendored copy) — writes are approval-gated (`approved:
+true`) and never store credentials, per
+`references/devmuse/knowledge/principles/case-registry.md`. Reuse an existing case's ID on
+update; never mint a second ID for the same scenario. Downstream, mu-scope
+**references** these IDs and owns only the delivery-specific delta (acceptance
+examples, edge/error/reverse coverage, the regression boundary); mu-arch/mu-plan/
+mu-code carry the same IDs through. Where no registry exists, this is additive and
+skipped — the PRD prose stands on its own.
 
 ### 3. Product Object Model (conditional)
 
@@ -159,6 +200,15 @@ Save to `docs/prd/YYYY-MM-DD-<product>.md` (plus the `CONTEXT.md` machines when 
 Ask the user which MVP feature to start with. Then invoke mu-scope for that feature. Remaining features go through mu-scope iteratively, one at a time.
 
 ## Artifact Format
+
+The template below is the **`end-user-app` profile** in full depth — its nine
+sections (persona, information architecture, screens, tiering, …) belong to a
+user-facing app, not to every project. Compose the actual section set from §2's
+axes: keep the common core, add the sections the project's profile activates, and
+drop the ones it does not populate (a `library-sdk`/`developer-tool` has a public
+or command surface and no screens or IA; a `data-ai` product leads with data-flow
+and the model/tool boundary). Do not emit an empty `end-user-app` section for a
+project whose profile never fills it.
 
 ```markdown
 # PRD: <product name>
