@@ -66,7 +66,11 @@ export function chooseUpdateStrategy({ supportsConditionalUpdate, providerConfli
 // inline screen was missing — authToken, authenticationToken, oauthCache, …).
 const SENSITIVE_KEY_WORDS = "access[_-]?token|api[_-]?(?:key|token)|authorization|auth(?:entication|orization)?[_-]?token|aws[_-]?secret[_-]?access[_-]?key|client[_-]?secret|credentials?|github[_-]?token|oauth[_-]?(?:cache|token)|passwd|password|private[_-]?key|refresh[_-]?token|secret|token";
 const SENSITIVE_KEY = new RegExp(`^(?:${SENSITIVE_KEY_WORDS})$`, "i");
-const SENSITIVE_ASSIGNMENT = new RegExp(`(?<![A-Za-z0-9])(?:${SENSITIVE_KEY_WORDS})\\s*[:=]\\s*[^\\s,;}'"]+`, "i");
+// Matches `<key> = <value>` in any common shape — bare, quoted key (JSON
+// `"token": …`), quoted value (`token="secret"`, dotenv, shell export). The
+// optional quotes around the key and value close the earlier bypass where the
+// value char class excluded quotes and the separator had to abut the key.
+const SENSITIVE_ASSIGNMENT = new RegExp(`(?<![A-Za-z0-9])(?:${SENSITIVE_KEY_WORDS})["']?\\s*[:=]\\s*["']?\\S`, "i");
 
 function inspectPublishable(value, key = null) {
   if (key !== null && SENSITIVE_KEY.test(key) && value !== null && value !== "") return "secret-rejected";

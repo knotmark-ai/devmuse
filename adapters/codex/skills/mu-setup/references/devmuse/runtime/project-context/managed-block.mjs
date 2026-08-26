@@ -52,9 +52,11 @@ function parseDocument(text, family) {
   if (!attributes) return { status: "malformed", blocks: [] };
   if (attributes.schema !== "1") return { status: "unsupported-schema", blocks: [] };
   if (!WORK_ID.test(attributes.work_id ?? "") || !WORK_ID.test(attributes.attempt_id ?? "")) return { status: "malformed", blocks: [] };
-  if (!/^[1-9]\d*$/.test(attributes.revision ?? "")) return { status: "malformed", blocks: [] };
+  // Bound the digit count so a pathological value (e.g. a 400-digit revision) can
+  // never parse to Infinity and later serialize to null — fail closed as malformed.
+  if (!/^[1-9]\d{0,8}$/.test(attributes.revision ?? "")) return { status: "malformed", blocks: [] };
   if (!/^[a-f0-9]{64}$/.test(attributes.content_sha256 ?? "")) return { status: "malformed", blocks: [] };
-  if (attributes.issue !== undefined && !/^[1-9]\d*$/.test(attributes.issue)) return { status: "malformed", blocks: [] };
+  if (attributes.issue !== undefined && !/^[1-9]\d{0,8}$/.test(attributes.issue)) return { status: "malformed", blocks: [] };
   if ((family === "plan") !== (attributes.issue !== undefined)) return { status: "malformed", blocks: [] };
   const content = normalizeContent(match[3]);
   if (hashContent(content) !== attributes.content_sha256) return { status: "malformed", blocks: [] };
@@ -128,6 +130,12 @@ export function replaceManagedRevision(body, managedRevision) {
   // so a `<block> + password=…` or a second managed marker cannot ride along.
   if (parsedNew.status !== "valid" || parsedNew.blocks.length !== 1 || parsedNew.blocks[0].raw !== revision.trim()) {
     throw Object.assign(new Error("invalid managed revision"), { code: "invalid-managed-revision" });
+  }
+  // A non-string body is a caller error, not an empty document — fail closed rather
+  // than silently discarding the original input. `null`/`undefined` mean "no body
+  // yet" (a fresh create).
+  if (body != null && typeof body !== "string") {
+    throw Object.assign(new Error("invalid managed body"), { code: "invalid-managed-body" });
   }
   // parseDocument normalizes internally for validation, but we splice against the
   // ORIGINAL body so surrounding human text is preserved byte-for-byte (its CRLF and

@@ -127,7 +127,7 @@ if (!known.has(command)) {
       } else if (command === "select-managed") {
         write(selectCurrentManagedRevision(input));
       } else if (command === "replace-managed") {
-        write({ body: replaceManagedRevision(input.body ?? "", input.managedRevision) });
+        write({ body: replaceManagedRevision(input.body, input.managedRevision) });
       } else if (command === "fingerprint-create") {
         write({ fingerprint: fingerprintCreateRequest(input) });
       } else if (command === "sanitize") {

@@ -75,6 +75,17 @@ test("a manifest cannot smuggle markup or control characters into the session su
 });
 
 // Covers: UC-G7
+test("the replace-managed CLI fails closed on a non-string body instead of exiting 0 and dropping it (#62)", () => {
+  const rev = renderManagedRevision({ kind: "scope", workId: "issue-62", attemptId: "a", revision: 1, content: "x\n" });
+  const bad = runCli("replace-managed", { body: 42, managedRevision: rev });
+  assert.notEqual(bad.status, 0);          // non-zero exit, not a silent success
+  assert.equal(bad.out?.error?.code, "invalid-managed-body");
+  // A string body still works.
+  const ok = runCli("replace-managed", { body: "", managedRevision: rev });
+  assert.equal(ok.status, 0);
+  assert.match(ok.out.body, /devmuse:scope:start/);
+});
+
 test("the managed publisher refuses common provider tokens, inline passwords, and credential URLs (#62)", () => {
   // Exact reverse cases: each must be rejected end-to-end through renderManagedRevision.
   const secrets = [
@@ -95,6 +106,12 @@ test("the managed publisher refuses common provider tokens, inline passwords, an
     "authorizationToken=plain-secret",
     "oauth_cache=plain-secret",
     "oauthCache=plain-secret",
+    // QUOTED shapes: dotenv/shell/JSON — the value or key is wrapped in quotes.
+    'token="secret"',
+    "token='secret'",
+    '"token": "secret"',
+    'export TOKEN="secret"',
+    'API_KEY="sk-live-xyz"',
   ];
   for (const secret of secrets) {
     assert.throws(
